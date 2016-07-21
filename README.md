@@ -1,26 +1,25 @@
 #FOPaM - File-Oriented Data Plotting and Manipulation
 ### Short description 
-A lightweight application allowing to browse the data files on your disk, and see their contents immediately plotted in the right panel.
+A lightweight application allowing to browse data files on your disk, and compare their contents immediately plotted in the right panel.
 
 ->![a screenshot of the first test of the program](examples/screenshot.png)<-
 
+Key points:
+ * Data file viewing, comparison and other simple tasks should be **as easy as browsing one's photo gallery**
+ * Data preprocessing should **allow the flexibility of writing standalone scripts** in *[Python](https://www.python.org/)*+*[NumPy](http://www.numpy.org/)*
+ * Plot options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
+ * Keep the **program code reusable**, i.e., as short and clean as possible.
+ * Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
+ * **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
+
 ### Motivation 
-Scientific work is often based on handling numerical or experimental results in a computer. This is somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results after 10 or 20 years.
+Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results after 10 or 20 years.
 
 Switching to  alternative **open-source structured formats**, such as [Scidavis](http://scidavis.sourceforge.net/), may present a compatibility barrier, since its interoperability with Origin has been still questionable. In either case, the workflow remains limited to the capabilities of the corresponding program. It is said that holding a hammer, one sees every problem as a nail; likewise, using a graphical application with fairly limited capabilities and almost no means of automatization, a scientist wrongly perceives many interesting problems either as desperately tedious or even untreatable. Aside of this, such applications force the user to accept one given point-and-click workflow which may be far from optimal, and do not allow attaching arbitrary files to the datasets. Also the quality of the plots is not always good.
 
 A different approach is to store one's data as plain **text files** (**\*.dat** or **\*.csv**). Fairly complex operations then can be programmed using, e.g., Matlab, R, Python or other suitable language, and gigantic amounts of data can be processed in a single batch. However, it is inconvenient to repeatedly write own scripts even for simple operations -- such as plotting or curve fitting. Sometimes people store the data along with **image files** with their plots, but again, the repeated plotting can be tedious.
 
-FOPaM resolves this problem by allowing the user to **view plain text files** rendered immediately as plots. The following points outline the motivation for writing the program from scratch:
-
-
-### Philosophy 
- * Data file viewing, comparison and other simple tasks should not be harder than browsing one's photo gallery
- * Data processing should not be harder than writing standalone scripts in *[Python](https://www.python.org/)*+*[NumPy](http://www.numpy.org/)*
- * Plot settings should build on the commands of the widely used *matplotlib* library, so that all its how-tos and tricks apply. Settings can be also stored as python scripts.
- * Keep the program code reusable, i.e., as short and clean as possible.
- * Define a keyboard shortcut for all important functions. While easy to learn, mouse control of a program is slow. 
- * Promote open data formats in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
+FOPaM resolves this problem by allowing the user to **view plain text files** rendered immediately as plots.
 
 
 ### Installation 
