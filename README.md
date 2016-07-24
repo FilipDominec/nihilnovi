@@ -26,11 +26,11 @@ FOPaM resolves this problem by allowing the user to **view plain text files** re
 
 You may need to get its dependencies; e.g. for Ubuntu 16.04, run:
 
-    sudo apt-get install python3-matplotlib python3-pip python3-numpy 
-    
+    sudo apt-get install python3-matplotlib python3-pip python3-numpy python3-gi-cairo 
+
 On Linux, get the fresh version by pulling this directory. The python program can be directly launched: 
 
-    git pull http://github.com/filipdominec/fopam.git
+    git clone http://github.com/filipdominec/fopam.git
     cd fopam
     python3 fopam.py
 
