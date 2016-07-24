@@ -7,7 +7,7 @@ A lightweight application allowing to browse data files on your disk, and compar
 Key points:
  * Data file viewing, comparison and other simple tasks should be **as easy as browsing one's photo gallery**
  * Data preprocessing should **allow the flexibility of writing standalone scripts** in *[Python](https://www.python.org/)*+*[NumPy](http://www.numpy.org/)*
- * Plot options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
+ * Plot options are determined by the ** *matplotlib* library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
  * Keep the **program code reusable**, i.e., as short and clean as possible.
  * Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
  * **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
@@ -24,17 +24,17 @@ FOPaM resolves this problem by allowing the user to **view plain text files** re
 
 ### Installation 
 
-You may need to get its dependencies; e.g. for Ubuntu 16.04, run:
+On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run:
 
     sudo apt-get install python3-matplotlib python3-pip python3-numpy python3-gi-cairo 
 
-On Linux, get the fresh version by pulling this directory. The python program can be directly launched: 
+Then get the fresh version by pulling this project, and launch the program directly:
 
     git clone http://github.com/filipdominec/fopam.git
     cd fopam
     python3 fopam.py
 
-In the future, one may optionally also make use of:
+In the future, seamless browsing of multiple-dataset files will depend also on:
 
     ## LibHDF
     sudo apt-get install python-h5py
@@ -53,7 +53,7 @@ In the future, one may optionally also make use of:
 	sudo python setup.py install
 	cd ..
 
-On Windows, the proposed distribution approach is to use [py2exe](http://matplotlib.org/) to bundle all required dependencies into one package.
+On Windows, the proposed distribution approach is to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package.
 
 ### Accepted file formats 
 FOPaM will try to understand all common formatting of *.dat (or, *.csv) files. A minimal example:
