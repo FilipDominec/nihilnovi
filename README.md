@@ -1,13 +1,13 @@
-#FOPAM - File-Oriented data Plotting And Manipulation
+![Gayplot - File-Oriented data Plotting And Manipulation](img/logo.png)
+
 ### Short description 
 A lightweight application allowing to browse data files on your disk, and see their contents immediately plotted in the right panel.
 
-![a screenshot of the first test of the program](examples/screenshot.png)
 
 Key points:
  * Data file viewing, comparison and other simple tasks should be **as easy as browsing one's photo gallery**
  * Data preprocessing should **allow the flexibility of writing standalone scripts** in *[Python](https://www.python.org/)*+*[NumPy](http://www.numpy.org/)*
- * Plot options are determined by the ** *matplotlib* library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
+ * Plot options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
  * Keep the **program code reusable**, i.e., as short and clean as possible.
  * Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
  * **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
@@ -19,8 +19,9 @@ Switching to  alternative **open-source structured formats**, such as [Scidavis]
 
 A different approach is to store one's data as plain **text files** (**\*.dat** or **\*.csv**). Fairly complex operations then can be programmed using, e.g., Matlab, R, Python or other suitable language, and gigantic amounts of data can be processed in a single batch. However, it is inconvenient to repeatedly write own scripts even for simple operations -- such as plotting or curve fitting. Sometimes people store the data along with **image files** with their plots, but again, the repeated plotting can be tedious.
 
-FOPaM resolves this problem by allowing the user to **view plain text files** rendered immediately as plots.
+**GayPlot** resolves this problem by allowing the user to **view plain text files** rendered immediately as plots.
 
+![a screenshot of the first test of the program](img/screenshot.png)
 
 ### Installation 
 
@@ -30,9 +31,9 @@ On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run
 
 Then get the fresh version by pulling this project, and launch the program directly:
 
-    git clone http://github.com/filipdominec/fopam.git
-    cd fopam
-    python3 fopam.py
+    git clone http://github.com/filipdominec/gayplot.git
+    cd gayplot
+    python3 gayplot.py
 
 In the future, seamless browsing of multiple-dataset files will depend also on:
 
@@ -56,13 +57,17 @@ In the future, seamless browsing of multiple-dataset files will depend also on:
 On Windows, the proposed distribution approach is to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package.
 
 ### Accepted file formats 
-FOPaM will try to understand all common formatting of *.dat (or, *.csv) files. A minimal example:
+GayPlot will try to understand all common formatting of *.dat (or, *.csv) files. A minimal example:
 
     10      123
     20.5    345
     30      5.67e2
 
-Running `./fopam.py minimal.dat` will open a window showing a two-segment line.
+Running `./gayplot.py minimal.dat` will open a window showing a two-segment line.
+
+### PAQ - presumably asked question
+#### "Gayplot" - why did you choose this name?
+By default, the program uses a sequential color coding for curve plotting that resembles the rainbow (LGBT flag)[https://en.wikipedia.org/wiki/LGBT]. However, it can be used by the heterosexual majority, too.
 
 
 ### To-Do 
@@ -78,4 +83,4 @@ Running `./fopam.py minimal.dat` will open a window showing a two-segment line.
  * [ ] enable browsing directories, dynamic unpacking sub-dirs and changing to up-dirs
  * [ ] enable browsing origin files if liborigin available for python3
  * [ ] enable browsing HDF5 files if libhdf available (dtto)
- * [ ] fopamrc.py files should be searched for in the directory (and all updirs, too)
+ * [ ] gayplotrc.py files should be searched for in the directory (and all updirs, too)
