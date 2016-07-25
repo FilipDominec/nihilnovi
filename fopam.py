@@ -26,15 +26,22 @@ class Handler:
         self.builder = builder
 
         fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee')
-        ax = fig.add_subplot(111)
+        #ax = fig.add_subplot(111)
+        ax = fig.add_axes([0.05, 0.03, .94, .96])    # makes the graph border narrow
 
         for infile in sys.argv: 
             print("\n\nLoading file: %s" % infile)
             try: 
                 ## Add the treeview item in the left panel
-                w('treestore1').append(None, ['no', infile])
-                # todo - use icons?
+                if 'oldtr' in locals(): oldertr = oldtr
+                oldtr = w('treestore1').append(None, ['no', infile])
+                if 'oldertr' in locals(): oldtr.parent = oldertr
+                # TODO - use icons?
                 #w('treestore1').append(None, ['no', Gtk.IconTheme.get_default().load_icon('edit-cut', 16, 0), infile])
+                # TODO - moving rows http://www.pygtk.org/pygtk2tutorial/sec-TreeModelInterface.html
+
+                # TODO - on window resize, adjust borders? 
+                # http://stackoverflow.com/questions/6066091/python-matplotlib-figure-borders-in-wxpython
 
                 ## Plot the curve in the right panel
                 x, y = np.genfromtxt(infile, usecols=[0,1], unpack=True,  dtype=type(0.0), 
@@ -59,6 +66,9 @@ class Handler:
 
         toolbar.pan() #todo - global shortcut, also for:
         #toolbar.zoom() #toolbar.home() #toolbar.back() #toolbar.forward() #toolbar.save_figure(toolbar)
+
+        from matplotlib.widgets import Cursor
+        cursor = Cursor(ax, useblit=True, color='red', linewidth=2)
         #}}}
 
     ## == trivial GUI handlers ==

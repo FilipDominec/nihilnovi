@@ -1,8 +1,8 @@
-#FOPaM - File-Oriented Data Plotting and Manipulation
+#FOPAM - File-Oriented data Plotting And Manipulation
 ### Short description 
-A lightweight application allowing to browse data files on your disk, and compare their contents immediately plotted in the right panel.
+A lightweight application allowing to browse data files on your disk, and see their contents immediately plotted in the right panel.
 
-->![a screenshot of the first test of the program](examples/screenshot.png)<-
+![a screenshot of the first test of the program](examples/screenshot.png)
 
 Key points:
  * Data file viewing, comparison and other simple tasks should be **as easy as browsing one's photo gallery**

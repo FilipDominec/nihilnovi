@@ -197,7 +197,9 @@
                     <property name="expander_column">treeviewcolumn2</property>
                     <property name="search_column">0</property>
                     <child internal-child="selection">
-                      <object class="GtkTreeSelection" id="treeview-selection"/>
+                      <object class="GtkTreeSelection" id="treeview-selection">
+                        <property name="mode">multiple</property>
+                      </object>
                     </child>
                     <child>
                       <object class="GtkTreeViewColumn" id="treeviewcolumn1">
