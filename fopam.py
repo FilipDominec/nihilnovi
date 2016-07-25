@@ -29,7 +29,7 @@ class Handler:
         #ax = fig.add_subplot(111)
         ax = fig.add_axes([0.05, 0.03, .94, .96])    # makes the graph border narrow
 
-        for infile in sys.argv: 
+        for infile in sys.argv[1:]: 
             print("\n\nLoading file: %s" % infile)
             try: 
                 ## Add the treeview item in the left panel
@@ -48,7 +48,8 @@ class Handler:
                         comments='#', delimiter=None, skip_header=0, skip_footer=0,           ## default options follow...
                         converters=None, missing_values=None, filling_values=None, names=None, excludelist=None, 
                         deletechars=None, replace_space='_', autostrip=False, case_sensitive=True, defaultfmt='f%i', 
-                        usemask=False, loose=True, invalid_raise=True, max_rows=None)
+                        usemask=False, loose=True, invalid_raise=True) 
+                # , max_rows=None ## does not work with older numpy?
                 ax.plot(x, y, label=os.path.basename(infile))
             except ValueError as e:
                 print(type(e).__name__ + ": " + str(e))
@@ -64,7 +65,7 @@ class Handler:
         w('box4').pack_start(sw, True, True, 0)
         w('box4').pack_start(toolbar, False, True, 0)
 
-        toolbar.pan() #todo - global shortcut, also for:
+        toolbar.pan() #todo - define global shortcuts as a superset of the Matplotlib-GUI's internal, include also:
         #toolbar.zoom() #toolbar.home() #toolbar.back() #toolbar.forward() #toolbar.save_figure(toolbar)
 
         from matplotlib.widgets import Cursor
@@ -78,7 +79,7 @@ class Handler:
 
 
 builder = Gtk.Builder()
-builder.add_from_file("fopam.glade")
+builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "fopam.glade"))
 def w(widgetname): return builder.get_object(widgetname)   # shortcut to access widgets 
 builder.connect_signals(Handler(builder))
 
