@@ -25,9 +25,8 @@ class Handler:
     def __init__(self, builder): #{{{
         self.builder = builder
 
-        fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee')
-        #ax = fig.add_subplot(111)
-        ax = fig.add_axes([0.05, 0.03, .94, .96])    # makes the graph border narrow
+        fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee', tight_layout=1)
+        ax = fig.add_subplot(111) 
 
         for infile in sys.argv[1:]: 
             print("\n\nLoading file: %s" % infile)
@@ -62,8 +61,8 @@ class Handler:
         toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(canvas, w('box4').get_parent_window())
         sw = Gtk.ScrolledWindow()
         sw.add_with_viewport(canvas)
-        w('box4').pack_start(sw, True, True, 0)
         w('box4').pack_start(toolbar, False, True, 0)
+        w('box4').pack_start(sw, True, True, 0)
 
         toolbar.pan() #todo - define global shortcuts as a superset of the Matplotlib-GUI's internal, include also:
         #toolbar.zoom() #toolbar.home() #toolbar.back() #toolbar.forward() #toolbar.save_figure(toolbar)
