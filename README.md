@@ -67,7 +67,7 @@ Running `./gayplot.py minimal.dat` will open a window showing a two-segment line
 
 ### PAQ - presumably asked question
 #### "Gayplot" - why did you choose this name?
-By default, the program uses a sequential color coding for curve plotting that resembles the rainbow (LGBT flag)[https://en.wikipedia.org/wiki/LGBT]. However, it can be used by the heterosexual majority, too.
+By default, the program uses a sequential color coding for curve plotting that resembles the rainbow [LGBT flag](https://en.wikipedia.org/wiki/LGBT). However, it can be used by the heterosexual majority, too.
 
 
 ### To-Do 
