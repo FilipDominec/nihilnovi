@@ -198,6 +198,7 @@
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="treeview-selection">
                         <property name="mode">multiple</property>
+                        <signal name="changed" handler="on_treeview1_selection_changed" swapped="no"/>
                       </object>
                     </child>
                     <child>
