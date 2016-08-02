@@ -1,4 +1,4 @@
-![Gayplot - File-Oriented data Plotting And Manipulation](img/logo.png)
+![PlotCommander - file-oriented data plotting and manipulation](img/logo.png)
 
 ### Short description 
 A lightweight application allowing to browse data files on your disk, and see their contents immediately plotted in the right panel.
@@ -19,7 +19,7 @@ Switching to  alternative **open-source structured formats**, such as [Scidavis]
 
 A different approach is to store one's data as plain **text files** (**\*.dat** or **\*.csv**). Fairly complex operations then can be programmed using, e.g., Matlab, R, Python or other suitable language, and gigantic amounts of data can be processed in a single batch. However, it is inconvenient to repeatedly write own scripts even for simple operations -- such as plotting or curve fitting. Sometimes people store the data along with **image files** with their plots, but again, the repeated plotting can be tedious.
 
-**GayPlot** resolves this problem by allowing the user to **view plain text files** rendered immediately as plots.
+**PlotCommander** resolves this problem by allowing the user to **view plain text files** rendered immediately as plots.
 
 ![a screenshot of the first test of the program](img/screenshot.png)
 
@@ -31,9 +31,9 @@ On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run
 
 Then get the fresh version by pulling this project, and launch the program directly:
 
-    git clone http://github.com/filipdominec/gayplot.git
-    cd gayplot
-    python3 gayplot.py
+    git clone http://github.com/filipdominec/plotcommander.git
+    cd plotcommander
+    python3 plotcommander.py
 
 In the future, seamless browsing of multiple-dataset files will depend also on:
 
@@ -57,17 +57,15 @@ In the future, seamless browsing of multiple-dataset files will depend also on:
 On Windows, the proposed distribution approach is to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package.
 
 ### Accepted file formats 
-GayPlot will try to understand all common formatting of *.dat (or, *.csv) files. A minimal example:
+PlotCommander will try to understand all common formatting of *.dat (or, *.csv) files. A minimal example:
 
     10      123
     20.5    345
     30      5.67e2
 
-Running `./gayplot.py minimal.dat` will open a window showing a two-segment line.
+Running `./plotcommander.py minimal.dat` will open a window showing a two-segment line.
 
-### PAQ - presumably asked question
-#### "Gayplot" - why did you choose this name?
-By default, the program uses a sequential color coding for curve plotting that resembles the rainbow [LGBT flag](https://en.wikipedia.org/wiki/LGBT). However, it can be used by the heterosexual majority, too.
+### PAQ - presumably asked questions
 
 
 ### To-Do 
@@ -83,4 +81,4 @@ By default, the program uses a sequential color coding for curve plotting that r
  * [ ] enable browsing directories, dynamic unpacking sub-dirs and changing to up-dirs
  * [ ] enable browsing origin files if liborigin available for python3
  * [ ] enable browsing HDF5 files if libhdf available (dtto)
- * [ ] gayplotrc.py files should be searched for in the directory (and all updirs, too)
+ * [ ] plotcommander.py files should be searched for in the directory (and all updirs, too)
