@@ -23,9 +23,7 @@ class Handler:
     ## == initialization == 
     def __init__(self): #{{{
         ## Init the table of records (i.e. files or similar datasets)
-        self.record_titems = {}
         self.record_labels = {}
-        self.record_curves = {}
         self.record__types = {}
 
         ## Plotting initialization
@@ -41,6 +39,8 @@ class Handler:
         w('box4').pack_start(self.sw, True, True, 0)
         self.toolbar.pan() #todo - define global shortcuts as a superset of the Matplotlib-GUI's internal, include also:
         #toolbar.zoom() #toolbar.home() #toolbar.back() #toolbar.forward() #toolbar.save_figure(toolbar)
+        
+        ## TreeStore and ListStore initialization
 
         ## Load records (if provided as arguments at startup)
         for infile in sys.argv[1:]: 
@@ -63,29 +63,14 @@ class Handler:
         ## Add the treeview item in the left panel
         new_trs_item = w('treestore1').append(tree_parent, ['no', file_path])
 
-        ## Plot it
-        new_curve = None # FIXME
-
         ## Register a new record in the record table
-        self.record_titems[file_path] = new_trs_item
         self.record_labels[file_path] = os.path.basename(file_path) 
-        self.record_curves[file_path] = new_curve
         self.record__types[file_path] = 'file'
 
     ## === FILE HANDLING ===
     
 
     ## === GRAPHICAL PRESENTATION ===
-    def treepath_to_filepath(self, treepath):
-        """ reverse search in dictionary, when its values (i.e. <treeiter> type) are not hashable """
-        for item in self.record_titems.items():
-            print(item)
-            it2 = Gtk.TreeRowReference(w('treestore1'), w('treestore1').get_path(item[1]))
-            print(item, it2.get_path() , treepath, it2 is treepath)
-        print([item[0] for item in self.record_titems.items()  if  item[1] is treepath])
-        print([item[0] for item in self.record_titems.items()  if  item[1] is treepath][0])
-        return [item[0] for item in self.record_titems.items()  if  item[1] is treepath][0]
-
     def plot_reset(self):
         self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
         self.ax.legend(loc="upper right")
@@ -105,23 +90,22 @@ class Handler:
                 converters=None, missing_values=None, filling_values=None, names=None, excludelist=None, 
                 deletechars=None, replace_space='_', autostrip=False, case_sensitive=True, defaultfmt='f%i', 
                 usemask=False, loose=True, invalid_raise=True) # , max_rows=None ## does not work with older numpy?
+                # TODO apply file loading options
 
         ## Plot the curve in the right panel
-        curve = self.ax.plot(x, y, label=os.path.basename(infile))
-        print(curve)
-        del(curve)
+        self.ax.plot(x, y, label=os.path.basename(infile)) # TODO apply plotting options
         self.ax.relim()
         self.ax.autoscale_view()
         self.canvas.draw()
 
-    ## == user interface handlers ==
+    ## == USER INTERFACE HANDLERS ==
     def on_window1_delete_event(self, *args):# {{{
         Gtk.main_quit(*args)# }}}
 
     def on_treeview1_selection_changed(self, *args):
-        ## TODO ... first delete the curves for unselected plots
-        self.plot_reset()
-        self.plot_all_sel_records() 
+        
+        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
+        self.plot_all_sel_records()     ## then show the selected ones
 
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
