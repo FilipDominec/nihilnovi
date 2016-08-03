@@ -4,14 +4,14 @@ from gi.repository.GdkPixbuf import Pixbuf
 
 def populateFileSystemTreeStore(treeStore, path, parent=None):
     itemCounter = 0
-    for item in os.listdir(path):       # iterate over the items in the path
-        itemFullname = os.path.join(path, item)         # Get the absolute path of the item
-        itemMetaData = os.stat(itemFullname)        # Extract metadata from the item
-        itemIsFolder = stat.S_ISDIR(itemMetaData.st_mode)       # Determine if the item is a folder
+    for item in os.listdir(path):                           # iterate over the items in the path
+        itemFullname = os.path.join(path, item)             # Get the absolute path of the item
+        itemMetaData = os.stat(itemFullname)                # Extract metadata from the item
+        itemIsFolder = stat.S_ISDIR(itemMetaData.st_mode)   # Determine if the item is a folder
         itemIcon = Gtk.IconTheme.get_default().load_icon("folder" if itemIsFolder else "empty", 8, 0) # Generate a default icon
         currentIter = treeStore.append(parent, [item, itemIcon, itemFullname])      # Append the item to the TreeStore
         if itemIsFolder: treeStore.append(currentIter, [None, None, None])      # add dummy if current item was a folder
-        itemCounter += 1        #increment the item counter
+        itemCounter += 1                                    #increment the item counter
     if itemCounter < 1: treeStore.append(parent, [None, None, None])        # add the dummy node back if nothing was inserted before
 
 def onRowExpanded(treeView, treeIter, treePath):
