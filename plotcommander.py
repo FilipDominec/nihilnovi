@@ -132,6 +132,7 @@ class Handler:
 
     def plot_all_sel_records(self):
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
+        error_counter = 0
         for path in pathlist:
             try:
                 file_name = self.treestore1.get_value(self.treestore1.get_iter(path), 0)
@@ -139,8 +140,10 @@ class Handler:
                 self.plot_record(file_name)
             except ValueError:
                 traceback.print_exc()
+                error_counter += 1
         self.ax.legend(loc="upper right")
         self.ax.grid(True)
+        w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
 
     def plot_record(self, infile):
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
