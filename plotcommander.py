@@ -28,33 +28,33 @@ class Handler:
         self.record_curves = {}
         self.record__types = {}
 
+        ## Plotting initialization
+        self.fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee', tight_layout=1)
+        self.ax = self.fig.add_subplot(111) 
+        self.canvas = FigureCanvas(self.fig)
+        self.canvas.set_size_request(300,300)
+        self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas, w('box4').get_parent_window())
+        self.sw = Gtk.ScrolledWindow()
+        self.sw.add_with_viewport(self.canvas)
+        w('box4').pack_start(self.toolbar, False, True, 0)
+        #self.toolbar.append_item(Gtk.Button('tetet')) ## TODO find out how to modify the NavigationToolbar...
+        w('box4').pack_start(self.sw, True, True, 0)
+        self.toolbar.pan() #todo - define global shortcuts as a superset of the Matplotlib-GUI's internal, include also:
+        #toolbar.zoom() #toolbar.home() #toolbar.back() #toolbar.forward() #toolbar.save_figure(toolbar)
+
         ## Load records (if provided as arguments at startup)
         for infile in sys.argv[1:]: 
             self.add_record(infile, tree_parent=None) ## TODO use dir hierarchy
 
         ## Select all input files at start, and plot them
         #TODO:set all argv[:] 
+        self.plot_reset()
         self.plot_all_sel_records()
 
-        ## Plotting initialization
-        fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee', tight_layout=1)
-        ax = fig.add_subplot(111) 
-        ax.legend(loc="upper right")
-        ax.grid(True)
-        canvas = FigureCanvas(fig)
-        canvas.set_size_request(300,300)
-        toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(canvas, w('box4').get_parent_window())
-        sw = Gtk.ScrolledWindow()
-        sw.add_with_viewport(canvas)
-        w('box4').pack_start(toolbar, False, True, 0)
-        #toolbar.append_item(Gtk.Button('tetet')) ## TODO find out how to modify the NavigationToolbar...
-        w('box4').pack_start(sw, True, True, 0)
-        toolbar.pan() #todo - define global shortcuts as a superset of the Matplotlib-GUI's internal, include also:
-        #toolbar.zoom() #toolbar.home() #toolbar.back() #toolbar.forward() #toolbar.save_figure(toolbar)
 
         ## Add the data cursor by default  # TODO - make this work
         from matplotlib.widgets import Cursor
-        cursor = Cursor(ax, useblit=True, color='red', linewidth=2)
+        cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
 
         #}}}
 
@@ -72,44 +72,47 @@ class Handler:
         self.record_curves[file_path] = new_curve
         self.record__types[file_path] = 'file'
 
+    ## === FILE HANDLING ===
+    
 
     ## === GRAPHICAL PRESENTATION ===
     def treepath_to_filepath(self, treepath):
         """ reverse search in dictionary, when its values (i.e. <treeiter> type) are not hashable """
         for item in self.record_titems.items():
-            print(item[1] , treepath, item[1] is treepath)
+            print(item)
+            it2 = Gtk.TreeRowReference(w('treestore1'), w('treestore1').get_path(item[1]))
+            print(item, it2.get_path() , treepath, it2 is treepath)
         print([item[0] for item in self.record_titems.items()  if  item[1] is treepath])
         print([item[0] for item in self.record_titems.items()  if  item[1] is treepath][0])
         return [item[0] for item in self.record_titems.items()  if  item[1] is treepath][0]
 
+    def plot_reset(self):
+        self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
+        self.ax.legend(loc="upper right")
+        self.ax.grid(True)
+
     def plot_all_sel_records(self):
-        model, sel_tree_paths = w('treeview1').get_selection().get_selected_rows()
-        for sel_tree_path in sel_tree_paths:
-            sel_file_path = self.treepath_to_filepath(sel_tree_path)
-            print('FILEPATH     = ', sel_file_path)
-            print(' ----> label = ', self.record_labels[sel_file_path])
+        (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
+        for path in pathlist:
+            file_name = w('treestore1').get_value(w('treestore1').get_iter(path), 1)
+            print(file_name)
+            self.plot_record(file_name)
 
-            #try: 
-            #except ValueError as e:
-                #print(type(e).__name__ + ": " + str(e))
-        #print("sel_tree_path", dir(sel_tree_path))
-        #print([record for record in self.records if (record.treerowref.get_path() in sel_tree_paths)])
-        #print("sel_tree_paths", sel_tree_paths)
-        #sps = [sp for sp in sel_tree_paths]
-        #print("sel_tree_paths-bis", sps)
-        #print("REPLOTTING", len(sel_tree_paths))
-
-    def plot_record(self, trs_item):
+    def plot_record(self, infile):
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
-        print("\n\nLoading file: %s" % self.record_fpaths[trs_item])
-           #x, y = np.genfromtxt(infile, usecols=[0,1], unpack=True,  dtype=type(0.0), 
-           #        comments='#', delimiter=None, skip_header=0, skip_footer=0,           ## default options follow...
-           #        converters=None, missing_values=None, filling_values=None, names=None, excludelist=None, 
-           #        deletechars=None, replace_space='_', autostrip=False, case_sensitive=True, defaultfmt='f%i', 
-           #        usemask=False, loose=True, invalid_raise=True) # , max_rows=None ## does not work with older numpy?
+        x, y = np.genfromtxt(infile, usecols=[0,1], unpack=True,  dtype=type(0.0), 
+                comments='#', delimiter=None, skip_header=0, skip_footer=0,           ## default options follow...
+                converters=None, missing_values=None, filling_values=None, names=None, excludelist=None, 
+                deletechars=None, replace_space='_', autostrip=False, case_sensitive=True, defaultfmt='f%i', 
+                usemask=False, loose=True, invalid_raise=True) # , max_rows=None ## does not work with older numpy?
 
-           ### Plot the curve in the right panel
-           #ax.plot(x, y, label=os.path.basename(infile))
+        ## Plot the curve in the right panel
+        curve = self.ax.plot(x, y, label=os.path.basename(infile))
+        print(curve)
+        del(curve)
+        self.ax.relim()
+        self.ax.autoscale_view()
+        self.canvas.draw()
 
     ## == user interface handlers ==
     def on_window1_delete_event(self, *args):# {{{
@@ -117,6 +120,7 @@ class Handler:
 
     def on_treeview1_selection_changed(self, *args):
         ## TODO ... first delete the curves for unselected plots
+        self.plot_reset()
         self.plot_all_sel_records() 
 
 
