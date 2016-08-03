@@ -22,9 +22,7 @@ matplotlib.rcParams['savefig.facecolor'] = "white"
 class Handler:
     ## == initialization == 
     def __init__(self): #{{{
-        ## Init the table of records (i.e. files or similar datasets)
-        self.record_labels = {}
-        self.record__types = {}
+        np.seterr(all='ignore')
 
         ## Plotting initialization
         self.fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee', tight_layout=1)
@@ -137,6 +135,7 @@ class Handler:
         for path in pathlist:
             try:
                 file_name = self.treestore1.get_value(self.treestore1.get_iter(path), 0)
+                ## TODO if not isdir(..) ... 
                 self.plot_record(file_name)
             except ValueError:
                 traceback.print_exc()
