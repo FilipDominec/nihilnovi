@@ -44,16 +44,14 @@ class Handler:
 
         ## TreeStore and ListStore initialization
         from gi.repository.GdkPixbuf import Pixbuf
-        self.treestore1 = Gtk.TreeStore(str,        Pixbuf, str,        str,    str)       # initialize the filesystem treestore
-        ## column meaning:              filepath    icon    shown-name  color   plotstatus
-        self.dummy_treestore_row = [None, None, None, None, None]
+        self.treestore1 = Gtk.TreeStore(str,        Pixbuf, str,        Pixbuf        )
+        ## column meaning:              0:filepath  1:icon  2:name      3:plotstyleicon
+        self.dummy_treestore_row = [None, None, None, None]
 
         treeViewCol0 = Gtk.TreeViewColumn("Plot")        # Create a TreeViewColumn
-        #colCellPlot = Gtk.CellRendererPixbuf()        # Create a column cell to display text
-        colCellPlot = Gtk.CellRendererText()        # Create a column cell to display text
+        colCellPlot = Gtk.CellRendererPixbuf()        # Create a column cell to display text
         treeViewCol0.pack_start(colCellPlot, expand=True)
-        treeViewCol0.add_attribute(colCellPlot, "text", 4)     # Bind the image cell to column 1 of the tree's model
-        treeViewCol0.add_attribute(colCellPlot, "foreground", 3)    # set params for icon
+        treeViewCol0.add_attribute(colCellPlot, "pixbuf", 3)    # set params for icon
         w('treeview1').append_column(treeViewCol0)       # Append the columns to the TreeView
 
         treeViewCol = Gtk.TreeViewColumn("File")        # Create a TreeViewColumn
@@ -126,7 +124,7 @@ class Handler:
                 icon = 'gtk-stop' 
             itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
 
-            currentIter = treeStore.append(parent, [itemFullname, itemIcon, item, '#000000', "xx"])  # Append the item to the TreeStore
+            currentIter = treeStore.append(parent, [itemFullname, itemIcon, item, itemIcon])  # Append the item to the TreeStore
             if itemIsFolder: treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
