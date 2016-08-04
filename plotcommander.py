@@ -7,6 +7,9 @@ import numpy as np
 ## Plotting dependencies and settings
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+from gi.repository import Gdk
+from gi.repository.GdkPixbuf import Pixbuf
+
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
@@ -40,10 +43,10 @@ class Handler:
         #TODO - define global shortcuts as a superset of the Matplotlib-GUI's internal, include also:
         #toolbar.zoom() #toolbar.home() #toolbar.back() #toolbar.forward() #toolbar.save_figure(toolbar)
         #TODO http://stackoverflow.com/questions/26433169/personalize-matplotlib-toolbar-with-log-feature
+        #TODO http://dalelane.co.uk/blog/?p=778
 
 
         ## TreeStore and ListStore initialization
-        from gi.repository.GdkPixbuf import Pixbuf
         self.treestore1 = Gtk.TreeStore(str,        Pixbuf, str,        Pixbuf        )
         ## column meaning:              0:filepath  1:icon  2:name      3:plotstyleicon
         self.dummy_treestore_row = [None, None, None, None]
@@ -124,7 +127,89 @@ class Handler:
                 icon = 'gtk-stop' 
             itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
 
-            currentIter = treeStore.append(parent, [itemFullname, itemIcon, item, itemIcon])  # Append the item to the TreeStore
+
+
+
+            #import cairo
+#
+            #WIDTH, HEIGHT = 256, 256
+#
+            #surface = cairo.ImageSurface (cairo.FORMAT_ARGB32, WIDTH, HEIGHT)
+            #ctx = cairo.Context (surface)
+#
+            #ctx.scale (WIDTH, HEIGHT) # Normalizing the canvas
+#
+            #pat = cairo.LinearGradient (0.0, 0.0, 0.0, 1.0)
+            #pat.add_color_stop_rgba (1, 0.7, 0, 0, 0.5) # First stop, 50% opacity
+            #pat.add_color_stop_rgba (0, 0.9, 0.7, 0.2, 1) # Last stop, 100% opacity
+#
+            #ctx.rectangle (0, 0, 1, 1) # Rectangle(x0, y0, x1, y1)
+            #ctx.set_source (pat)
+            #ctx.fill ()
+#
+            #ctx.translate (0.1, 0.1) # Changing the current transformation matrix
+#
+            #ctx.move_to (0, 0)
+            #ctx.arc (0.2, 0.1, 0.1, -3./2, 0) # Arc(cx, cy, radius, start_angle, stop_angle)
+            #ctx.line_to (0.5, 0.1) # Line to (x,y)
+            #ctx.curve_to (0.5, 0.2, 0.5, 0.4, 0.2, 0.8) # Curve(x1, y1, x2, y2, x3, y3)
+            #ctx.close_path ()
+#
+            #ctx.set_source_rgb (0.3, 0.2, 0.5) # Solid color
+            #ctx.set_line_width (0.02)
+            #ctx.stroke ()
+
+
+            ##TODO
+            #plotstyleIcon = Gtk.IconTheme.get_default().load_icon('empty', 8, 0) # Generate a default icon ## WORKS
+            #plotstyleIcon = Pixbuf.new_from_file_at_size("img/logo.png", 125, 125) ## WORKS
+
+            pixbuf = Pixbuf.new_from_file_at_size("img/logo.png", 125, 125) # Generate a default icon
+
+#           drawable = Gdk.cairo_create(pixbuf)
+#           #drawable = Gtk.GdkPixmap(None, 30, 30, 24)
+#           gc = drawable.new_gc()
+#           #drawable.draw_pixbuf(gc, pixbuf, 0, 0, 0, 0, -1, -1)
+#           gc.set_foreground(Gtk.Gdk.Color(65535, 0, 0))
+#           drawable.draw_line(gc, 0, 0, w, h)
+#
+#           cmap = Gtk.Gdk.Colormap(Gtk.Gdk.visual_get_best(), False)
+#           pixbuf.get_from_drawable(drawable, cmap, 0, 0, 0, 0, w, h)
+
+
+            plotstyleIcon = pixbuf
+
+#s = cairo_image_surface_create (CAIRO_FORMAT_A1, 3, 3);
+#cr = cairo_create (s);
+#cairo_arc (cr, 1.5, 1.5, 1.5, 0, 2 * M_PI);
+#cairo_fill (cr);
+#cairo_destroy (cr);
+#
+#pixbuf = gdk_pixbuf_get_from_surface (s,
+                                      #0, 0,
+                                      #3, 3);
+#
+#cairo_surface_destroy (s);
+
+            ## OPTION 4
+            cairo_context = self.canvas.get_window().cairo_create()
+
+            window = w('treeview1').get_window()
+
+            ctx = Gdk.cairo_create(window)
+            ctx.set_source_pixbuf(pixbuf, 0, 0)
+            #self.image = cairo.ImageSurface.create_from_png('img/logo.png')
+
+            ## OPTION 5
+            # ?? Gdk.cairo_set_source_pixbuf() 
+
+
+
+
+
+
+
+            currentIter = treeStore.append(parent, [itemFullname, itemIcon, item, plotstyleIcon])  # Append the item to the TreeStore
             if itemIsFolder: treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
@@ -161,10 +246,11 @@ class Handler:
 
         ## Erase all color fields in the list
         treeiter = self.treestore1.get_iter_first()
-        while treeiter != None: 
-                self.treestore1.set_value(treeiter, 4, 'no') ## empty field means not plotted
-                #self.treestore1.set_value(treeiter, 3, '#000000')  ## clear the color to black
-                treeiter=self.treestore1.iter_next(treeiter)
+
+        ## TODO: set some empty icon for not plotted lines
+        #while treeiter != None: 
+                #self.treestore1.set_value(treeiter, 4, 'no') ## empty field means not plotted
+                #treeiter=self.treestore1.iter_next(treeiter)
 
         ## Plot all curves sequentially
         error_counter = 0
@@ -177,9 +263,11 @@ class Handler:
                 ## If no exception occurs, color the background of the "plot" column according to the line 
                 c1,c2,c3 = 256*color_from_palette[0:3] - .5
                 hexcode_from_palette = '#%02x%02x%02x' % (int(c1), int(c2), int(c3)) # list(np.int(256*color_from_palette[0:3]))
-                self.treestore1.set_value(self.treestore1.get_iter(path), 4, "YES")
-                self.treestore1.set_value(self.treestore1.get_iter(path), 3, hexcode_from_palette)
-                ## TODO if not isdir(..) ... 
+
+                ## TODO generate a new coloured icon
+                #self.treestore1.set_value(self.treestore1.get_iter(path), 3, hexcode_from_palette)
+                 #self.treestre1.set_value(self.
+
             except ValueError:
                 traceback.print_exc()
                 error_counter += 1
