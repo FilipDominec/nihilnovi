@@ -8,7 +8,7 @@ import numpy as np
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from gi.repository import Gdk
-from gi.repository.GdkPixbuf import Pixbuf
+from gi.repository.GdkPixbuf import Pixbuf,Colorspace
 
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
@@ -164,7 +164,13 @@ class Handler:
             #plotstyleIcon = Gtk.IconTheme.get_default().load_icon('empty', 8, 0) # Generate a default icon ## WORKS
             #plotstyleIcon = Pixbuf.new_from_file_at_size("img/logo.png", 125, 125) ## WORKS
 
-            pixbuf = Pixbuf.new_from_file_at_size("img/logo.png", 125, 125) # Generate a default icon
+            drawnpixbuf = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+            color = 0xeeff2d
+            print("%x" % color)
+            drawnpixbuf.fill(color)
+            #treestore.append(None, [drawnpixbuf, "data with a custom drawn image, which does not work"])
+
+            #pixbuf = Pixbuf.new_from_file_at_size("img/logo.png", 125, 125) # Generate a default icon
 
 #           drawable = Gdk.cairo_create(pixbuf)
 #           #drawable = Gtk.GdkPixmap(None, 30, 30, 24)
@@ -177,7 +183,7 @@ class Handler:
 #           pixbuf.get_from_drawable(drawable, cmap, 0, 0, 0, 0, w, h)
 
 
-            plotstyleIcon = pixbuf
+            plotstyleIcon = drawnpixbuf
 
 #s = cairo_image_surface_create (CAIRO_FORMAT_A1, 3, 3);
 #cr = cairo_create (s);
@@ -192,12 +198,12 @@ class Handler:
 #cairo_surface_destroy (s);
 
             ## OPTION 4
-            cairo_context = self.canvas.get_window().cairo_create()
-
-            window = w('treeview1').get_window()
-
-            ctx = Gdk.cairo_create(window)
-            ctx.set_source_pixbuf(pixbuf, 0, 0)
+            #cairo_context = self.canvas.get_window().cairo_create()
+#
+            #window = w('treeview1').get_window()
+#
+            #ctx = Gdk.cairo_create(window)
+            #ctx.set_source_pixbuf(pixbuf, 0, 0)
             #self.image = cairo.ImageSurface.create_from_png('img/logo.png')
 
             ## OPTION 5
