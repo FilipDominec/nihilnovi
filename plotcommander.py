@@ -191,12 +191,14 @@ class Handler:
             except ValueError:
                 traceback.print_exc()
                 error_counter += 1
-        self.ax.legend(loc="auto")
+        #self.ax.legend(loc="auto")
         self.ax.grid(True)
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
 
     def plot_record(self, infile, plot_style={}):
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
+
+        ## TODO disable freezing on loading non-data files (detect errors -> abort the loading early)
         x, y = np.genfromtxt(infile, usecols=[0,1], unpack=True,  dtype=type(0.0), 
                 comments='#', delimiter=None, skip_header=0, skip_footer=0,           ## default options follow...
                 converters=None, missing_values=None, filling_values=None, names=None, excludelist=None, 
