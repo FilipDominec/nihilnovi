@@ -126,10 +126,8 @@ class Handler:
             else:
                 icon = 'gtk-stop' 
             itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
-
-            drawnpixbuf = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
-            drawnpixbuf.fill(0xeeff2d)
-            plotstyleIcon = drawnpixbuf
+            plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+            plotstyleIcon.fill(0xffffffff)
             currentIter = treeStore.append(parent, [itemFullname, itemIcon, item, plotstyleIcon])  # Append the item to the TreeStore
             if itemIsFolder: treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
             itemCounter += 1                                    #increment the item counter
@@ -151,10 +149,19 @@ class Handler:
     
 
     ## === GRAPHICAL PRESENTATION ===
+    def array2rgbhex(self,arr3,alpha=1): 
+        return  int(arr3[0]*256-.5)*(256**3) +\
+                int(arr3[1]*256-.5)*(256**2) +\
+                int(arr3[2]*256-.5)*(256**1) +\
+                int(alpha*255  -.5)
     def plot_reset(self):
         self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
 
-        ## TODO for all liststore rows, reset the plotting color to white
+        ## Erase all color fields in the list (reset the plotting color to white)
+        treeiter = self.treestore1.get_iter_first()
+        while treeiter != None: 
+                self.treestore1.get_value(treeiter, 3).fill(self.array2rgbhex([1,1,1], alpha=0))
+                treeiter=self.treestore1.iter_next(treeiter)
 
 
     def plot_all_sel_records(self):
@@ -165,14 +172,6 @@ class Handler:
         #color_palette = ["g"]*len(pathlist) ## TODO use some real palette
         color_palette = matplotlib.cm.gist_rainbow(np.linspace(0.00, 0.95, len(pathlist)+1)[:-1])
 
-        ## Erase all color fields in the list
-        treeiter = self.treestore1.get_iter_first()
-
-        ## TODO: set some empty icon for not plotted lines
-        #while treeiter != None: 
-                #self.treestore1.set_value(treeiter, 4, 'no') ## empty field means not plotted
-                #treeiter=self.treestore1.iter_next(treeiter)
-
         ## Plot all curves sequentially
         error_counter = 0
         for (path, color_from_palette) in zip(pathlist, color_palette):
@@ -182,12 +181,7 @@ class Handler:
                 self.plot_record(file_name, plot_style={'color':color_from_palette})
 
                 ## If no exception occurs, color the background of the "plot" column according to the line 
-                c1,c2,c3 = 256*color_from_palette[0:3] - .5
-                hexcode_from_palette = '#%02x%02x%02x' % (int(c1), int(c2), int(c3)) # list(np.int(256*color_from_palette[0:3]))
-
-                ## TODO generate a new coloured icon
-                #self.treestore1.set_value(self.treestore1.get_iter(path), 3, hexcode_from_palette)
-                 #self.treestre1.set_value(self.
+                self.treestore1.get_value(self.treestore1.get_iter(path), 3).fill(self.array2rgbhex(color_from_palette))
 
             except ValueError:
                 traceback.print_exc()
