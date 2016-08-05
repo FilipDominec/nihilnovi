@@ -115,11 +115,12 @@ class Handler:
         itemCounter = 0
         listdir = os.listdir(filepath)
         listdir.sort()
-        for item in listdir:                           # iterate over the items in the filepath
+        def is_folder(filepath, item):
             itemFullname = os.path.join(filepath, item)             # Get the absolute filepath of the item
             itemMetaData = os.stat(itemFullname) 
-            itemIsFolder = stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
-            if itemIsFolder:
+            return stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
+        for item in [f for f in listdir if is_folder(filepath,f)] + [f for f in listdir if not is_folder(filepath,f)]: # folders first
+            if is_folder(filepath, item):
                 icon = 'folder' # Determine if the item is a folder
             elif item[-4:] == '.dat':
                 icon = 'empty'   ## if can not load, change icon to stock_dialog-warning
@@ -128,8 +129,10 @@ class Handler:
             itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
-            currentIter = treeStore.append(parent, [itemFullname, itemIcon, item, plotstyleIcon])  # Append the item to the TreeStore
-            if itemIsFolder: treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
+            currentIter = treeStore.append(parent, 
+                    [os.path.join(filepath, item), itemIcon, item, plotstyleIcon])  # Append the item to the TreeStore
+            if is_folder(filepath, item): 
+                treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
 
@@ -160,8 +163,9 @@ class Handler:
         ## Erase all color fields in the list (reset the plotting color to white)
         treeiter = self.treestore1.get_iter_first()
         while treeiter != None: 
-                self.treestore1.get_value(treeiter, 3).fill(self.array2rgbhex([1,1,1], alpha=0))
-                treeiter=self.treestore1.iter_next(treeiter)
+            self.treestore1.get_value(treeiter, 3).fill(self.array2rgbhex([1,1,1], alpha=0))
+            treeiter=self.treestore1.iter_next(treeiter)
+        w('treeview1').queue_draw()
 
 
     def plot_all_sel_records(self):
@@ -170,7 +174,8 @@ class Handler:
 
         ## Generate the color palette
         #color_palette = ["g"]*len(pathlist) ## TODO use some real palette
-        color_palette = matplotlib.cm.gist_rainbow(np.linspace(0.00, 0.95, len(pathlist)+1)[:-1])
+        color_pre_map = np.linspace(0.05, .95, len(pathlist)+1)[:-1]
+        color_palette = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
 
         ## Plot all curves sequentially
         error_counter = 0
@@ -186,7 +191,7 @@ class Handler:
             except ValueError:
                 traceback.print_exc()
                 error_counter += 1
-        self.ax.legend(loc="upper right")
+        self.ax.legend(loc="auto")
         self.ax.grid(True)
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
 
