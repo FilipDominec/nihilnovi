@@ -136,6 +136,7 @@ class Handler:
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
 
+
     def onRowExpanded(self, treeView, treeIter, treePath):
         treeStore = treeView.get_model()        # get the associated model
         newPath = treeStore.get_value(treeIter, 0)      # get the full path of the position
@@ -160,11 +161,13 @@ class Handler:
     def plot_reset(self):
         self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
 
-        ## Erase all color fields in the list (reset the plotting color to white)
-        treeiter = self.treestore1.get_iter_first()
-        while treeiter != None: 
-            self.treestore1.get_value(treeiter, 3).fill(self.array2rgbhex([1,1,1], alpha=0))
-            treeiter=self.treestore1.iter_next(treeiter)
+        def recursive_clear(treeiter):
+            while treeiter != None: 
+                iterpixbuf = self.treestore1.get_value(treeiter, 3)
+                if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
+                recursive_clear(self.treestore1.iter_children(treeiter))
+                treeiter=self.treestore1.iter_next(treeiter)
+        recursive_clear(self.treestore1.get_iter_first())
         w('treeview1').queue_draw()
 
 
