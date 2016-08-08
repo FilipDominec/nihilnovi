@@ -2,7 +2,7 @@
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
-from gi.repository.GdkPixbuf import Pixbuf,Colorspace
+from gi.repository.GdkPixbuf import Pixbuf, Colorspace, PixbufLoader
 
 ## Define the structure of the data to be shown in the treeview: one column with an icon and a text (easy)
 treestore = Gtk.TreeStore(Pixbuf, str)
@@ -43,11 +43,33 @@ filledpixbuf = Pixbuf.new(Colorspace.RGB, True, 8, 16, 16)  ## In fact, it is RG
 filledpixbuf.fill(0xff9922ff) 
 treestore.append(None, [filledpixbuf, "data with a custom color filled image"])
 
+
+px = PixbufLoader.new_with_type('pnm')
+#color = b'\xee\xff\x2d'
+#px.write(b'P6\n\n1 1\n255\n' + color)
+#px.write(color)
+iconpnm = b"""P2 24 7 25
+0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+0  3  3  3  3  0  0  7  7  7  7  0  0 11 11 11 11  0  0 15 15 15 15  0
+0  3  0  0  0  0  0  7  0  0  0  0  0 11  0  0  0  0  0 15  0  0 15  0
+0  3  3  3  0  0  0  7  7  7  0  0  0 11 11 11  0  0  0 15 15 15 15  0
+0  3  0  0  0  0  0  7  0  0  0  0  0 11  0  0  0  0  0 15  0  0  0  0
+0  3  0  0  0  0  0  7  7  7  7  0  0 11 11 11 11  0  0 15  0  0  0  0
+0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+"""
+px.write(iconpnm)
+px.close()
+treestore.append(None, [px.get_pixbuf(), "data with an image loaded from a custom inline PNM file (tedious)"])
+
+
+
+
 ## Add a row with a custom-drawn image (cannot do)
 import cairo                       # one "cairo" is not ...
-#from gi.repository import cairo     # ... the other "cairo" (which does not even contain ImageSurface)
+from gi.repository import cairo as gi_cairo     # ... the other "cairo" (which does not even contain ImageSurface)
 drawnpixbuf = filledpixbuf.copy()
 img = cairo.ImageSurface(cairo.FORMAT_ARGB32, 50, 50)
+gi_cairo.set_source_pixbuf(drawnpixbuf)
 cc = cairo.Context(img)
 cc.set_source_rgb(.8, .0, .0) # Cairo uses floats from 0 to 1 for RGB values
 cc.rectangle(5,5,5,30)
