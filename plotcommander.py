@@ -74,8 +74,8 @@ class Handler:
         w('treeview1').get_selection().set_select_function(self.treeview1_selectmethod, data=None) # , full=True
 
         ## Select all input files at start, and plot them
-        if len(sys.argv) > 1:    self.populateFileSystemTreeStore(self.treestore1, sys.argv[1], parent=None) ## TODO 
-        else:                    self.populateFileSystemTreeStore(self.treestore1, os.path.dirname(os.getcwd()), parent=None) ## TODO 
+        if len(sys.argv) > 1:    self.populateFileSystemTreeStore(self.treestore1, sys.argv[1], parent=None)
+        else:                    self.populateFileSystemTreeStore(self.treestore1, os.getcwd(), parent=None)
         self.plot_reset()
         self.plot_all_sel_records()
 
@@ -100,15 +100,6 @@ class Handler:
             return False
         else:
             return True
-    ## === DATA HANDLING ===
-    def add_record(self, file_path, tree_parent=None):
-        ## Add the treeview item in the left panel
-
-        #itemIcon = Gtk.IconTheme.get_default().load_icon("folder" if itemIsFolder else "empty", 8, 0) # Generate a default icon
-
-        ## Register a new record in the record table
-        self.record_labels[file_path] = os.path.basename(file_path) 
-        self.record__types[file_path] = 'file'
 
     ## === FILE HANDLING ===
     def populateFileSystemTreeStore(self, treeStore, filepath, parent=None):
@@ -198,16 +189,31 @@ class Handler:
         self.ax.grid(True)
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
 
+    def guess_file_type(self, infile):
+        if   infile[-4:].lower() in ('.csv', '.dat',):
+            return 'csv'
+        elif infile[-4:].lower() in ('.xls'):
+            return 'xls'
+        elif infile[-4:].lower() in ('.opj'):       
+            return 'opj'
+
     def plot_record(self, infile, plot_style={}):
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
-        ## TODO disable freezing on loading non-data files (detect errors -> abort the loading early)
-        x, y = np.genfromtxt(infile, usecols=[0,1], unpack=True,  dtype=type(0.0), 
-                comments='#', delimiter=None, skip_header=0, skip_footer=0,           ## default options follow...
-                converters=None, missing_values=None, filling_values=None, names=None, excludelist=None, 
-                deletechars=None, replace_space='_', autostrip=False, case_sensitive=True, defaultfmt='f%i', 
-                usemask=False, loose=True, invalid_raise=True) # , max_rows=None ## does not work with older numpy?
-                # TODO apply file loading options
+        import pandas as pd
+        if   self.guess_file_type(infile) == 'opj':
+            return ## NOTE: support for liborigin not tested yet! 
+        elif self.guess_file_type(infile) == 'xls':
+            xl = pd.ExcelFile(infile, header=1)
+            print(xl.sheet_names)   ## TODO: auto-unfold xls file as a "fake directory"; let the user select the correct sheet
+            df = xl.parse() 
+            x,y = df.values.T ## TODO Should offer choice of columns
+        else:   ## for all remaining filetypes, try to interpret as CSV 
+            df = pd.read_csv(infile, delim_whitespace=True, error_bad_lines=False, comment='#', header=None) 
+            x,y = df[0], df[1] ## other columns?
+        print(df.info())
+        print(df.values)
+        print(x,y)
 
         ## Plot the curve in the right panel
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options

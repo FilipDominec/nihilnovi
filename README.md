@@ -27,7 +27,8 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 
 On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run:
 
-    sudo apt-get install python3-matplotlib python3-pip python3-numpy python3-gi-cairo 
+    sudo apt-get install python3-matplotlib python3-pip python3-numpy python3-gi-cairo python3-pandas
+    sudo apt-get install python3-xlrd		## optional packages
 
 Then get the fresh version by pulling this project, and launch the program directly:
 
@@ -38,7 +39,7 @@ Then get the fresh version by pulling this project, and launch the program direc
 In the future, seamless browsing of multiple-dataset files will depend also on:
 
     ## LibHDF
-    sudo apt-get install python-h5py
+    sudo apt-get install python-h5py			## TODO - may be substituted by pandas
     
 	## LibOrigin for python
 	sudo apt-get install -y python-pip cython doxygen cmake libboost-all-dev
