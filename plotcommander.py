@@ -183,6 +183,7 @@ class Handler:
 
     ## == FILE AND DATA UTILITIES ==
     def guess_file_type(self, infile):
+        print (infile[-4:])
         if   infile[-4:].lower() in ('.csv', '.dat',):
             return 'csv'
         elif infile[-4:].lower() in ('.xls'):
