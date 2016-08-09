@@ -183,13 +183,13 @@ class Handler:
         else:
             return 'unknown'
 
-    def safe_to_float(self, x0, y0):
+    def safe_to_float(self, x_raw, y_raw, x0=[], y0=[]):
+        
         # safe simultaneous conversion of both data columns; error in either value leads to skipped row
-        x, y = [], []
-        for x0, y0 in zip(x0,y0): 
-            try: x1, y1 = float(x0), float(y0); x.append(x1); y.append(y1)
+        for x_raw, y_raw in zip(x_raw,y_raw): 
+            try: x1, y1 = float(x_raw), float(y_raw); x0.append(x1); y0.append(y1)
             except: pass
-        return np.array(x),  np.array(y)
+        return np.array(x0),  np.array(y0)
 
     def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
@@ -205,16 +205,21 @@ class Handler:
         else:             ## for all remaining filetypes, try to interpret as a text table
             from io import StringIO ## this is just a hack to avoid loading different comment lines
             output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
-            df = pd.read_csv(output, delim_whitespace=True, error_bad_lines=False, comment='#', header=None) 
+            df = pd.read_csv(output, delim_whitespace=True, error_bad_lines=False, comment='#', header=1) 
             output.close()
-            x, y = df[xcolumn], df[ycolumn] ## TODO: selection of columns!
+            print(df.values.T)
+            #x, y = df[xcolumn], df[ycolumn] ## TODO: selection of columns!
+            x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
 
-        print(df.head())
-        ## Plot the curve in the right panel
-        x, y = self.safe_to_float(x, y)
+        try:                    ## if possible, use also the first row as numeric data
+            x, y = self.safe_to_float(x, y, x0=[float(df.columns[xcolumn])], y0=[float(df.columns[ycolumn])])
+            xlabel, ylabel = "x", "y"
+        except ValueError:      ## if conversion fails, use the first row as column names instead
+            x, y = self.safe_to_float(x, y, x0=[], y0=[])
+            xlabel, ylabel = df.columns[xcolumn], df.columns[ycolumn]
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
-        self.ax.set_xlabel(df.columns[xcolumn])
-        self.ax.set_ylabel(df.columns[ycolumn])
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel(ylabel)
         #except:
             #pass
 

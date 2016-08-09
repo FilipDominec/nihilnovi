@@ -60,7 +60,7 @@ On Windows, the proposed distribution approach is to use [py2exe](http://py2exe.
 ### Accepted file formats 
 PlotCommander will try to understand all common formatting of *.dat (or, *.csv) files. A minimal example:
 
-    10      123
+    column1      column2
     20.5    345
     30      5.67e2
 
