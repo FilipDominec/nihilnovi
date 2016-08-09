@@ -197,6 +197,18 @@ class Handler:
         elif infile[-4:].lower() in ('.opj'):       
             return 'opj'
 
+    def safe_to_float(self, x0, y0):
+        # safe simultaneous conversion of both data columns; error in either value leads to skipped row
+        x, y = [], []
+        for x0, y0 in zip(np.array(x0), np.array(y0)): 
+            try:
+                x1, y1 = float(x0), float(y0)
+                x.append(x1)
+                y.append(y1)
+            except:
+                pass
+        return x, y
+
     def plot_record(self, infile, plot_style={}):
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
@@ -207,15 +219,18 @@ class Handler:
             xl = pd.ExcelFile(infile, header=1)
             print(xl.sheet_names)   ## TODO: auto-unfold xls file as a "fake directory"; let the user select the correct sheet
             df = xl.parse() 
+            print(df.values)
             x,y = df.values.T ## TODO Should offer choice of columns
-        else:   ## for all remaining filetypes, try to interpret as CSV 
-            df = pd.read_csv(infile, delim_whitespace=True, error_bad_lines=False, comment='#', header=None) 
-            x,y = df[0], df[1] ## other columns?
-        print(df.info())
-        print(df.values)
-        print(x,y)
+        else:             ## for all remaining filetypes, try to interpret as a text table
+            from io import StringIO ## this is just a hack to avoid loading different comment lines
+            output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
+            df = pd.read_csv(output, delim_whitespace=True, error_bad_lines=False, comment='#', header=None) 
+            output.close()
+            x, y = df[0], df[1] ## TODO: selection of columns!
 
+        print(df.head())
         ## Plot the curve in the right panel
+        x, y = self.safe_to_float(x, y)
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
 
     ## == USER INTERFACE HANDLERS ==
