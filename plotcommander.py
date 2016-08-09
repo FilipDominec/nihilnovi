@@ -25,6 +25,7 @@ matplotlib.rcParams['savefig.facecolor'] = "white"
 class Handler:
     ## == initialization == 
     def __init__(self): #{{{
+        self.lockTreestoreSelection = False
         np.seterr(all='ignore')
 
         ## Plotting initialization
@@ -74,8 +75,8 @@ class Handler:
         w('treeview1').get_selection().set_select_function(self.treeview1_selectmethod, data=None) # , full=True
 
         ## Select all input files at start, and plot them
-        if len(sys.argv) > 1:    self.populateFileSystemTreeStore(self.treestore1, sys.argv[1], parent=None)
-        else:                    self.populateFileSystemTreeStore(self.treestore1, os.getcwd(), parent=None)
+        if len(sys.argv) > 1:    self.populateFileSystemTreeStore(self.treestore1, sys.argv[1], parent=None, include_up_dir=True)
+        else:                    self.populateFileSystemTreeStore(self.treestore1, os.getcwd(), parent=None, include_up_dir=True)
         self.plot_reset()
         self.plot_all_sel_records()
 
@@ -102,8 +103,16 @@ class Handler:
             return True
 
     ## === FILE HANDLING ===
-    def populateFileSystemTreeStore(self, treeStore, filepath, parent=None):
+    def populateFileSystemTreeStore(self, treeStore, filepath, parent=None, include_up_dir=False):
         itemCounter = 0
+
+
+        if include_up_dir:
+            itemIcon = Gtk.IconTheme.get_default().load_icon('go-up', 8, 0) # Generate a default icon
+            plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+            plotstyleIcon.fill(0xffffffff)
+            currentIter = treeStore.append(parent, [filepath, itemIcon, '..', plotstyleIcon])  # Append the item to the TreeStore
+            treeStore.append(currentIter, self.dummy_treestore_row)
         listdir = os.listdir(filepath)
         listdir.sort()
         def is_folder(filepath, item):
@@ -135,13 +144,13 @@ class Handler:
     def plot_reset(self):
         self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
 
-        def recursive_clear(treeiter):
+        def recursive_clear_icon(treeiter):
             while treeiter != None: 
                 iterpixbuf = self.treestore1.get_value(treeiter, 3)
                 if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
-                recursive_clear(self.treestore1.iter_children(treeiter))
+                recursive_clear_icon(self.treestore1.iter_children(treeiter))
                 treeiter=self.treestore1.iter_next(treeiter)
-        recursive_clear(self.treestore1.get_iter_first())
+        recursive_clear_icon(self.treestore1.get_iter_first())
         w('treeview1').queue_draw()
 
 
@@ -227,8 +236,16 @@ class Handler:
     def onRowExpanded(self, treeView, treeIter, treePath):# {{{
         treeStore = treeView.get_model()        # get the associated model
         newPath = treeStore.get_value(treeIter, 0)      # get the full path of the position
-        self.populateFileSystemTreeStore(treeStore, newPath, treeIter)       # populate the subtree on curent position
-        treeStore.remove(treeStore.iter_children(treeIter))         # remove the first child (dummy node)
+        if treeStore.get_value(treeIter, 2) == "..":  ## if the expanded row was ".." change to up-dir with  include_up_dir=True
+            self.lockTreestoreSelection = True
+            treeStore.clear()
+            self.lockTreestoreSelection = False
+            self.populateFileSystemTreeStore(treeStore, os.path.dirname(os.path.abspath(newPath)), 
+                    None, include_up_dir=True)       # populate the subtree on curent position
+            ## TODO remember and keep unfolded nodes during "cd .."
+        else:
+            self.populateFileSystemTreeStore(treeStore, newPath, treeIter)       # populate the subtree on curent position
+            treeStore.remove(treeStore.iter_children(treeIter))         # remove the first child (dummy node)
     # }}}
     def onRowCollapsed(self, treeView, treeIter, treePath):# {{{ 
         treeStore = treeView.get_model()        # get the associated model
@@ -239,11 +256,12 @@ class Handler:
         treeStore.append(treeIter, self.dummy_treestore_row)      # append dummy node
     # }}}
     def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
-        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
-        self.plot_all_sel_records()     ## then show the selected ones
-        self.ax.relim()
-        self.ax.autoscale_view()
-        self.canvas.draw()
+        if not self.lockTreestoreSelection:
+            self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
+            self.plot_all_sel_records()     ## then show the selected ones
+            self.ax.relim()
+            self.ax.autoscale_view()
+            self.canvas.draw()
     # }}}
     def on_window1_delete_event(self, *args):# {{{
         Gtk.main_quit(*args)# }}}
