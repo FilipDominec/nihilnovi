@@ -87,7 +87,7 @@ class Handler:
         #}}}
 
     def treeview1_selectmethod(self, selection, model, treepath, is_selected, user_data):
-        ## Expand a directory by clicking; do not allow selecting it
+        ## Expand a directory by clicking, but do not allow user to select it
         treeiter        = self.treestore1.get_iter(treepath)
         filenamepath    = self.treestore1.get_value(treeiter, 0)
         itemMetaData    = os.stat(filenamepath) 
@@ -111,12 +111,9 @@ class Handler:
             itemMetaData = os.stat(itemFullname) 
             return stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
         for item in [f for f in listdir if is_folder(filepath,f)] + [f for f in listdir if not is_folder(filepath,f)]: # folders first
-            if is_folder(filepath, item):
-                icon = 'folder' # Determine if the item is a folder
-            elif item[-4:] == '.dat':
-                icon = 'empty'   ## if can not load, change icon to stock_dialog-warning
-            else:
-                icon = 'gtk-stop' 
+            if is_folder(filepath, item):                       icon = 'folder'
+            elif self.guess_file_type(filepath) == 'unknown':   icon = 'gtk-stop' 
+            else:                                               icon = 'empty'   ## if can not load, change icon to stock_dialog-warning
             itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
@@ -128,20 +125,6 @@ class Handler:
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
 
 
-    def onRowExpanded(self, treeView, treeIter, treePath):
-        treeStore = treeView.get_model()        # get the associated model
-        newPath = treeStore.get_value(treeIter, 0)      # get the full path of the position
-        self.populateFileSystemTreeStore(treeStore, newPath, treeIter)       # populate the subtree on curent position
-        treeStore.remove(treeStore.iter_children(treeIter))         # remove the first child (dummy node)
-
-    def onRowCollapsed(self, treeView, treeIter, treePath):
-        treeStore = treeView.get_model()        # get the associated model
-        currentChildIter = treeStore.iter_children(treeIter)        # get the iterator of the first child
-        while currentChildIter:         # loop as long as some childern exist
-            treeStore.remove(currentChildIter)      # remove the first child
-            currentChildIter = treeStore.iter_children(treeIter)        # refresh the iterator of the next child
-        treeStore.append(treeIter, self.dummy_treestore_row)      # append dummy node
-    
 
     ## === GRAPHICAL PRESENTATION ===
     def array2rgbhex(self,arr3,alpha=1): 
@@ -189,6 +172,7 @@ class Handler:
         self.ax.grid(True)
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
 
+    ## == FILE AND DATA UTILITIES ==
     def guess_file_type(self, infile):
         if   infile[-4:].lower() in ('.csv', '.dat',):
             return 'csv'
@@ -196,54 +180,68 @@ class Handler:
             return 'xls'
         elif infile[-4:].lower() in ('.opj'):       
             return 'opj'
+        else:
+            return 'unknown'
 
     def safe_to_float(self, x0, y0):
         # safe simultaneous conversion of both data columns; error in either value leads to skipped row
         x, y = [], []
-        for x0, y0 in zip(np.array(x0), np.array(y0)): 
-            try:
-                x1, y1 = float(x0), float(y0)
-                x.append(x1)
-                y.append(y1)
-            except:
-                pass
-        return x, y
+        for x0, y0 in zip(x0,y0): 
+            try: x1, y1 = float(x0), float(y0); x.append(x1); y.append(y1)
+            except: pass
+        return np.array(x),  np.array(y)
 
-    def plot_record(self, infile, plot_style={}):
+    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
         import pandas as pd
         if   self.guess_file_type(infile) == 'opj':
             return ## NOTE: support for liborigin not tested yet! 
         elif self.guess_file_type(infile) == 'xls':
-            xl = pd.ExcelFile(infile, header=1)
-            print(xl.sheet_names)   ## TODO: auto-unfold xls file as a "fake directory"; let the user select the correct sheet
+            xl = pd.ExcelFile(infile, header=1) ##  print(xl.sheet_names)   
+            ## TODO: a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
             df = xl.parse() 
-            print(df.values)
-            x,y = df.values.T ## TODO Should offer choice of columns
+            x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns
         else:             ## for all remaining filetypes, try to interpret as a text table
             from io import StringIO ## this is just a hack to avoid loading different comment lines
             output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
             df = pd.read_csv(output, delim_whitespace=True, error_bad_lines=False, comment='#', header=None) 
             output.close()
-            x, y = df[0], df[1] ## TODO: selection of columns!
+            x, y = df[xcolumn], df[ycolumn] ## TODO: selection of columns!
 
         print(df.head())
         ## Plot the curve in the right panel
         x, y = self.safe_to_float(x, y)
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
+        self.ax.set_xlabel(df.columns[xcolumn])
+        self.ax.set_ylabel(df.columns[ycolumn])
+        #except:
+            #pass
 
     ## == USER INTERFACE HANDLERS ==
-    def on_window1_delete_event(self, *args):# {{{
-        Gtk.main_quit(*args)# }}}
-
-    def on_treeview1_selection_changed(self, *args):
+    def onRowExpanded(self, treeView, treeIter, treePath):# {{{
+        treeStore = treeView.get_model()        # get the associated model
+        newPath = treeStore.get_value(treeIter, 0)      # get the full path of the position
+        self.populateFileSystemTreeStore(treeStore, newPath, treeIter)       # populate the subtree on curent position
+        treeStore.remove(treeStore.iter_children(treeIter))         # remove the first child (dummy node)
+    # }}}
+    def onRowCollapsed(self, treeView, treeIter, treePath):# {{{ 
+        treeStore = treeView.get_model()        # get the associated model
+        currentChildIter = treeStore.iter_children(treeIter)        # get the iterator of the first child
+        while currentChildIter:         # loop as long as some childern exist
+            treeStore.remove(currentChildIter)      # remove the first child
+            currentChildIter = treeStore.iter_children(treeIter)        # refresh the iterator of the next child
+        treeStore.append(treeIter, self.dummy_treestore_row)      # append dummy node
+    # }}}
+    def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
         self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
         self.plot_all_sel_records()     ## then show the selected ones
         self.ax.relim()
         self.ax.autoscale_view()
         self.canvas.draw()
-
+    # }}}
+    def on_window1_delete_event(self, *args):# {{{
+        Gtk.main_quit(*args)# }}}
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 builder = Gtk.Builder()
