@@ -60,11 +60,14 @@ On Windows, the proposed distribution approach is to use [py2exe](http://py2exe.
 ### Accepted file formats 
 PlotCommander will try to understand all common formatting of *.dat (or, *.csv) files. A minimal example:
 
-    column1      column2
+    column1 column2
+    10		500
     20.5    345
     30      5.67e2
 
-Running `./plotcommander.py minimal.dat` will open a window showing a two-segment line.
+Running `./plotcommander.py test_files/minimal.dat` will open a window showing a two-segment line. If the first line cannot be interpreted as numbers, it will consider it a *header*, i.e. this plot will correctly recognize the x- and y-axis names.
+
+Using the excel parser, it can also plot the first pair of columns (from the first sheet) XLS files. An example is in `./plotcommander.py test_files/xlstest.xls`.
 
 ### PAQ - presumably asked questions
 

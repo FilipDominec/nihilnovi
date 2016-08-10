@@ -103,32 +103,37 @@ class Handler:
             return True
 
     ## === FILE HANDLING ===
-    def populateFileSystemTreeStore(self, treeStore, filepath, parent=None, include_up_dir=False):
+    def populateFileSystemTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
+        def is_folder(itemFullName):
+            #return os.stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
+            #
+            return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
+
         itemCounter = 0
-
-
         if include_up_dir:
             itemIcon = Gtk.IconTheme.get_default().load_icon('go-up', 8, 0) # Generate a default icon
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
-            currentIter = treeStore.append(parent, [filepath, itemIcon, '..', plotstyleIcon])  # Append the item to the TreeStore
+            currentIter = treeStore.append(parent, [basepath, itemIcon, '..', plotstyleIcon])  # Append the item to the TreeStore
             treeStore.append(currentIter, self.dummy_treestore_row)
-        listdir = os.listdir(filepath)
-        listdir.sort()
-        def is_folder(filepath, item):
-            itemFullname = os.path.join(filepath, item)             # Get the absolute filepath of the item
-            itemMetaData = os.stat(itemFullname) 
-            return stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
-        for item in [f for f in listdir if is_folder(filepath,f)] + [f for f in listdir if not is_folder(filepath,f)]: # folders first
-            if is_folder(filepath, item):                       icon = 'folder'
-            elif self.guess_file_type(filepath) == 'unknown':   icon = 'gtk-stop' 
-            else:                                               icon = 'empty'   ## if can not load, change icon to stock_dialog-warning
+
+        itemFullNames = [os.path.join(basepath,filename) for filename in os.listdir(basepath)]
+        itemFullNames.sort()
+        itemFullNames = [f for f in itemFullNames if is_folder(f)] + [f for f in itemFullNames if not is_folder(f)]   # folders above files
+
+        for itemFullName in itemFullNames:
+            if is_folder(itemFullName):                       
+                icon = 'folder'
+            elif self.guess_file_type(itemFullName) == 'unknown':   
+                icon = 'gtk-stop' 
+            else:                                               
+                icon = 'empty'   ## if can not load, change icon to stock_dialog-warning
             itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
             currentIter = treeStore.append(parent, 
-                    [os.path.join(filepath, item), itemIcon, item, plotstyleIcon])  # Append the item to the TreeStore
-            if is_folder(filepath, item): 
+                    [itemFullName, itemIcon, os.path.basename(itemFullName), plotstyleIcon])  # Append the item to the TreeStore
+            if is_folder(itemFullName): 
                 treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
@@ -183,7 +188,6 @@ class Handler:
 
     ## == FILE AND DATA UTILITIES ==
     def guess_file_type(self, infile):
-        print (infile[-4:])
         if   infile[-4:].lower() in ('.csv', '.dat',):
             return 'csv'
         elif infile[-4:].lower() in ('.xls'):
@@ -208,8 +212,8 @@ class Handler:
         if   self.guess_file_type(infile) == 'opj':
             return ## NOTE: support for liborigin not tested yet! 
         elif self.guess_file_type(infile) == 'xls':
-            xl = pd.ExcelFile(infile, header=1) ##  print(xl.sheet_names)   
-            ## TODO: a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
+            xl = pd.ExcelFile(infile, header=1) ##  
+            ## TODO: print(xl.sheet_names)    a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
             df = xl.parse() 
             x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns
         else:             ## for all remaining filetypes, try to interpret as a text table
@@ -217,7 +221,6 @@ class Handler:
             output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
             df = pd.read_csv(output, delim_whitespace=True, error_bad_lines=False, comment='#', header=1) 
             output.close()
-            print(df.values.T)
             #x, y = df[xcolumn], df[ycolumn] ## TODO: selection of columns!
             x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
 
