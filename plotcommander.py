@@ -219,12 +219,14 @@ class Handler:
         else:             ## for all remaining filetypes, try to interpret as a text table
             from io import StringIO ## this is just a hack to avoid loading different comment lines
             output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
-            df = pd.read_csv(output, delim_whitespace=True, error_bad_lines=False, comment='#', header=1) 
+            df = pd.read_csv(output, comment='#', delim_whitespace=True, error_bad_lines=False) 
+            ## sep=None     -- automatic detection of separators clashes with delim_whitespace=True, error_bad_lines=False
             output.close()
             #x, y = df[xcolumn], df[ycolumn] ## TODO: selection of columns!
             x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
 
         try:                    ## if possible, use also the first row as numeric data
+            print (df.columns)
             x, y = self.safe_to_float(x, y, x0=[float(df.columns[xcolumn])], y0=[float(df.columns[ycolumn])])
             xlabel, ylabel = "x", "y"
         except ValueError:      ## if conversion fails, use the first row as column names instead
