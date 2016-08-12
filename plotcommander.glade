@@ -215,22 +215,12 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkButton" id="button1">
-                                <property name="label" translatable="yes">Set from sel</property>
+                              <object class="GtkEntry" id="enFileFilter">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
-                              </object>
-                              <packing>
-                                <property name="left_attach">1</property>
-                                <property name="top_attach">2</property>
-                              </packing>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="entry1">
-                                <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes">* (show all)</property>
+                                <property name="placeholder_text" translatable="yes">.* (show all)</property>
+                                <signal name="activate" handler="on_enFileFilter_activate" swapped="no"/>
+                                <signal name="focus-out-event" handler="on_enFileFilter_focus_out_event" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -238,10 +228,12 @@
                               </packing>
                             </child>
                             <child>
-                              <object class="GtkEntry" id="entry2">
+                              <object class="GtkEntry" id="enColFilter">
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
-                                <property name="placeholder_text" translatable="yes">* (show all)</property>
+                                <property name="placeholder_text" translatable="yes">.* (show all)</property>
+                                <signal name="activate" handler="on_enColFilter_activate" swapped="no"/>
+                                <signal name="focus-out-event" handler="on_enColFilter_focus_out_event" swapped="no"/>
                               </object>
                               <packing>
                                 <property name="left_attach">1</property>
@@ -249,7 +241,29 @@
                               </packing>
                             </child>
                             <child>
-                              <placeholder/>
+                              <object class="GtkButton" id="button1">
+                                <property name="label" translatable="yes">Guess</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                                <property name="margin_top">1</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">2</property>
+                                <property name="top_attach">1</property>
+                              </packing>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="button2">
+                                <property name="label" translatable="yes">Guess</property>
+                                <property name="visible">True</property>
+                                <property name="can_focus">True</property>
+                                <property name="receives_default">True</property>
+                              </object>
+                              <packing>
+                                <property name="left_attach">2</property>
+                                <property name="top_attach">0</property>
+                              </packing>
                             </child>
                           </object>
                         </child>

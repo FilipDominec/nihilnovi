@@ -48,7 +48,7 @@ class Handler:
 
 
         ## TreeStore and ListStore initialization
-        self.treestore1 = Gtk.TreeStore(str,        Pixbuf, str,        Pixbuf        )
+        self.tsFiles = Gtk.TreeStore(str,        Pixbuf, str,        Pixbuf        )
         ## column meaning:              0:filepath  1:icon  2:name      3:plotstyleicon
         self.dummy_treestore_row = [None, None, None, None]
 
@@ -68,15 +68,18 @@ class Handler:
         w('treeview1').append_column(treeViewCol)       # Append the columns to the TreeView
         w('treeview1').set_expander_column(treeViewCol)
 
-        w('treeview1').set_model(self.treestore1)       # Append the columns to the TreeView
+        w('treeview1').set_model(self.tsFiles)       # Append the columns to the TreeView
         w('treeview1').set_enable_tree_lines(True) 
         w('treeview1').connect("row-expanded", self.onRowExpanded)       # add "on expand" callback
         w('treeview1').connect("row-collapsed", self.onRowCollapsed)         # add "on collapse" callback
         w('treeview1').get_selection().set_select_function(self.treeview1_selectmethod, data=None) # , full=True
 
-        ## Select all input files at start, and plot them
-        if len(sys.argv) > 1:    self.populateFileSystemTreeStore(self.treestore1, sys.argv[1], parent=None, include_up_dir=True)
-        else:                    self.populateFileSystemTreeStore(self.treestore1, os.getcwd(), parent=None, include_up_dir=True)
+        ## TODO: If files are specified as arguments, select these at start, and plot them at once
+
+        ## If a directory is specified, just set it as the root of the file list. If none, use current working dir.
+        print(len(sys.argv))
+        self.treeViewRootDir = os.getcwd() if len(sys.argv)<=1  else  sys.argv[1]
+        self.populateFileSystemTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)
         self.plot_reset()
         self.plot_all_sel_records()
 
@@ -86,28 +89,16 @@ class Handler:
         cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
 
         #}}}
-
-    def treeview1_selectmethod(self, selection, model, treepath, is_selected, user_data):
-        ## Expand a directory by clicking, but do not allow user to select it
-        treeiter        = self.treestore1.get_iter(treepath)
-        filenamepath    = self.treestore1.get_value(treeiter, 0)
-        itemMetaData    = os.stat(filenamepath) 
-        itemIsFolder    = stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
-        if itemIsFolder:
-            if w('treeview1').row_expanded(treepath):
-                w('treeview1').collapse_row(treepath)
-            else:
-                w('treeview1').expand_row(treepath, open_all=False)
-            return False
-        else:
-            return True
-
     ## === FILE HANDLING ===
     def populateFileSystemTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
-        def is_folder(itemFullName):
-            #return os.stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
-            #
-            return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
+        ## If we update the whole tree, it has to be cleared first. 
+        ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
+        if parent == None:
+            self.lockTreestoreSelection = True
+            self.tsFiles.clear()
+            self.lockTreestoreSelection = False
+
+        ## TODO remember and maintain expanded rows
 
         itemCounter = 0
         if include_up_dir:
@@ -119,47 +110,56 @@ class Handler:
 
         itemFullNames = [os.path.join(basepath,filename) for filename in os.listdir(basepath)]
         itemFullNames.sort()
+        def is_folder(itemFullName): ## Shorthand
+            return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
         itemFullNames = [f for f in itemFullNames if is_folder(f)] + [f for f in itemFullNames if not is_folder(f)]   # folders above files
 
+
+        fileFilterString = w('enFileFilter').get_text().strip()
         for itemFullName in itemFullNames:
             if is_folder(itemFullName):                       
                 icon = 'folder'
             elif self.guess_file_type(itemFullName) == 'unknown':   
                 icon = 'gtk-stop' 
             else:                                               
-                icon = 'empty'   ## if can not load, change icon to stock_dialog-warning
-            itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
-            plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
-            plotstyleIcon.fill(0xffffffff)
-            currentIter = treeStore.append(parent, 
-                    [itemFullName, itemIcon, os.path.basename(itemFullName), plotstyleIcon])  # Append the item to the TreeStore
+                icon = 'empty'
+
+            ## If specified, apply filter to files (but not directories)
+            if fileFilterString=="" or (fileFilterString in os.path.basename(itemFullName)) or is_folder(itemFullName):
+                itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
+                plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+                plotstyleIcon.fill(0xffffffff)
+                currentIter = treeStore.append(parent, 
+                        [itemFullName, itemIcon, os.path.basename(itemFullName), plotstyleIcon])  # Append the item to the TreeStore
+
             if is_folder(itemFullName): 
                 treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
+
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
 
 
 
     ## === GRAPHICAL PRESENTATION ===
-    def array2rgbhex(self,arr3,alpha=1): 
+    def array2rgbhex(self,arr3,alpha=1): # {{{
         return  int(arr3[0]*256-.5)*(256**3) +\
                 int(arr3[1]*256-.5)*(256**2) +\
                 int(arr3[2]*256-.5)*(256**1) +\
                 int(alpha*255  -.5)
-    def plot_reset(self):
+# }}}
+    def plot_reset(self):# {{{
         self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
 
         def recursive_clear_icon(treeiter):
             while treeiter != None: 
-                iterpixbuf = self.treestore1.get_value(treeiter, 3)
+                iterpixbuf = self.tsFiles.get_value(treeiter, 3)
                 if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
-                recursive_clear_icon(self.treestore1.iter_children(treeiter))
-                treeiter=self.treestore1.iter_next(treeiter)
-        recursive_clear_icon(self.treestore1.get_iter_first())
+                recursive_clear_icon(self.tsFiles.iter_children(treeiter))
+                treeiter=self.tsFiles.iter_next(treeiter)
+        recursive_clear_icon(self.tsFiles.get_iter_first())
         w('treeview1').queue_draw()
-
-
-    def plot_all_sel_records(self):
+# }}}
+    def plot_all_sel_records(self):# {{{
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
 
@@ -173,11 +173,11 @@ class Handler:
         for (path, color_from_palette) in zip(pathlist, color_palette):
             try:
                 ## Plot the line first
-                file_name = self.treestore1.get_value(self.treestore1.get_iter(path), 0)
+                file_name = self.tsFiles.get_value(self.tsFiles.get_iter(path), 0)
                 self.plot_record(file_name, plot_style={'color':color_from_palette})
 
                 ## If no exception occurs, color the background of the "plot" column according to the line 
-                self.treestore1.get_value(self.treestore1.get_iter(path), 3).fill(self.array2rgbhex(color_from_palette))
+                self.tsFiles.get_value(self.tsFiles.get_iter(path), 3).fill(self.array2rgbhex(color_from_palette))
 
             except ValueError:
                 traceback.print_exc()
@@ -185,9 +185,9 @@ class Handler:
         #self.ax.legend(loc="auto")
         self.ax.grid(True)
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
-
+# }}}
     ## == FILE AND DATA UTILITIES ==
-    def guess_file_type(self, infile):
+    def guess_file_type(self, infile):# {{{
         if   infile[-4:].lower() in ('.csv', '.dat',):
             return 'csv'
         elif infile[-4:].lower() in ('.xls'):
@@ -196,16 +196,16 @@ class Handler:
             return 'opj'
         else:
             return 'unknown'
-
-    def safe_to_float(self, x_raw, y_raw, x0=[], y0=[]):
+# }}}
+    def safe_to_float(self, x_raw, y_raw, x0=[], y0=[]):# {{{
         
         # safe simultaneous conversion of both data columns; error in either value leads to skipped row
         for x_raw, y_raw in zip(x_raw,y_raw): 
             try: x1, y1 = float(x_raw), float(y_raw); x0.append(x1); y0.append(y1)
             except: pass
         return np.array(x0),  np.array(y0)
-
-    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):
+# }}}
+    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
         import pandas as pd
@@ -237,29 +237,58 @@ class Handler:
         self.ax.set_ylabel(ylabel)
         #except:
             #pass
-
+# }}}
     ## == USER INTERFACE HANDLERS ==
+    def treeview1_selectmethod(self, selection, model, treepath, is_selected, user_data):# {{{
+        ## Expand a directory by clicking, but do not allow user to select it
+        treeiter        = self.tsFiles.get_iter(treepath)
+        filenamepath    = self.tsFiles.get_value(treeiter, 0)
+        itemMetaData    = os.stat(filenamepath) 
+        itemIsFolder    = stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
+        if itemIsFolder:
+            if w('treeview1').row_expanded(treepath):
+                w('treeview1').collapse_row(treepath)
+            else:
+                w('treeview1').expand_row(treepath, open_all=False)
+            return False
+        else:
+            return True
+# }}}
+    def on_enFileFilter_activate(self, *args):
+        print("on_enFileFilter_activate", args)
+        # Passing parent=None will populate the whole tree again, passing basepath="None" will not change the directory.
+        self.populateFileSystemTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)       
+    def on_enFileFilter_focus_out_event(self, *args):
+        print("focus_out", args)
+        pass
+    def on_enColFilter_activate(self, *args):
+        pass
+    def on_enColFilter_focus_out_event(self, *args):
+        pass
+
+    def on_enFileFilter_editing_done(self, *args):
+        print("on_enFileFilter_editing_done")
+        pass
+    def on_enFileFilter_editing_done(self, *args):
+        print("on_enFileFilter_editing_done")
+        pass
     def onRowExpanded(self, treeView, treeIter, treePath):# {{{
-        treeStore = treeView.get_model()        # get the associated model
-        newPath = treeStore.get_value(treeIter, 0)      # get the full path of the position
-        if treeStore.get_value(treeIter, 2) == "..":  ## if the expanded row was ".." change to up-dir with  include_up_dir=True
-            self.lockTreestoreSelection = True
-            treeStore.clear()
-            self.lockTreestoreSelection = False
-            self.populateFileSystemTreeStore(treeStore, os.path.dirname(os.path.abspath(newPath)), 
+        newPath = self.tsFiles.get_value(treeIter, 0)      # get the full path of the position
+        if self.tsFiles.get_value(treeIter, 2) == "..":  ## if the expanded row was "..", change to up-dir
+            self.populateFileSystemTreeStore(self.tsFiles, os.path.dirname(os.path.abspath(newPath)), 
                     None, include_up_dir=True)       # populate the subtree on curent position
             ## TODO remember and keep unfolded nodes during "cd .."
         else:
-            self.populateFileSystemTreeStore(treeStore, newPath, treeIter)       # populate the subtree on curent position
-            treeStore.remove(treeStore.iter_children(treeIter))         # remove the first child (dummy node)
+            self.populateFileSystemTreeStore(self.tsFiles, newPath, treeIter)       # populate the subtree on curent position
+            self.tsFiles.remove(self.tsFiles.iter_children(treeIter))         # remove the first child (dummy node)
     # }}}
     def onRowCollapsed(self, treeView, treeIter, treePath):# {{{ 
-        treeStore = treeView.get_model()        # get the associated model
-        currentChildIter = treeStore.iter_children(treeIter)        # get the iterator of the first child
-        while currentChildIter:         # loop as long as some childern exist
-            treeStore.remove(currentChildIter)      # remove the first child
-            currentChildIter = treeStore.iter_children(treeIter)        # refresh the iterator of the next child
-        treeStore.append(treeIter, self.dummy_treestore_row)      # append dummy node
+        ## Remove all child nodes of the given row to free memory
+        currentChildIter = self.tsFiles.iter_children(treeIter)
+        while currentChildIter:         
+            self.tsFiles.remove(currentChildIter)
+            currentChildIter = self.tsFiles.iter_children(treeIter)
+        self.tsFiles.append(treeIter, self.dummy_treestore_row)
     # }}}
     def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
         if not self.lockTreestoreSelection:
