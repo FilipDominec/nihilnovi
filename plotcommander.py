@@ -25,7 +25,7 @@ matplotlib.rcParams['savefig.facecolor'] = "white"
 class Handler:
     ## == initialization == 
     def __init__(self): #{{{
-        self.lockTreestoreSelection = False
+        self.lockTreeViewEvents = False
         np.seterr(all='ignore')
 
         ## Plotting initialization
@@ -77,7 +77,6 @@ class Handler:
         ## TODO: If files are specified as arguments, select these at start, and plot them at once
 
         ## If a directory is specified, just set it as the root of the file list. If none, use current working dir.
-        print(len(sys.argv))
         self.treeViewRootDir = os.getcwd() if len(sys.argv)<=1  else  sys.argv[1]
         self.populateFileSystemTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)
         self.plot_reset()
@@ -93,12 +92,20 @@ class Handler:
     def populateFileSystemTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
         ## If we update the whole tree, it has to be cleared first. 
         ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
-        if parent == None:
-            self.lockTreestoreSelection = True
-            self.tsFiles.clear()
-            self.lockTreestoreSelection = False
 
-        ## TODO remember and maintain expanded rows
+        if parent == None:
+            ## Clear all rows including their icons
+            self.lockTreeViewEvents = True
+            self.tsFiles.clear()
+            self.lockTreeViewEvents = False
+
+        def recursive_clear_icon(treeIter):
+            while treeIter != None: 
+                iterpixbuf = self.tsFiles.get_value(treeIter, 3)
+                if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
+                recursive_clear_icon(self.tsFiles.iter_children(treeIter))
+                treeIter=self.tsFiles.iter_next(treeIter)
+        recursive_clear_icon(self.tsFiles.get_iter_first())
 
         itemCounter = 0
         if include_up_dir:
@@ -137,9 +144,6 @@ class Handler:
 
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
-
-
-
     ## === GRAPHICAL PRESENTATION ===
     def array2rgbhex(self,arr3,alpha=1): # {{{
         return  int(arr3[0]*256-.5)*(256**3) +\
@@ -150,12 +154,12 @@ class Handler:
     def plot_reset(self):# {{{
         self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
 
-        def recursive_clear_icon(treeiter):
-            while treeiter != None: 
-                iterpixbuf = self.tsFiles.get_value(treeiter, 3)
+        def recursive_clear_icon(treeIter):
+            while treeIter != None: 
+                iterpixbuf = self.tsFiles.get_value(treeIter, 3)
                 if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
-                recursive_clear_icon(self.tsFiles.iter_children(treeiter))
-                treeiter=self.tsFiles.iter_next(treeiter)
+                recursive_clear_icon(self.tsFiles.iter_children(treeIter))
+                treeIter=self.tsFiles.iter_next(treeIter)
         recursive_clear_icon(self.tsFiles.get_iter_first())
         w('treeview1').queue_draw()
 # }}}
@@ -176,7 +180,7 @@ class Handler:
                 file_name = self.tsFiles.get_value(self.tsFiles.get_iter(path), 0)
                 self.plot_record(file_name, plot_style={'color':color_from_palette})
 
-                ## If no exception occurs, color the background of the "plot" column according to the line 
+                ## If no exception occurs, colour the icon according to the line colour
                 self.tsFiles.get_value(self.tsFiles.get_iter(path), 3).fill(self.array2rgbhex(color_from_palette))
 
             except ValueError:
@@ -226,7 +230,7 @@ class Handler:
             x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
 
         try:                    ## if possible, use also the first row as numeric data
-            print (df.columns)
+            #print (df.columns)
             x, y = self.safe_to_float(x, y, x0=[float(df.columns[xcolumn])], y0=[float(df.columns[ycolumn])])
             xlabel, ylabel = "x", "y"
         except ValueError:      ## if conversion fails, use the first row as column names instead
@@ -239,51 +243,103 @@ class Handler:
             #pass
 # }}}
     ## == USER INTERFACE HANDLERS ==
-    def treeview1_selectmethod(self, selection, model, treepath, is_selected, user_data):# {{{
+    def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
         ## Expand a directory by clicking, but do not allow user to select it
-        treeiter        = self.tsFiles.get_iter(treepath)
+        treeiter        = self.tsFiles.get_iter(treePath)
         filenamepath    = self.tsFiles.get_value(treeiter, 0)
+        if not filenamepath: return False
         itemMetaData    = os.stat(filenamepath) 
         itemIsFolder    = stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
-        if itemIsFolder:
-            if w('treeview1').row_expanded(treepath):
-                w('treeview1').collapse_row(treepath)
+
+        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+        if itemIsFolder: ### TODO allow expanding multi-column files, too
+            if w('treeview1').row_expanded(treePath):
+                w('treeview1').collapse_row(treePath)
             else:
-                w('treeview1').expand_row(treepath, open_all=False)
+                w('treeview1').expand_row(treePath, open_all=False)
+            print(selected_row_names)
+            self.restore_treeView_selected_rows(selected_row_names)
             return False
         else:
             return True
 # }}}
-    def on_enFileFilter_activate(self, *args):
-        print("on_enFileFilter_activate", args)
-        # Passing parent=None will populate the whole tree again, passing basepath="None" will not change the directory.
+    def on_enFileFilter_activate(self, *args):# {{{
+        expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
+        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+        # Passing parent=None will populate the whole tree again
+        #self.lockTreeViewEvents = True
         self.populateFileSystemTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)       
-    def on_enFileFilter_focus_out_event(self, *args):
-        print("focus_out", args)
-        pass
-    def on_enColFilter_activate(self, *args):
+        #self.lockTreeViewEvents = False
+        self.restore_treeView_expanded_rows(expanded_row_names)
+        self.restore_treeView_selected_rows(selected_row_names)
+        # }}}
+    def remember_treeView_expanded_rows(self, treeStore, treeView):    # {{{
+        ## returns a list of paths of expanded files/directories
+        expanded_row_names = []
+        def remember_treeview_states(treeIter):
+            while treeIter != None: 
+                if w('treeview1').row_expanded(treeStore.get_path(treeIter)):
+                    expanded_row_names.append(treeStore.get_value(treeIter, 0))      # get the full path of the position
+                remember_treeview_states(treeStore.iter_children(treeIter))
+                treeIter=treeStore.iter_next(treeIter)
+        remember_treeview_states(treeStore.get_iter_first())
+        print("remember_treeView_expanded_rows: expanded_row_names", expanded_row_names)
+        return expanded_row_names
+        # }}}
+    def remember_treeView_selected_rows(self, treeStore, treeView):# {{{
+        ## returns a list of paths of selected files/directories
+        (model, selectedPathList) = treeView.get_selection().get_selected_rows()
+        selected_row_names = []
+        for treePath in selectedPathList:
+            selected_row_names.append(treeStore.get_value(treeStore.get_iter(treePath), 0))
+        return selected_row_names
+        # }}}
+    def restore_treeView_expanded_rows(self, expanded_row_names):# {{{
+        def recursive_expand_rows(treeIter, ):
+            while treeIter != None: 
+                if self.tsFiles.get_value(treeIter, 0) in expanded_row_names:
+                    self.lockTreeViewEvents = True
+                    w('treeview1').expand_row(self.tsFiles.get_path(treeIter), open_all=False)
+                    self.lockTreeViewEvents = False
+                recursive_expand_rows(self.tsFiles.iter_children(treeIter))
+                treeIter=self.tsFiles.iter_next(treeIter)
+        recursive_expand_rows(self.tsFiles.get_iter_first())
+        # }}}
+    def restore_treeView_selected_rows(self, selected_row_names):# {{{
+        def recursive_select_rows(treeIter):
+            while treeIter != None: 
+                if self.tsFiles.get_value(treeIter, 0) in selected_row_names:
+                    w('treeview1').get_selection().select_path(self.tsFiles.get_path(treeIter))
+                recursive_select_rows(self.tsFiles.iter_children(treeIter))
+                treeIter=self.tsFiles.iter_next(treeIter)
+        recursive_select_rows(self.tsFiles.get_iter_first())
+        self.plot_all_sel_records()
+        # }}}
+    def on_enFileFilter_focus_out_event(self, *args):# {{{
+        self.on_enFileFilter_activate(self)
+    # }}}
+    def on_enColFilter_activate(self, *args):# {{{ TODO
         pass
     def on_enColFilter_focus_out_event(self, *args):
         pass
-
-    def on_enFileFilter_editing_done(self, *args):
-        print("on_enFileFilter_editing_done")
-        pass
-    def on_enFileFilter_editing_done(self, *args):
-        print("on_enFileFilter_editing_done")
-        pass
+# }}}
     def onRowExpanded(self, treeView, treeIter, treePath):# {{{
+        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
         newPath = self.tsFiles.get_value(treeIter, 0)      # get the full path of the position
         if self.tsFiles.get_value(treeIter, 2) == "..":  ## if the expanded row was "..", change to up-dir
-            self.populateFileSystemTreeStore(self.tsFiles, os.path.dirname(os.path.abspath(newPath)), 
-                    None, include_up_dir=True)       # populate the subtree on curent position
-            ## TODO remember and keep unfolded nodes during "cd .."
+            expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
+            selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+            self.populateFileSystemTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
+                    parent=None, include_up_dir=True)       
+            self.restore_treeView_expanded_rows(expanded_row_names)
+            self.restore_treeView_selected_rows(selected_row_names)
         else:
             self.populateFileSystemTreeStore(self.tsFiles, newPath, treeIter)       # populate the subtree on curent position
             self.tsFiles.remove(self.tsFiles.iter_children(treeIter))         # remove the first child (dummy node)
     # }}}
     def onRowCollapsed(self, treeView, treeIter, treePath):# {{{ 
         ## Remove all child nodes of the given row to free memory
+        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
         currentChildIter = self.tsFiles.iter_children(treeIter)
         while currentChildIter:         
             self.tsFiles.remove(currentChildIter)
@@ -291,12 +347,12 @@ class Handler:
         self.tsFiles.append(treeIter, self.dummy_treestore_row)
     # }}}
     def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
-        if not self.lockTreestoreSelection:
-            self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
-            self.plot_all_sel_records()     ## then show the selected ones
-            self.ax.relim()
-            self.ax.autoscale_view()
-            self.canvas.draw()
+        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
+        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
+        self.plot_all_sel_records()     ## then show the selected ones
+        self.ax.relim()
+        self.ax.autoscale_view()
+        self.canvas.draw()
     # }}}
     def on_window1_delete_event(self, *args):# {{{
         Gtk.main_quit(*args)# }}}
