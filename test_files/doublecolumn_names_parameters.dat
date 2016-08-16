@@ -1,0 +1,11 @@
+#instrument=ACME company
+#pressure,ambient
+#temperature(K)		conductivity(uS)
+1					-40
+2					-40
+2.5					-41
+2.75				-44
+2.90				-60
+3.00				-70
+3.25				-60
+4					-44
