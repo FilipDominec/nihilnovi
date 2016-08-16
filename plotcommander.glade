@@ -346,7 +346,7 @@
                         <property name="enable_search">False</property>
                         <property name="search_column">0</property>
                         <property name="rubber_banding">True</property>
-                        <property name="enable_grid_lines">both</property>
+                        <property name="enable_grid_lines">none</property>
                         <property name="enable_tree_lines">True</property>
                         <property name="activate_on_single_click">True</property>
                         <child internal-child="selection">

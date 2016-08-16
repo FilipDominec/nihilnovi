@@ -78,7 +78,7 @@ class Handler:
 
         ## If a directory is specified, just set it as the root of the file list. If none, use current working dir.
         self.treeViewRootDir = os.getcwd() if len(sys.argv)<=1  else  sys.argv[1]
-        self.populateFileSystemTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)
+        self.populateTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)
         self.plot_reset()
         self.plot_all_sel_records()
 
@@ -89,25 +89,30 @@ class Handler:
 
         #}}}
     ## === FILE HANDLING ===
-    def populateFileSystemTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
-        ## If we update the whole tree, it has to be cleared first. 
-        ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
+    def clearAllPlotIcons(self, treeIter):# {{{
+        while treeIter != None: 
+            iterpixbuf = self.tsFiles.get_value(treeIter, 3)
+            if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
+            self.clearAllPlotIcons(self.tsFiles.iter_children(treeIter))
+            treeIter=self.tsFiles.iter_next(treeIter)
+        # }}}
+    def isFolder(self, itemFullName): return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
+    def isMulticolumnFile(self, itemFullName): 
+        pass
+        return False ## TODO FIXME
+    def populateTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
+        ## Returns whether the row at basepath can be selected
 
         if parent == None:
-            ## Clear all rows including their icons
+            ## If we update the whole tree, it has to be cleared first. 
+            ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
             self.lockTreeViewEvents = True
             self.tsFiles.clear()
+            self.clearAllPlotIcons(self.tsFiles.get_iter_first())
+            self.treeViewRootDir = basepath
             self.lockTreeViewEvents = False
 
-        def recursive_clear_icon(treeIter):
-            while treeIter != None: 
-                iterpixbuf = self.tsFiles.get_value(treeIter, 3)
-                if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
-                recursive_clear_icon(self.tsFiles.iter_children(treeIter))
-                treeIter=self.tsFiles.iter_next(treeIter)
-        recursive_clear_icon(self.tsFiles.get_iter_first())
-
-        itemCounter = 0
+        ## The first node may point to the above directory, enabling the user to browse whole filesystem (used together with parent=None)
         if include_up_dir:
             itemIcon = Gtk.IconTheme.get_default().load_icon('go-up', 8, 0) # Generate a default icon
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
@@ -115,35 +120,43 @@ class Handler:
             currentIter = treeStore.append(parent, [basepath, itemIcon, '..', plotstyleIcon])  # Append the item to the TreeStore
             treeStore.append(currentIter, self.dummy_treestore_row)
 
-        itemFullNames = [os.path.join(basepath,filename) for filename in os.listdir(basepath)]
-        itemFullNames.sort()
-        def is_folder(itemFullName): ## Shorthand
-            return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
-        itemFullNames = [f for f in itemFullNames if is_folder(f)] + [f for f in itemFullNames if not is_folder(f)]   # folders above files
+        if self.isFolder(basepath):
+            ## Populate a folder with files/subdirs in directory
+            itemFullNames = [os.path.join(basepath, filename) for filename in os.listdir(basepath)]
 
+            ## Filter the files
+            fileFilterString = w('enFileFilter').get_text().strip()
+            if fileFilterString != "":
+                itemFullNames = [item for item in itemFullNames 
+                        if (fileFilterString in os.path.basename(itemFullName) or self.isFolder(itemFullName))]
 
-        fileFilterString = w('enFileFilter').get_text().strip()
-        for itemFullName in itemFullNames:
-            if is_folder(itemFullName):                       
-                icon = 'folder'
-            elif self.guess_file_type(itemFullName) == 'unknown':   
-                icon = 'gtk-stop' 
-            else:                                               
-                icon = 'empty'
+            ## Sort alphabetically, all folders above files
+            itemFullNames.sort()
+            itemFullNames = [f for f in itemFullNames if self.isFolder(f)] + [f for f in itemFullNames if not self.isFolder(f)] 
 
-            ## If specified, apply filter to files (but not directories)
-            if fileFilterString=="" or (fileFilterString in os.path.basename(itemFullName)) or is_folder(itemFullName):
-                itemIcon = Gtk.IconTheme.get_default().load_icon(icon, 8, 0) # Generate a default icon
+            ## Populate the node
+            itemCounter = 0
+            for itemFullName in itemFullNames:
+                print(itemFullName)
+                itemIcon = Gtk.IconTheme.get_default().load_icon('folder' if self.isFolder(itemFullName) else 'empty', 8, 0)
+                displayedName = os.path.basename(itemFullName)
                 plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
                 plotstyleIcon.fill(0xffffffff)
-                currentIter = treeStore.append(parent, 
-                        [itemFullName, itemIcon, os.path.basename(itemFullName), plotstyleIcon])  # Append the item to the TreeStore
+                currentIter = treeStore.append(parent, [itemFullName, itemIcon, displayedName, plotstyleIcon])
+                if self.isFolder(itemFullName):  ## Try this
+                    treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
+                itemCounter += 1                                    #increment the item counter
+            if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
 
-            if is_folder(itemFullName): 
-                treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
+            ## Folder cannot be selected, since they store no data to plot:
+            return False        
+        elif self.isMulticolumnFile(basepath):
+            ## TODO scan the file for datasets/columns/whatever, list them here
+            pass
+        else:
+            ## Files that are not multicolumn can be selected
+            return True
 
-            itemCounter += 1                                    #increment the item counter
-        if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
     ## === GRAPHICAL PRESENTATION ===
     def array2rgbhex(self,arr3,alpha=1): # {{{
         return  int(arr3[0]*256-.5)*(256**3) +\
@@ -245,11 +258,29 @@ class Handler:
     ## == USER INTERFACE HANDLERS ==
     def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
         ## Expand a directory by clicking, but do not allow user to select it
-        treeiter        = self.tsFiles.get_iter(treePath)
-        filenamepath    = self.tsFiles.get_value(treeiter, 0)
+        treeIter        = self.tsFiles.get_iter(treePath)
+        filenamepath    = self.tsFiles.get_value(treeIter, 0)
         if not filenamepath: return False
         itemMetaData    = os.stat(filenamepath) 
         itemIsFolder    = stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
+        ### TODO self.isFolder(self.tsFiles.get_value(self.tsFiles.get_iter(treePath), 0))  ++ replace below
+
+        #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
+
+        ## if present, remove the dummy node (which is only used to draw the expander arrow)
+        if self.tsFiles.iter_children(treeIter):  
+            self.tsFiles.remove(self.tsFiles.iter_children(treeIter))         
+
+        newPath = self.tsFiles.get_value(treeIter, 0)      # get the full path of the position
+        if self.tsFiles.get_value(treeIter, 2) == "..":  ## if the expanded row was "..", change to up-dir
+            expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
+            selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+            self.populateTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
+                    parent=None, include_up_dir=True)       
+            self.restore_treeView_expanded_rows(expanded_row_names)
+            self.restore_treeView_selected_rows(selected_row_names)
+        else:
+            self.populateTreeStore(self.tsFiles, newPath, treeIter)       # populate the subtree on curent position
 
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         if itemIsFolder: ### TODO allow expanding multi-column files, too
@@ -262,13 +293,14 @@ class Handler:
             return False
         else:
             return True
+
 # }}}
     def on_enFileFilter_activate(self, *args):# {{{
         expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         # Passing parent=None will populate the whole tree again
         #self.lockTreeViewEvents = True
-        self.populateFileSystemTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)       
+        self.populateTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)       
         #self.lockTreeViewEvents = False
         self.restore_treeView_expanded_rows(expanded_row_names)
         self.restore_treeView_selected_rows(selected_row_names)
@@ -324,21 +356,11 @@ class Handler:
         pass
 # }}}
     def onRowExpanded(self, treeView, treeIter, treePath):# {{{
-        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
-        newPath = self.tsFiles.get_value(treeIter, 0)      # get the full path of the position
-        if self.tsFiles.get_value(treeIter, 2) == "..":  ## if the expanded row was "..", change to up-dir
-            expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
-            selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-            self.populateFileSystemTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
-                    parent=None, include_up_dir=True)       
-            self.restore_treeView_expanded_rows(expanded_row_names)
-            self.restore_treeView_selected_rows(selected_row_names)
-        else:
-            self.populateFileSystemTreeStore(self.tsFiles, newPath, treeIter)       # populate the subtree on curent position
-            self.tsFiles.remove(self.tsFiles.iter_children(treeIter))         # remove the first child (dummy node)
+        print("EXPANDED", treePath) ## TODO should trigger the same action as selection of a directory
+        pass
     # }}}
     def onRowCollapsed(self, treeView, treeIter, treePath):# {{{ 
-        ## Remove all child nodes of the given row to free memory
+        ## Remove all child nodes of the given row (useful mostly to de-syncing from some changes in the filesystem)
         if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
         currentChildIter = self.tsFiles.iter_children(treeIter)
         while currentChildIter:         
