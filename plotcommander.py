@@ -13,6 +13,7 @@ from gi.repository.GdkPixbuf import Pixbuf,Colorspace
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
+import pandas as pd
 
 
 ## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
@@ -93,11 +94,18 @@ class Handler:
             treeIter=self.tsFiles.iter_next(treeIter)
         # }}}
     def isFolder(self, itemFullName): # {{{
-        return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
-# }}}
-    def isMulticolumnFile(self, itemFullName): # {{{
-        pass
-        return False ## TODO FIXME
+        try:
+            return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
+        except FileError:
+            return False    ## because the user may supply, e.g., a name of a data column
+    # }}}
+    def isMulticolumnFile(self, itemFullName): # {{{ ## TODO
+        try:                    ## if possible, use also the first row as numeric data
+            x, y, df = self.parseFile(infile)
+            print (df.columns)
+            return len(df.columns)>2
+        except:
+            return False
 # }}}
     def populateTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
         ## Returns whether the row at basepath can be selected
@@ -120,7 +128,7 @@ class Handler:
             treeStore.append(currentIter, self.dummy_treestore_row)
 
         if self.isFolder(basepath):
-            ## Populate a folder with files/subdirs in directory
+            ## Populate a folder with files/subdirs in a directory
             itemFullNames = [os.path.join(basepath, filename) for filename in os.listdir(basepath)]
 
             ## Filter the files
@@ -136,7 +144,6 @@ class Handler:
             ## Populate the node
             itemCounter = 0
             for itemFullName in itemFullNames:
-                print(itemFullName)
                 itemIcon = Gtk.IconTheme.get_default().load_icon('folder' if self.isFolder(itemFullName) else 'empty', 8, 0)
                 displayedName = os.path.basename(itemFullName)
                 plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
@@ -218,10 +225,7 @@ class Handler:
             except: pass
         return np.array(x0),  np.array(y0)
 # }}}
-    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
-        ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
-
-        import pandas as pd
+    def parseFile(self, infile, xcolumn=0, ycolumn=1):
         if   self.guess_file_type(infile) == 'opj':
             return ## NOTE: support for liborigin not tested yet! 
         elif self.guess_file_type(infile) == 'xls':
@@ -237,14 +241,23 @@ class Handler:
             output.close()
             #x, y = df[xcolumn], df[ycolumn] ## TODO: selection of columns!
             x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
+        return x, y, df
+    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
+        ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
-        try:                    ## if possible, use also the first row as numeric data
+        #try:
+            #try:                    ## if possible, use also the first row as numeric data
+        x, y, df = self.parseFile(infile)
+
+        try:
             #print (df.columns)
             x, y = self.safe_to_float(x, y, x0=[float(df.columns[xcolumn])], y0=[float(df.columns[ycolumn])])
             xlabel, ylabel = "x", "y"
         except ValueError:      ## if conversion fails, use the first row as column names instead
             x, y = self.safe_to_float(x, y, x0=[], y0=[])
             xlabel, ylabel = df.columns[xcolumn], df.columns[ycolumn]
+
+            #print("Warning, file %s could not be loaded as data file" % infile)
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
         self.ax.set_xlabel(xlabel)
         self.ax.set_ylabel(ylabel)
@@ -343,13 +356,9 @@ class Handler:
                 #self.restore_treeView_expanded_rows(expanded_row_names) TODO TEST
                 #self.restore_treeView_selected_rows(selected_row_names) TODO TEST
             elif w('treeview1').row_expanded(treePath):
-                print("expanded")
                 w('treeview1').collapse_row(treePath)
             elif not w('treeview1').row_expanded(treePath) :
-                print("NOT expanded")
                 w('treeview1').expand_row(treePath, open_all=False)
-
-
             #print(selected_row_names)
             #self.restore_treeView_selected_rows(selected_row_names)
             return False
