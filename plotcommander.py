@@ -96,10 +96,13 @@ class Handler:
             self.clearAllPlotIcons(self.tsFiles.iter_children(treeIter))
             treeIter=self.tsFiles.iter_next(treeIter)
         # }}}
-    def isFolder(self, itemFullName): return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
-    def isMulticolumnFile(self, itemFullName): 
+    def isFolder(self, itemFullName): # {{{
+        return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
+# }}}
+    def isMulticolumnFile(self, itemFullName): # {{{
         pass
         return False ## TODO FIXME
+# }}}
     def populateTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
         ## Returns whether the row at basepath can be selected
 
@@ -255,56 +258,6 @@ class Handler:
         #except:
             #pass
 # }}}
-    ## == USER INTERFACE HANDLERS ==
-    def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
-        ## Expand a directory by clicking, but do not allow user to select it
-        treeIter        = self.tsFiles.get_iter(treePath)
-        filenamepath    = self.tsFiles.get_value(treeIter, 0)
-        if not filenamepath: return False
-        itemMetaData    = os.stat(filenamepath) 
-        itemIsFolder    = stat.S_ISDIR(itemMetaData.st_mode) # Extract metadata from the item
-        ### TODO self.isFolder(self.tsFiles.get_value(self.tsFiles.get_iter(treePath), 0))  ++ replace below
-
-        #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
-
-        ## if present, remove the dummy node (which is only used to draw the expander arrow)
-        if self.tsFiles.iter_children(treeIter):  
-            self.tsFiles.remove(self.tsFiles.iter_children(treeIter))         
-
-        newPath = self.tsFiles.get_value(treeIter, 0)      # get the full path of the position
-        if self.tsFiles.get_value(treeIter, 2) == "..":  ## if the expanded row was "..", change to up-dir
-            expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
-            selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-            self.populateTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
-                    parent=None, include_up_dir=True)       
-            self.restore_treeView_expanded_rows(expanded_row_names)
-            self.restore_treeView_selected_rows(selected_row_names)
-        else:
-            self.populateTreeStore(self.tsFiles, newPath, treeIter)       # populate the subtree on curent position
-
-        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-        if itemIsFolder: ### TODO allow expanding multi-column files, too
-            if w('treeview1').row_expanded(treePath):
-                w('treeview1').collapse_row(treePath)
-            else:
-                w('treeview1').expand_row(treePath, open_all=False)
-            print(selected_row_names)
-            self.restore_treeView_selected_rows(selected_row_names)
-            return False
-        else:
-            return True
-
-# }}}
-    def on_enFileFilter_activate(self, *args):# {{{
-        expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
-        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-        # Passing parent=None will populate the whole tree again
-        #self.lockTreeViewEvents = True
-        self.populateTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)       
-        #self.lockTreeViewEvents = False
-        self.restore_treeView_expanded_rows(expanded_row_names)
-        self.restore_treeView_selected_rows(selected_row_names)
-        # }}}
     def remember_treeView_expanded_rows(self, treeStore, treeView):    # {{{
         ## returns a list of paths of expanded files/directories
         expanded_row_names = []
@@ -347,6 +300,55 @@ class Handler:
         recursive_select_rows(self.tsFiles.get_iter_first())
         self.plot_all_sel_records()
         # }}}
+
+    ## == USER INTERFACE HANDLERS ==
+    def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
+        ## Expand a directory by clicking, but do not allow user to select it
+        treeIter        = self.tsFiles.get_iter(treePath)
+        fileNamePath    = self.tsFiles.get_value(treeIter, 0)
+
+        #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
+
+
+        ## Actions must be available even on un-selectable rows:
+        newPath = self.tsFiles.get_value(treeIter, 0)      # get the full path of the position
+        if self.isFolder(newPath):
+        ## if present, remove the dummy node (which is only used to draw the expander arrow)
+        else:
+            ## populate the subtree on curent position
+            self.populateTreeStore(self.tsFiles, newPath, treeIter)       #
+
+        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+        if self.isFolder(fileNamePath): ### TODO allow expanding multi-column files, too
+            if self.tsFiles.get_value(treeIter, 2) == "..":  
+                ## If the expanded row was "..", change to up-dir
+                expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
+                selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+                self.populateTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
+                        parent=None, include_up_dir=True)       
+                #self.restore_treeView_expanded_rows(expanded_row_names) TODO TEST
+                #self.restore_treeView_selected_rows(selected_row_names) TODO TEST
+            elif w('treeview1').row_expanded(treePath):
+                w('treeview1').collapse_row(treePath)
+            elif not w('treeview1').row_expanded(treePath) :
+                w('treeview1').expand_row(treePath, open_all=False)
+            print(selected_row_names)
+            #self.restore_treeView_selected_rows(selected_row_names)
+            return False
+        else:
+            return True
+
+# }}}
+    def on_enFileFilter_activate(self, *args):# {{{
+        expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
+        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+        # Passing parent=None will populate the whole tree again
+        #self.lockTreeViewEvents = True
+        self.populateTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)       
+        #self.lockTreeViewEvents = False
+        self.restore_treeView_expanded_rows(expanded_row_names)
+        self.restore_treeView_selected_rows(selected_row_names)
+        # }}}
     def on_enFileFilter_focus_out_event(self, *args):# {{{
         self.on_enFileFilter_activate(self)
     # }}}
@@ -357,10 +359,12 @@ class Handler:
 # }}}
     def onRowExpanded(self, treeView, treeIter, treePath):# {{{
         print("EXPANDED", treePath) ## TODO should trigger the same action as selection of a directory
+        if self.tsFiles.iter_children(treeIter):  
+            self.tsFiles.remove(self.tsFiles.iter_children(treeIter))         
         pass
     # }}}
     def onRowCollapsed(self, treeView, treeIter, treePath):# {{{ 
-        ## Remove all child nodes of the given row (useful mostly to de-syncing from some changes in the filesystem)
+        ## Remove all child nodes of the given row (useful mostly to prevent de-syncing from some changes in the filesystem)
         if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
         currentChildIter = self.tsFiles.iter_children(treeIter)
         while currentChildIter:         
