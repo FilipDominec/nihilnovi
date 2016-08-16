@@ -96,8 +96,8 @@ class Handler:
     def isFolder(self, itemFullName): # {{{
         try:
             return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
-        except FileError:
-            return False    ## because the user may supply, e.g., a name of a data column
+        except:
+            return False    ## because the user might supply, e.g., a name of a data column
     # }}}
     def isMulticolumnFile(self, itemFullName): # {{{ ## TODO
         try:                    ## if possible, use also the first row as numeric data
@@ -166,7 +166,7 @@ class Handler:
                 int(arr3[1]*256-.5)*(256**2) +\
                 int(arr3[2]*256-.5)*(256**1) +\
                 int(alpha*255  -.5)
-# }}}
+        # }}}
     def plot_reset(self):# {{{
         self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
 
@@ -178,7 +178,7 @@ class Handler:
                 treeIter=self.tsFiles.iter_next(treeIter)
         recursive_clear_icon(self.tsFiles.get_iter_first())
         w('treeview1').queue_draw()
-# }}}
+        # }}}
     def plot_all_sel_records(self):# {{{
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
@@ -205,7 +205,7 @@ class Handler:
         #self.ax.legend(loc="auto")
         self.ax.grid(True)
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
-# }}}
+        # }}}
     ## == FILE AND DATA UTILITIES ==
     def guess_file_type(self, infile):# {{{
         if   infile[-4:].lower() in ('.csv', '.dat',):
@@ -216,7 +216,7 @@ class Handler:
             return 'opj'
         else:
             return 'unknown'
-# }}}
+        # }}}
     def safe_to_float(self, x_raw, y_raw, x0=[], y0=[]):# {{{
         
         # safe simultaneous conversion of both data columns; error in either value leads to skipped row
@@ -224,7 +224,7 @@ class Handler:
             try: x1, y1 = float(x_raw), float(y_raw); x0.append(x1); y0.append(y1)
             except: pass
         return np.array(x0),  np.array(y0)
-# }}}
+        # }}}
     def parseFile(self, infile, xcolumn=0, ycolumn=1):
         if   self.guess_file_type(infile) == 'opj':
             return ## NOTE: support for liborigin not tested yet! 
