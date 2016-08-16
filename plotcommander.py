@@ -67,11 +67,7 @@ class Handler:
         treeViewCol.add_attribute(colCellText, "text", 2)       # Bind the text cell to column 0 of the tree's model
         w('treeview1').append_column(treeViewCol)       # Append the columns to the TreeView
         w('treeview1').set_expander_column(treeViewCol)
-
         w('treeview1').set_model(self.tsFiles)       # Append the columns to the TreeView
-        w('treeview1').set_enable_tree_lines(True) 
-        w('treeview1').connect("row-expanded", self.onRowExpanded)       # add "on expand" callback
-        w('treeview1').connect("row-collapsed", self.onRowCollapsed)         # add "on collapse" callback
         w('treeview1').get_selection().set_select_function(self.treeview1_selectmethod, data=None) # , full=True
 
         ## TODO: If files are specified as arguments, select these at start, and plot them at once
@@ -150,15 +146,12 @@ class Handler:
                     treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
                 itemCounter += 1                                    #increment the item counter
             if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
+        elif self.isMulticolumnFile(basepath):
+            print("Warning: not implemented:  scan the file for datasets/columns/whatever, list them here")
+        else:
+            print("Warning: program wants to populate a single-column file")
 
             ## Folder cannot be selected, since they store no data to plot:
-            return False        
-        elif self.isMulticolumnFile(basepath):
-            ## TODO scan the file for datasets/columns/whatever, list them here
-            pass
-        else:
-            ## Files that are not multicolumn can be selected
-            return True
 
     ## === GRAPHICAL PRESENTATION ===
     def array2rgbhex(self,arr3,alpha=1): # {{{
@@ -302,6 +295,34 @@ class Handler:
         # }}}
 
     ## == USER INTERFACE HANDLERS ==
+    def on_treeview1_row_expanded(self, treeView, treeIter, treePath):# {{{
+        ## if present, remove the dummy node (which is only used to draw the expander arrow)
+        treeStore = treeView.get_model()
+        newFilePath = treeStore.get_value(treeIter, 0)      # get the full path of the position
+
+        ## Add the children 
+        self.populateTreeStore(treeStore, newFilePath, treeIter)
+        ## The dummy row has to be removed AFTER this, otherwise the empty treeView row will NOT expand)
+        if treeStore.iter_children(treeIter):  
+            treeStore.remove(treeStore.iter_children(treeIter))         
+    def on_treeview1_row_collapsed(self, treeView, treeIter, treePath):# {{{ 
+        ## Remove all child nodes of the given row (useful mostly to prevent de-syncing from some changes in the filesystem)
+        #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
+        currentChildIter = self.tsFiles.iter_children(treeIter)
+        while currentChildIter:         
+            self.tsFiles.remove(currentChildIter)
+            currentChildIter = self.tsFiles.iter_children(treeIter)
+        self.tsFiles.append(treeIter, self.dummy_treestore_row)
+    # }}}
+    def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
+        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
+        ## Update the graphical presentation
+        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
+        self.plot_all_sel_records()     ## then show the selected ones
+        self.ax.relim()
+        self.ax.autoscale_view()
+        self.canvas.draw()
+    # }}}
     def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
         ## Expand a directory by clicking, but do not allow user to select it
         treeIter        = self.tsFiles.get_iter(treePath)
@@ -311,17 +332,10 @@ class Handler:
 
 
         ## Actions must be available even on un-selectable rows:
-        newPath = self.tsFiles.get_value(treeIter, 0)      # get the full path of the position
-        if self.isFolder(newPath):
-        ## if present, remove the dummy node (which is only used to draw the expander arrow)
-        else:
-            ## populate the subtree on curent position
-            self.populateTreeStore(self.tsFiles, newPath, treeIter)       #
-
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         if self.isFolder(fileNamePath): ### TODO allow expanding multi-column files, too
             if self.tsFiles.get_value(treeIter, 2) == "..":  
-                ## If the expanded row was "..", change to up-dir
+                ## If the expanded row was "..", do not expand it, instead change to up-dir and refresh whole tree
                 expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
                 selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
                 self.populateTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
@@ -329,10 +343,14 @@ class Handler:
                 #self.restore_treeView_expanded_rows(expanded_row_names) TODO TEST
                 #self.restore_treeView_selected_rows(selected_row_names) TODO TEST
             elif w('treeview1').row_expanded(treePath):
+                print("expanded")
                 w('treeview1').collapse_row(treePath)
             elif not w('treeview1').row_expanded(treePath) :
+                print("NOT expanded")
                 w('treeview1').expand_row(treePath, open_all=False)
-            print(selected_row_names)
+
+
+            #print(selected_row_names)
             #self.restore_treeView_selected_rows(selected_row_names)
             return False
         else:
@@ -357,29 +375,6 @@ class Handler:
     def on_enColFilter_focus_out_event(self, *args):
         pass
 # }}}
-    def onRowExpanded(self, treeView, treeIter, treePath):# {{{
-        print("EXPANDED", treePath) ## TODO should trigger the same action as selection of a directory
-        if self.tsFiles.iter_children(treeIter):  
-            self.tsFiles.remove(self.tsFiles.iter_children(treeIter))         
-        pass
-    # }}}
-    def onRowCollapsed(self, treeView, treeIter, treePath):# {{{ 
-        ## Remove all child nodes of the given row (useful mostly to prevent de-syncing from some changes in the filesystem)
-        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
-        currentChildIter = self.tsFiles.iter_children(treeIter)
-        while currentChildIter:         
-            self.tsFiles.remove(currentChildIter)
-            currentChildIter = self.tsFiles.iter_children(treeIter)
-        self.tsFiles.append(treeIter, self.dummy_treestore_row)
-    # }}}
-    def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
-        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
-        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
-        self.plot_all_sel_records()     ## then show the selected ones
-        self.ax.relim()
-        self.ax.autoscale_view()
-        self.canvas.draw()
-    # }}}
     def on_window1_delete_event(self, *args):# {{{
         Gtk.main_quit(*args)# }}}
 

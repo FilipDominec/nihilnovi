@@ -349,6 +349,8 @@
                         <property name="enable_grid_lines">none</property>
                         <property name="enable_tree_lines">True</property>
                         <property name="activate_on_single_click">True</property>
+						<signal name="row-expanded" handler="on_treeview1_row_expanded" swapped="no"/>
+						<signal name="row-collapsed" handler="on_treeview1_row_collapsed" swapped="no"/>
                         <child internal-child="selection">
                           <object class="GtkTreeSelection" id="treeview-selection">
                             <property name="mode">multiple</property>
