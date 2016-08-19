@@ -101,12 +101,12 @@ class Handler:
             return False    ## because the user might supply, e.g., a name of a data column
     # }}}
     def isMulticolumnFile(self, itemFullName): # {{{ ## TODO
-        try:                    
-            data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000)
-            print("len header", len(header))
-            return len(header)>2
-        except:
-            return False
+        data_array, header, parameters = robust_csv_parser.loadtxt(itemFullName, sizehint=1000)
+        print("len header", len(header))
+        return len(header)>2
+        #try:                    
+        #except:
+            #return False
 # }}}
     def populateTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
         ## Returns whether the row at basepath can be selected
@@ -145,7 +145,8 @@ class Handler:
             ## Populate the node
             itemCounter = 0
             for itemFullName in itemFullNames:
-                itemIcon = Gtk.IconTheme.get_default().load_icon('folder' if self.isFolder(itemFullName) else 'empty', 8, 0)
+                itemIcon = Gtk.IconTheme.get_default().load_icon('folder' if self.isFolder(itemFullName) else 
+                        ('zip' if self.isMulticolumnFile(itemFullName) else 'empty'), 8, 0)
                 displayedName = os.path.basename(itemFullName)
                 plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
                 plotstyleIcon.fill(0xffffffff)
