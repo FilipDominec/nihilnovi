@@ -3,7 +3,7 @@
 
 import gi, sys, os, signal, stat, traceback
 import numpy as np
-import 
+import robust_csv_parser
 
 ## Plotting dependencies and settings
 gi.require_version('Gtk', '3.0')
@@ -102,9 +102,9 @@ class Handler:
     # }}}
     def isMulticolumnFile(self, itemFullName): # {{{ ## TODO
         try:                    
-            x, y, df = self.parseFile(infile, max_rows=50)
-            print (df.columns)
-            return len(df.columns)>2
+            data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000)
+            print("len header", len(header))
+            return len(header)>2
         except:
             return False
 # }}}
@@ -233,31 +233,31 @@ class Handler:
             xl = pd.ExcelFile(infile, header=1) ##  
             ## TODO: print(xl.sheet_names)    a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
             df = xl.parse() 
-            x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns
+            x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
         else:             ## for all remaining filetypes, try to interpret as a text table
             #from io import StringIO ## this is just a hack to avoid loading different comment lines
             #output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
             #df = pd.read_csv(output, comment='#', delim_whitespace=True, error_bad_lines=False) 
             #output.close()
             #x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
-            import flexible_csv_parser
-            data_array, header, parameters = flexible_csv_parser.loadtxt(infile)
-            x, y = data_array[0], data_array[1]
-        return x, y 
+            data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000000)
+            x, y, header = data_array.T[0], data_array.T[1], header
+        return x, y, header 
     def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
         #try:
             #try:                    ## if possible, use also the first row as numeric data
-        x, y, df = self.parseFile(infile)
+        x, y, header = self.parseFile(infile)
+        print(x, y, header)
 
         try:
             #print (df.columns)
-            x, y = self.safe_to_float(x, y, x0=[float(df.columns[xcolumn])], y0=[float(df.columns[ycolumn])])
+            x, y = self.safe_to_float(x, y, x0=[float(header[xcolumn])], y0=[float(header[ycolumn])])
             xlabel, ylabel = "x", "y"
         except ValueError:      ## if conversion fails, use the first row as column names instead
             x, y = self.safe_to_float(x, y, x0=[], y0=[])
-            xlabel, ylabel = df.columns[xcolumn], df.columns[ycolumn]
+            xlabel, ylabel = header[xcolumn], header[ycolumn]
 
             #print("Warning, file %s could not be loaded as data file" % infile)
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options

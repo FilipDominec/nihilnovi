@@ -62,10 +62,11 @@ def floatableLen(arr):      return len(filter_floats(arr))
 
 
 
-def loadtxt(file_name, max_rows=None):
+def loadtxt(file_name, sizehint=None):
     ## Load file
     try:
-        lines = open(fileName).readlines()
+        lines = open(file_name).readlines(sizehint)
+        print("Read %d lines" % len(lines))
     except:
         raise IOError('file could not be opened for reading')
 
@@ -170,7 +171,7 @@ def loadtxt(file_name, max_rows=None):
                 lcol, rcol = column.rsplit('(',1)
                 column = " (".join([" ".join(camel_case_split(lcol)), rcol]) 
             elif "[" in column[:-2]  and  "]" in column[-1:]: 
-                lcol, rcol = column.rsplit('(',1)
+                lcol, rcol = column.rsplit('[',1)
                 column = " [".join([" ".join(camel_case_split(lcol)), rcol]) 
             else:
                 column = " ".join(camel_case_split(column))
@@ -199,9 +200,8 @@ def loadtxt(file_name, max_rows=None):
 
 if __name__ == "__main__":
     fileName = sys.argv[1]
-
-    data_array, header, parameters = load_txt(fileName)
-    print("DATA:",   data_array)
-    print("HEADER:", expandedColumnsInHeader)
-    print("PARAMETERS:", parameters)
+    data_array, header, parameters = loadtxt(fileName)
+    print("DATA:",          data_array)
+    print("HEADER:",        header)
+    print("PARAMETERS:",    parameters)
 
