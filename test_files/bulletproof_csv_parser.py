@@ -2,15 +2,18 @@
 #-*- coding: utf-8 -*-
 
 """
-Why do one need this module instead of e.g. pandas.read_csv('../data/example.csv', header=None) ? 
+Python offers many functions to load a text file containing numbers, e.g. numpy.genfromtxt(), csv.reader() and pandas.read_table().
+The reason why I spent two days writing another one is that these functions are not flexible enough to recognize the syntax of all data 
+files which I encounter in my daily practice. 
 
-   
-   
-1)  Automatic detection of separators in Pandas (option sep=None) currently clashes with options 
-    delim_whitespace=True, error_bad_lines=False. This module employs quite a robust detection.
-2)  Pandas does not allow different comment characters like "!;,%" in single file
-3)  It takes unacceptable time when it is erroneously fed with a big binary file
-4)  
+This module implements following improvements:
+1)  Automatic detection of column separators. This is also implemented by pandas.read_table() as option sep=None), but this currently 
+    clashes with the options delim_whitespace=True, error_bad_lines=False. This module employs quite a robust detection.
+2)  It allows different comment characters like "!;,%" in a single file. Useful, but probably not implemented elsewhere.
+3)  It (usually) aborts reading binary files quite soon. In pandas, it took a lot of time when one accidentaly fed it 
+    with a big binary file.
+4)  It recognizes parameters in the file header, and returns them as a dict.
+5)  If not specified otherwise, it does not clog the stderr with error reports .
 """
 
 ## Import common moduli
