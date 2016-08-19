@@ -3,6 +3,7 @@
 
 import gi, sys, os, signal, stat, traceback
 import numpy as np
+import 
 
 ## Plotting dependencies and settings
 gi.require_version('Gtk', '3.0')
@@ -100,8 +101,8 @@ class Handler:
             return False    ## because the user might supply, e.g., a name of a data column
     # }}}
     def isMulticolumnFile(self, itemFullName): # {{{ ## TODO
-        try:                    ## if possible, use also the first row as numeric data
-            x, y, df = self.parseFile(infile)
+        try:                    
+            x, y, df = self.parseFile(infile, max_rows=50)
             print (df.columns)
             return len(df.columns)>2
         except:
@@ -234,14 +235,15 @@ class Handler:
             df = xl.parse() 
             x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns
         else:             ## for all remaining filetypes, try to interpret as a text table
-            from io import StringIO ## this is just a hack to avoid loading different comment lines
-            output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
-            df = pd.read_csv(output, comment='#', delim_whitespace=True, error_bad_lines=False) 
-            ## sep=None     -- automatic detection of separators clashes with delim_whitespace=True, error_bad_lines=False
-            output.close()
-            #x, y = df[xcolumn], df[ycolumn] ## TODO: selection of columns!
-            x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
-        return x, y, df
+            #from io import StringIO ## this is just a hack to avoid loading different comment lines
+            #output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
+            #df = pd.read_csv(output, comment='#', delim_whitespace=True, error_bad_lines=False) 
+            #output.close()
+            #x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
+            import flexible_csv_parser
+            data_array, header, parameters = flexible_csv_parser.loadtxt(infile)
+            x, y = data_array[0], data_array[1]
+        return x, y 
     def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
