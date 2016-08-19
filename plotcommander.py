@@ -101,12 +101,13 @@ class Handler:
             return False    ## because the user might supply, e.g., a name of a data column
     # }}}
     def isMulticolumnFile(self, itemFullName): # {{{ ## TODO
-        data_array, header, parameters = robust_csv_parser.loadtxt(itemFullName, sizehint=1000)
-        print("len header", len(header))
-        return len(header)>2
-        #try:                    
-        #except:
-            #return False
+        try:                    
+            data_array, header, parameters = robust_csv_parser.loadtxt(itemFullName, sizehint=1000)
+            print("len header", len(header))
+            return len(header)>2
+        except:
+            print("could not read %s", itemFullName)
+            return False
 # }}}
     def populateTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
         ## Returns whether the row at basepath can be selected
@@ -145,18 +146,39 @@ class Handler:
             ## Populate the node
             itemCounter = 0
             for itemFullName in itemFullNames:
-                itemIcon = Gtk.IconTheme.get_default().load_icon('folder' if self.isFolder(itemFullName) else 
-                        ('zip' if self.isMulticolumnFile(itemFullName) else 'empty'), 8, 0)
+                isFolder, isMultiColumnFile = self.isFolder(itemFullName),  self.isMulticolumnFile(itemFullName)
+                itemIcon = Gtk.IconTheme.get_default().load_icon('folder' if isFolder else 
+                        ('zip' if isMultiColumnFile else 'empty'), 8, 0)
                 displayedName = os.path.basename(itemFullName)
                 plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
                 plotstyleIcon.fill(0xffffffff)
                 currentIter = treeStore.append(parent, [itemFullName, itemIcon, displayedName, plotstyleIcon])
-                if self.isFolder(itemFullName):  ## Try this
+                if isFolder or isMultiColumnFile:  
                     treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
                 itemCounter += 1                                    #increment the item counter
             if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
         elif self.isMulticolumnFile(basepath):
-            print("Warning: not implemented:  scan the file for datasets/columns/whatever, list them here")
+            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=1000000)
+            print("Warning: not fully implemented:  scan the file for datasets/columns/whatever, list them here")
+
+            ## Populate a folder with files/subdirs in a directory
+            itemFullNames = header
+
+            ## Filter the column names TODO
+            #columnFilterString = w('enColumnFilter').get_text().strip()
+            #if columnFilterString != "":
+                #itemFullNames = [item for item in itemFullNames 
+                        #if (columnFilterString in os.path.basename(itemFullName) or self.isFolder(itemFullName))]
+
+            ## Populate the node
+            itemCounter = 0
+            for columnName in header:
+                itemIcon = Gtk.IconTheme.get_default().load_icon('go-next', 8, 0)
+                plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+                plotstyleIcon.fill(0xffffffff)
+                currentIter = treeStore.append(parent, [columnName, itemIcon, columnName, plotstyleIcon])
+                itemCounter += 1                                    #increment the item counter
+            if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
         else:
             print("Warning: program wants to populate a single-column file")
 
@@ -195,8 +217,11 @@ class Handler:
         for (path, color_from_palette) in zip(pathlist, color_palette):
             try:
                 ## Plot the line first
-                file_name = self.tsFiles.get_value(self.tsFiles.get_iter(path), 0)
-                self.plot_record(file_name, plot_style={'color':color_from_palette})
+                if self.tsFiles.get_value(self.tsFiles.get_iter(path), 2) == 'go-next': ## FIXME identify a file column more reliably
+                    pass
+                else:
+                    file_name = self.tsFiles.get_value(self.tsFiles.get_iter(path), 0)
+                    self.plot_record(file_name, plot_style={'color':color_from_palette})
 
                 ## If no exception occurs, colour the icon according to the line colour
                 self.tsFiles.get_value(self.tsFiles.get_iter(path), 3).fill(self.array2rgbhex(color_from_palette))

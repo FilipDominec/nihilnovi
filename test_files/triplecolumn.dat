@@ -1,3 +1,6 @@
+#instrument=ACME company
+#pressure,ambient
+#temperature(K)		SampleConductivity(uS)     radioactivity(Gy/h)
 1		30   20
 2            20
 2.5		nan    18

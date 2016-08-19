@@ -92,7 +92,7 @@ def loadtxt(file_name, sizehint=None):
             if firstNonSkippedLine is None: firstNonSkippedLine = lineNumber
             filteredLines.append(line)
             skippedLinesN += 1
-    if firstNonSkippedLine is None: raise("Error: all lines in the file identified as comments")
+    if firstNonSkippedLine is None: raise RuntimeError("Error: all lines in the file identified as comments")
     if very_verbose: print("firstNonSkippedLine", firstNonSkippedLine)
 
     ## Cut line end after a comment character is found
@@ -129,7 +129,7 @@ def loadtxt(file_name, sizehint=None):
             resultingColSeparator           = tryColSeparator
             resultingColSeparatorFitness    = tryColSeparatorFitness
             resultingColumnsOnLines         = int(columnsOnLinesAvg+0.99)        ## (rounding up favors keeping more data whenever possible)
-    if resultingColumnsOnLines == 0: raise("Error: estimated that there are zero data columns")
+    if resultingColumnsOnLines == 0: raise RuntimeError("Error: estimated that there are zero data columns")
     if very_verbose: print("resultingColSeparator, resultingColumnsOnLines", resultingColSeparator, resultingColumnsOnLines)
 
         
