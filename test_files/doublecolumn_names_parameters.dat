@@ -1,6 +1,6 @@
 #instrument=ACME company
 #pressure,ambient
-#temperature(K)		conductivity(uS)
+#temperature(K)		SampleConductivity(uS)
 1					-40
 2					-40
 2.5					-41
