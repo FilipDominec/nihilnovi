@@ -19,7 +19,7 @@ This module implements following improvements:
 """
 
 ## Import common moduli
-import matplotlib, sys, os, time
+import matplotlib, sys, os, stat
 import matplotlib.pyplot as plt
 import numpy as np
 #import pandas as pd
@@ -66,13 +66,13 @@ def loadtxt(file_name, sizehint=None):
     ## Load file
     try:
         lines = open(file_name).readlines(sizehint)
-        print("Read %d lines" % len(lines))
+        if verbose: print("Read %d lines" % len(lines))
     except:
-        raise IOError('file could not be opened for reading')
+        raise IOError('file %s could not be opened for reading' % file_name)
 
     ## Abort if overly long lines
     if max([len(line) for line in lines]) > maxLineLength:
-        raise IOError('Error: a line longer than %d characters - file is probably binary or corrupt' % maxLineLength)
+        raise IOError('Error: a line longer than %d characters found, the file is probably binary or corrupt' % maxLineLength)
 
     ## Filter out empty lines, and also all that are commented out. If they have a parameter-like syntax, store them in a dict.
     filteredLines = [] 

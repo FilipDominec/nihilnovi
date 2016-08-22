@@ -50,9 +50,9 @@ class Handler:
 
 
         ## TreeStore and ListStore initialization
-        self.tsFiles = Gtk.TreeStore(str,        Pixbuf, str,        Pixbuf        )
-        ## column meaning:              0:filepath  1:icon  2:name      3:plotstyleicon
-        self.dummy_treestore_row = [None, None, None, None]
+        self.tsFiles = Gtk.TreeStore(str,        Pixbuf, str,        Pixbuf,            int)
+        ## column meaning:           0:filepath  1:icon  2:name      3:plotstyleicon    4:column
+        self.dummy_treestore_row = [None, None, None, None, None]
 
         treeViewCol0 = Gtk.TreeViewColumn("Plot")        # Create a TreeViewColumn
         colCellPlot = Gtk.CellRendererPixbuf()        # Create a column cell to display text
@@ -98,23 +98,21 @@ class Handler:
         try:
             return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
         except:
-            return False    ## because the user might supply, e.g., a name of a data column
-    # }}}
-    def isMulticolumnFile(self, itemFullName): # {{{ ## TODO
+            return False    ## catch errors - the user might supply, e.g., a name of a data column
+        # }}}
+    def isMulticolumnFile(self, itemFullName): # {{{
         try:                    
             data_array, header, parameters = robust_csv_parser.loadtxt(itemFullName, sizehint=1000)
-            print("len header", len(header))
             return len(header)>2
-        except:
-            print("could not read %s", itemFullName)
+        except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
             return False
-# }}}
+        # }}}
     def populateTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
         ## Returns whether the row at basepath can be selected
 
+        ## If we update the whole tree, it has to be cleared first. 
+        ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
         if parent == None:
-            ## If we update the whole tree, it has to be cleared first. 
-            ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
             self.lockTreeViewEvents = True
             self.tsFiles.clear()
             self.clearAllPlotIcons(self.tsFiles.get_iter_first())
@@ -126,7 +124,7 @@ class Handler:
             itemIcon = Gtk.IconTheme.get_default().load_icon('go-up', 8, 0) # Generate a default icon
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
-            currentIter = treeStore.append(parent, [basepath, itemIcon, '..', plotstyleIcon])  # Append the item to the TreeStore
+            currentIter = treeStore.append(parent, [basepath, itemIcon, '..', plotstyleIcon, -1])  # Append the item to the TreeStore
             treeStore.append(currentIter, self.dummy_treestore_row)
 
         if self.isFolder(basepath):
@@ -136,7 +134,7 @@ class Handler:
             ## Filter the files
             fileFilterString = w('enFileFilter').get_text().strip()
             if fileFilterString != "":
-                itemFullNames = [item for item in itemFullNames 
+                itemFullNames = [itemFullName for itemFullName in itemFullNames 
                         if (fileFilterString in os.path.basename(itemFullName) or self.isFolder(itemFullName))]
 
             ## Sort alphabetically, all folders above files
@@ -152,17 +150,15 @@ class Handler:
                 displayedName = os.path.basename(itemFullName)
                 plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
                 plotstyleIcon.fill(0xffffffff)
-                currentIter = treeStore.append(parent, [itemFullName, itemIcon, displayedName, plotstyleIcon])
+                currentIter = treeStore.append(parent, [itemFullName, itemIcon, displayedName, plotstyleIcon, -1])
                 if isFolder or isMultiColumnFile:  
                     treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
                 itemCounter += 1                                    #increment the item counter
             if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
-        elif self.isMulticolumnFile(basepath):
-            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=1000000)
-            print("Warning: not fully implemented:  scan the file for datasets/columns/whatever, list them here")
-
-            ## Populate a folder with files/subdirs in a directory
-            itemFullNames = header
+        elif self.isMulticolumnFile(basepath):          ## Multicolumn means x-column and two or more y-columns
+            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=1000)
+            ## Populate a file with files/subdirs in a directory
+            columnNames = header
 
             ## Filter the column names TODO
             #columnFilterString = w('enColumnFilter').get_text().strip()
@@ -172,13 +168,15 @@ class Handler:
 
             ## Populate the node
             itemCounter = 0
-            for columnName in header:
+            for columnNumber, columnName in enumerate(columnNames):
                 itemIcon = Gtk.IconTheme.get_default().load_icon('go-next', 8, 0)
                 plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
                 plotstyleIcon.fill(0xffffffff)
-                currentIter = treeStore.append(parent, [columnName, itemIcon, columnName, plotstyleIcon])
+                currentIter = treeStore.append(parent, [basepath, itemIcon, columnName, plotstyleIcon, columnNumber])
                 itemCounter += 1                                    #increment the item counter
             if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
+        elif basepath[-4:] == ".opj":
+            warnings.warn("Not implemented: Origin projects plotting not implemented yet")
         else:
             print("Warning: program wants to populate a single-column file")
 
@@ -208,7 +206,6 @@ class Handler:
         if len(pathlist) == 0: return
 
         ## Generate the color palette
-        #color_palette = ["g"]*len(pathlist) ## TODO use some real palette
         color_pre_map = np.linspace(0.05, .95, len(pathlist)+1)[:-1]
         color_palette = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
 
@@ -217,11 +214,11 @@ class Handler:
         for (path, color_from_palette) in zip(pathlist, color_palette):
             try:
                 ## Plot the line first
-                if self.tsFiles.get_value(self.tsFiles.get_iter(path), 2) == 'go-next': ## FIXME identify a file column more reliably
-                    pass
-                else:
-                    file_name = self.tsFiles.get_value(self.tsFiles.get_iter(path), 0)
-                    self.plot_record(file_name, plot_style={'color':color_from_palette})
+                file_name       = self.tsFiles.get_value(self.tsFiles.get_iter(path), 0)
+                column_number   = self.tsFiles.get_value(self.tsFiles.get_iter(path), 4)
+                self.plot_record(file_name, 
+                        xcolumn=0, ycolumn=column_number if column_number>0 else 1, 
+                        plot_style={'color':color_from_palette})
 
                 ## If no exception occurs, colour the icon according to the line colour
                 self.tsFiles.get_value(self.tsFiles.get_iter(path), 3).fill(self.array2rgbhex(color_from_palette))
@@ -252,7 +249,10 @@ class Handler:
             except: pass
         return np.array(x0),  np.array(y0)
         # }}}
-    def parseFile(self, infile, xcolumn=0, ycolumn=1):
+    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
+        ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
+
+        ## Load the data
         if   self.guess_file_type(infile) == 'opj':
             return ## NOTE: support for liborigin not tested yet! 
         elif self.guess_file_type(infile) == 'xls':
@@ -267,28 +267,19 @@ class Handler:
             #output.close()
             #x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
             data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000000)
-            x, y, header = data_array.T[0], data_array.T[1], header
-        return x, y, header 
-    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
-        ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
+            x, y, header = data_array.T[xcolumn], data_array.T[ycolumn], header
 
         #try:
-            #try:                    ## if possible, use also the first row as numeric data
-        x, y, header = self.parseFile(infile)
-        print(x, y, header)
-
-        try:
-            #print (df.columns)
-            x, y = self.safe_to_float(x, y, x0=[float(header[xcolumn])], y0=[float(header[ycolumn])])
-            xlabel, ylabel = "x", "y"
-        except ValueError:      ## if conversion fails, use the first row as column names instead
-            x, y = self.safe_to_float(x, y, x0=[], y0=[])
-            xlabel, ylabel = header[xcolumn], header[ycolumn]
+            #x, y = self.safe_to_float(x, y, x0=[float(header[xcolumn])], y0=[float(header[ycolumn])])
+            #xlabel, ylabel = "x", "y"
+        #except ValueError:      ## if conversion fails, use the first row as column names instead
+            #x, y = self.safe_to_float(x, y, x0=[], y0=[])
+            #xlabel, ylabel = header[xcolumn], header[ycolumn]
 
             #print("Warning, file %s could not be loaded as data file" % infile)
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
-        self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel(ylabel)
+        self.ax.set_xlabel(header[xcolumn])
+        self.ax.set_ylabel(header[ycolumn])
         #except:
             #pass
 # }}}
@@ -365,16 +356,18 @@ class Handler:
         self.canvas.draw()
     # }}}
     def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
+        ## TODO reasonable behaviour for block-selection over different unpacked directories/files
         ## Expand a directory by clicking, but do not allow user to select it
         treeIter        = self.tsFiles.get_iter(treePath)
         fileNamePath    = self.tsFiles.get_value(treeIter, 0)
+        columnNumber    = self.tsFiles.get_value(treeIter, 4)
 
-        #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
-
+        #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events OBSOLETED?
 
         ## Actions must be available even on un-selectable rows:
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-        if self.isFolder(fileNamePath): ### TODO allow expanding multi-column files, too
+        print(columnNumber)
+        if self.isFolder(fileNamePath) or (self.isMulticolumnFile(fileNamePath) and columnNumber in (None, -1, 0)):
             if self.tsFiles.get_value(treeIter, 2) == "..":  
                 ## If the expanded row was "..", do not expand it, instead change to up-dir and refresh whole tree
                 expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
