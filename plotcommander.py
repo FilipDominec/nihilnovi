@@ -178,7 +178,7 @@ class Handler:
         elif basepath[-4:] == ".opj":
             warnings.warn("Not implemented: Origin projects plotting not implemented yet")
         else:
-            print("Warning: program wants to populate a single-column file")
+            print("Warning: file type not recognized")
 
             ## Folder cannot be selected, since they store no data to plot:
 
@@ -366,7 +366,6 @@ class Handler:
 
         ## Actions must be available even on un-selectable rows:
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-        print(columnNumber)
         if self.isFolder(fileNamePath) or (self.isMulticolumnFile(fileNamePath) and columnNumber in (None, -1, 0)):
             if self.tsFiles.get_value(treeIter, 2) == "..":  
                 ## If the expanded row was "..", do not expand it, instead change to up-dir and refresh whole tree
@@ -380,7 +379,6 @@ class Handler:
                 w('treeview1').collapse_row(treePath)
             elif not w('treeview1').row_expanded(treePath) :
                 w('treeview1').expand_row(treePath, open_all=False)
-            #print(selected_row_names)
             #self.restore_treeView_selected_rows(selected_row_names)
             return False
         else:

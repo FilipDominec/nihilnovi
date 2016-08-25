@@ -71,7 +71,7 @@ def loadtxt(file_name, sizehint=None):
         raise IOError('file %s could not be opened for reading' % file_name)
 
     ## Abort if overly long lines
-    if max([len(line) for line in lines]) > maxLineLength:
+    if len(lines)>0 and max([len(line) for line in lines]) > maxLineLength:
         raise IOError('Error: a line longer than %d characters found, the file is probably binary or corrupt' % maxLineLength)
 
     ## Filter out empty lines, and also all that are commented out. If they have a parameter-like syntax, store them in a dict.
@@ -92,7 +92,7 @@ def loadtxt(file_name, sizehint=None):
             if firstNonSkippedLine is None: firstNonSkippedLine = lineNumber
             filteredLines.append(line)
             skippedLinesN += 1
-    if firstNonSkippedLine is None: raise RuntimeError("Error: all lines in the file identified as comments")
+    if firstNonSkippedLine is None: raise RuntimeError("Error: file empty or all lines in the file identified as comments")
     if very_verbose: print("firstNonSkippedLine", firstNonSkippedLine)
 
     ## Cut line end after a comment character is found
