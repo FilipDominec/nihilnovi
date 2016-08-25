@@ -38,7 +38,7 @@ treestore.append(None, [iconpixbuf, "data with a stock icon"])
 #treestore.append(None, [loadedpixbuf, "data with a custom image from disk"])
 
 ## Add a row with a flat-painted image (easy, but not always useful...)
-from gi.repository import GLib, Gtk, Gdk, GObject
+from gi.repository import Gtk, Gdk
 filledpixbuf = Pixbuf.new(Colorspace.RGB, True, 8, 16, 16)  ## In fact, it is RGBA
 filledpixbuf.fill(0xff9922ff) 
 treestore.append(None, [filledpixbuf, "data with a custom color filled image"])
@@ -65,25 +65,45 @@ treestore.append(None, [px.get_pixbuf(), "data with an image loaded from a custo
 
 
 ## Add a row with a custom-drawn image (cannot do)
-import cairo                       # one "cairo" is not ...
-from gi.repository import cairo as gi_cairo     # ... the other "cairo" (which does not even contain ImageSurface)
-drawnpixbuf = filledpixbuf.copy()
-img = cairo.ImageSurface(cairo.FORMAT_ARGB32, 50, 50)
-gi_cairo.set_source_pixbuf(drawnpixbuf)
-cc = cairo.Context(img)
-cc.set_source_rgb(.8, .0, .0) # Cairo uses floats from 0 to 1 for RGB values
-cc.rectangle(5,5,5,30)
-cc.fill()
-cc.set_source_rgb(.5, .9, .2)
-cc.move_to(5,5) ## (not visible, but this is a minor problem)
-cc.line_to(100,100)
-cc.stroke()   ## if I was not interested in Pixbuf, I could easily get the result similar to http://stackoverflow.com/questions/10270795/drawing-in-pygobject-python3#10541984
-## Something is missing here to connect the drawing to pixbuf
-## This was used by somebody, but does not exist in Gtk3: drawnpixbuf = img.get_pixbuf() 
-## This was used by somebody, but does not exist in Gtk3: img.set_source_pixbuf(drawnpixbuf, 0, 0)
-## This was used by somebody, but in Gtk3 it reports that the 'get_data' function is not implemented yet: Pixbuf.new_from_data(img.get_data(), cairo.FORMAT_ARGB32, false, 8, 50,50, 50*3)
-## None of these methods exists in Gtk3, but I believe there must be some reasonable way to do it.
-treestore.append(None, [drawnpixbuf, "data with a custom drawn image, which does not work so far"])
+
+
+
+from gi.repository import GdkPixbuf
+import cairo
+
+
+class MyCellRenderer(Gtk.CellRenderer):
+    def __init__(self, rgb_triplet):
+        Gtk.CellRenderer.__init__(self)
+        self.rgb_triplet = rgb_triplet
+    def do_render(self, cr, widget, bg_area, cell_area, flags):
+        pixbuf = GdkPixbuf.Pixbuf.new(Colorspace.RGB, True, 8, cell_area.width, cell_area.height)
+        Gdk.cairo_set_source_pixbuf(cr, pixbuf, cell_area.x, cell_area.y)
+
+        ## Draw a filled square
+        cr.set_source_rgb(*self.rgb_triplet)
+        cr.rectangle(cell_area.x+1, cell_area.y+1, cell_area.width-2, cell_area.height-2)
+        cr.fill() 
+
+        ## Outline it black 
+        cr.set_source_rgb(0, .8, 0)
+        cr.rectangle(cell_area.x+1, cell_area.y+1, cell_area.width-2, cell_area.height-2)
+        cr.stroke() 
+
+        ## Draw a blue line
+        #cr.set_source_rgb(0, 0, .8)
+        #cr.move_to(cell_area.x+5, cell_area.y+5)
+        #cr.line_to(cell_area.x+15, cell_area.y+15)
+        #cr.stroke()
+
+        ## Semitransparent overwrite of whole image
+        #cr.set_source_rgb(0,0,0)
+        #cr.paint_with_alpha(self.alpha)
+
+
+renderer_pixbuf = MyCellRenderer(rgb_triplet=(1.0,.7, .0))
+column_pixbuf = Gtk.TreeViewColumn("Image", renderer_pixbuf, stock_id=1)
+treeview.append_column(column_pixbuf)
 
 Gtk.main()
 

@@ -1,50 +1,34 @@
-from gi.repository import Gtk, Gdk, GLib
+from gi.repository import Gtk, Gdk
 from gi.repository import GdkPixbuf
 import cairo
 
 class CellRenderFade(Gtk.CellRenderer):
-    def __init__(self, param):
-        super(CellRenderFade, self).__init__()
-        self.alpha = 0
-        self.step = param
-
+    def __init__(self, rgb_triplet):
+        Gtk.CellRenderer.__init__()
+        self.rgb_triplet = rgb_triplet
     def do_render(self, cr, widget, bg_area, cell_area, flags):
-        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
-            '/usr/share/pixmaps/blueman/blueman-rssi-70.png',
-            cell_area.width, cell_area.height, True)
+        pixbuf = GdkPixbuf.Pixbuf.new(Colorspace.RGB, True, 8, cell_area.width, cell_area.height)
         Gdk.cairo_set_source_pixbuf(cr, pixbuf, cell_area.x, cell_area.y)
 
-        ## Draw red filled square
-        cr.set_source_rgb(1, 0, 0)
-        cr.rectangle(cell_area.x, cell_area.y, 10,10)
+        ## Draw a filled square
+        cr.set_source_rgb(rgb_triplet)
+        cr.rectangle(cell_area.x+1, cell_area.y+1, cell_area.width-2, cell_area.height-2)
         cr.fill() 
 
-        ## Draw green outlined square
+        ## Outline it black 
         cr.set_source_rgb(0, .8, 0)
-        cr.rectangle(cell_area.x+5, cell_area.y+5, 10,10)
+        cr.rectangle(cell_area.x+1, cell_area.y+1, cell_area.width-2, cell_area.height-2)
         cr.stroke() 
 
         ## Draw blue line
-        cr.set_source_rgb(0, 0, .8)
-        cr.move_to(cell_area.x+5, cell_area.y+5)
-        cr.line_to(cell_area.x+15, cell_area.y+15)
-        cr.stroke()
+        #cr.set_source_rgb(0, 0, .8)
+        #cr.move_to(cell_area.x+5, cell_area.y+5)
+        #cr.line_to(cell_area.x+15, cell_area.y+15)
+        #cr.stroke()
 
         ## Semitransparent overwrite of whole image
         cr.set_source_rgb(0,0,0)
         cr.paint_with_alpha(self.alpha)
-
-
-        GLib.timeout_add(15, self.start_fade, widget, cell_area)
-
-
-    def start_fade(self, widget, cell_area):
-        if self.alpha > 1:
-            return
-
-        print('Fade', self.alpha)
-        widget.queue_draw()
-        self.alpha += self.step
 
 class CellRendererFadeWindow(Gtk.Window):
 
