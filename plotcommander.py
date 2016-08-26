@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
-
 import gi, sys, os, signal, stat, traceback
 import numpy as np
 import robust_csv_parser

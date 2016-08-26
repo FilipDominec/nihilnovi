@@ -16,6 +16,8 @@ This module implements following improvements:
     with a big binary file.
 4)  It recognizes parameters in the file header, and returns them as a dict.
 5)  If not specified otherwise, it does not clog the stderr with error reports .
+
+# TODO https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 """
 
 ## Import common moduli
