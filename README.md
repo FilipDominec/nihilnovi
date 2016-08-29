@@ -27,8 +27,7 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 
 On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run:
 
-    sudo apt-get install python3-matplotlib python3-pip python3-numpy python3-gi-cairo python3-pandas
-    sudo apt-get install python3-xlrd		## optional packages
+    sudo apt-get install python3-matplotlib python3-numpy python3-gi-cairo
 
 Then get the fresh version by pulling this project, and launch the program directly:
 
@@ -36,14 +35,12 @@ Then get the fresh version by pulling this project, and launch the program direc
     cd plotcommander
     python3 plotcommander.py
 
-In the future, seamless browsing of multiple-dataset files will depend also on:
+### Other formats
 
-    ## LibHDF
-    sudo apt-get install python-h5py			## TODO - may be substituted by pandas
-    
-	## LibOrigin for python
-	sudo apt-get install -y python-pip cython doxygen cmake libboost-all-dev
-	pip install Cython
+In the future, seamless browsing of multiple-dataset files will probably bring also following dependencies
+
+	## .OPJ - Origin files
+	sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
 	git clone https://github.com/Saluev/python-liborigin2.git
 	cd python-liborigin2/
 	mkdir build
@@ -52,8 +49,15 @@ In the future, seamless browsing of multiple-dataset files will depend also on:
 	make
 	doxygen Doxyfile
 	cd ..
-	sudo python setup.py install
+	sudo python3 setup.py install
 	cd ..
+
+    ## .HDF5 - Hierarchical data format
+    sudo apt-get install python3-h5py
+    
+	## .XLS - Excel files (and what about .ODS?)
+    sudo apt-get install python3-xlrd
+
 
 On Windows, the proposed distribution approach is to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package.
 
