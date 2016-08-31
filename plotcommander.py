@@ -192,12 +192,10 @@ class Handler:
 #cairo_surface_destroy (s);
 
             ## OPTION 4
-            cairo_context = self.canvas.get_window().cairo_create()
-
-            window = w('treeview1').get_window()
-
-            ctx = Gdk.cairo_create(window)
-            ctx.set_source_pixbuf(pixbuf, 0, 0)
+            #cairo_context = self.canvas.get_window().cairo_create()
+            #window = w('treeview1').get_window()
+            #ctx = Gdk.cairo_create(window)
+            #ctx.set_source_pixbuf(pixbuf, 0, 0)
             #self.image = cairo.ImageSurface.create_from_png('img/logo.png')
 
             ## OPTION 5
