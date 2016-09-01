@@ -227,6 +227,11 @@ class Handler:
                 error_counter += 1
         #self.ax.legend(loc="auto")
         self.ax.grid(True)
+
+        if w('chk_autoscale').get_active():
+            self.ax.relim()
+            self.ax.autoscale_view()
+        self.canvas.draw()
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
         # }}}
     ## == FILE AND DATA UTILITIES ==
@@ -350,9 +355,6 @@ class Handler:
         ## Update the graphical presentation
         self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
         self.plot_all_sel_records()     ## then show the selected ones
-        self.ax.relim()
-        self.ax.autoscale_view()
-        self.canvas.draw()
     # }}}
     def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
         ## TODO reasonable behaviour for block-selection over different unpacked directories/files
