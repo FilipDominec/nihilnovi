@@ -100,6 +100,8 @@ def loadtxt(file_name, sizehint=None):
     ## Cut line end after a comment character is found
     for commentCharLineMiddle in commentCharsLineMiddle: 
         filteredLines = [line.split(commentCharLineMiddle,1)[0] for line in filteredLines]
+    ## Remove empty lines (which could otherwise confuse the column number estimator)
+    filteredLines = [line for line in filteredLines if line.strip()!=""]
     if very_verbose: print("filteredLines:", filteredLines)
 
 
@@ -116,13 +118,13 @@ def loadtxt(file_name, sizehint=None):
         ## the whole line with the count of numbers it appears to contain. This naturally depends on our choice of the field separator.)
         columnsOnLines = np.array([chosen_len_fn(splitLine) for splitLine in [regExpSep.split(line.strip()) for line in filteredLines]])
 
+        ## If the first column is header, do not let it spoil the column-number statistics
+        if len(columnsOnLines)>1 and columnsOnLines[0]==0: columnsOnLines = columnsOnLines[1:]
+
         ## Compute the statistics of numeric-valued columns at each line 
         columnsOnLinesAvg = np.sum(columnsOnLines)/len(columnsOnLines)
         columnsOnLinesSD  = np.sum(columnsOnLines**2)/len(columnsOnLines)-columnsOnLinesAvg**2
         tryColSeparatorFitness = columnsOnLinesAvg - unevenColumnLengthPenalty*columnsOnLinesSD
-        if very_verbose:
-            print("columnsOnLines, columnsOnLinesAvg, unevenColumnLengthPenalty,int(columnsOnLinesAvg+0.5)", 
-                    columnsOnLines, columnsOnLinesAvg, unevenColumnLengthPenalty,int(columnsOnLinesAvg+0.5))
 
         ## Choose parser settings that give the highest average and simultaneously the lowest deviation for the number of fields per line
         ## Note that use of < instead of <= is important to prefer less greedy regexp (e.g. "\s" over "\s*") and 
@@ -131,6 +133,11 @@ def loadtxt(file_name, sizehint=None):
             resultingColSeparator           = tryColSeparator
             resultingColSeparatorFitness    = tryColSeparatorFitness
             resultingColumnsOnLines         = int(columnsOnLinesAvg+0.99)        ## (rounding up favors keeping more data whenever possible)
+        if very_verbose:
+            print("tryColSeparator columnsOnLines, columnsOnLinesAvg, int(columnsOnLinesAvg+0.99), tryColSeparatorFitness, "+
+                    "resultingColumnsOnLines", 
+                    tryColSeparator, columnsOnLines, columnsOnLinesAvg, int(columnsOnLinesAvg+0.99), tryColSeparatorFitness,
+                    resultingColumnsOnLines)
     if resultingColumnsOnLines == 0: raise RuntimeError("Error: estimated that there are zero data columns")
     if very_verbose: print("resultingColSeparator, resultingColumnsOnLines", resultingColSeparator, resultingColumnsOnLines)
 
@@ -153,8 +160,8 @@ def loadtxt(file_name, sizehint=None):
     ## Match the header length to the detected column number
     if len(columnsInHeader) != resultingColumnsOnLines:   
         if verbose: 
-           warnings.warn("Warning: found %d labels in header for total %d columns; truncating or adding next by the " +
-                "rule 'x, column1, column2...'" % (len(columnsInHeader), resultingColumnsOnLines), RuntimeWarning)
+           warnings.warn(("Warning: found %d labels in header for total %d columns; truncating or adding next by the " +
+                "rule 'x, column1, column2...'") % (len(columnsInHeader), resultingColumnsOnLines), RuntimeWarning)
     if columnsInHeader == [] and resultingColumnsOnLines>0: columnsInHeader = ['x']
     while len(columnsInHeader) < resultingColumnsOnLines:           ## extend it if shorter
         columnsInHeader.append("column%d"%len(columnsInHeader))
@@ -196,7 +203,8 @@ def loadtxt(file_name, sizehint=None):
 
     assert len(data_array) >= 1
     assert len(expandedColumnsInHeader) == len(data_array[0])
-
+    if very_verbose:
+        print("data_array, expandedColumnsInHeader, parameters", data_array, expandedColumnsInHeader, parameters)
     return data_array, expandedColumnsInHeader, parameters
 
 
