@@ -228,9 +228,11 @@ class Handler:
         #self.ax.legend(loc="auto")
         self.ax.grid(True)
 
-        if w('chk_autoscale').get_active():
-            self.ax.relim()
-            self.ax.autoscale_view()
+        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
+        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
+        #if w('chk_autoscale').get_active():
+            #self.ax.relim()
+            #self.ax.autoscale_view()
         self.canvas.draw()
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
         # }}}
