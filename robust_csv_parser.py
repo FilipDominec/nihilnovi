@@ -42,7 +42,7 @@ commentCharsLineMiddle      = ['#']
 parameterSplitterOtherwise  = ['=']
 strict_table_layout         = False
 
-maxLineLength               = 1024          ## hardly any numeric table in ASCII will have more than one 1kB per line 
+maxLineLength               = 10000          ## hardly any numeric table in ASCII will have more than one 10kB per line 
 
 headerOrdinateAllowOmit     = True             ## e.g. three-column CSV files sometimes have only two names in header
 headerOrdinateSuggestName   = 'x'              ## ... in such a case, the x-axis will be named as such
