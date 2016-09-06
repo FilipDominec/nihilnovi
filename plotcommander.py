@@ -104,7 +104,7 @@ class Handler:
         # }}}
     def isMulticolumnFile(self, itemFullName): # {{{
         try:                    
-            data_array, header, parameters = robust_csv_parser.loadtxt(itemFullName, sizehint=1000)
+            data_array, header, parameters = robust_csv_parser.loadtxt(itemFullName, sizehint=10000)
             return len(header)>2
         except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
             return False
@@ -158,7 +158,7 @@ class Handler:
                 itemCounter += 1                                    #increment the item counter
             if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
         elif self.isMulticolumnFile(basepath):          ## Multicolumn means x-column and two or more y-columns
-            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=1000)
+            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
             ## Populate a file with files/subdirs in a directory
             columnNames = header
 
