@@ -217,7 +217,8 @@ class Handler:
                         plot_style={'color':color_from_palette})
 
                 ## If no exception occurs, colour the icon according to the line colour
-                self.tsFiles.get_value(self.tsFiles.get_iter(path), 3).fill(self.array2rgbhex(color_from_palette))
+                icon = self.tsFiles.get_value(self.tsFiles.get_iter(path), 3)
+                if icon: icon.fill(self.array2rgbhex(color_from_palette))
 
             except ValueError:
                 traceback.print_exc()
@@ -237,7 +238,7 @@ class Handler:
     def guess_file_type(self, infile):# {{{
         if type(infile) != str: 
             return 'unknown'
-        if   infile[-4:].lower() in ('.csv', '.dat',):
+        if   infile[-4:].lower() in ('.csv', '.dat', '.txt',):
             return 'csv'
         elif infile[-4:].lower() in ('.xls'):
             return 'xls'
@@ -258,14 +259,18 @@ class Handler:
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
         ## Load the data
-        if   self.guess_file_type(infile) == 'opj':
-            return ## NOTE: support for liborigin not tested yet! 
-        elif self.guess_file_type(infile) == 'xls':
+        file_type = self.guess_file_type(infile)
+        if  file_type == 'opj':
+            warnings.warn('support for liborigin not implemented yet!')
+            return 
+        elif file_type == 'xls':
+            warnings.warn('support for multiple xls sheets not implemented  yet!')
+            return 
             xl = pd.ExcelFile(infile, header=1) ##  
             ## TODO: print(xl.sheet_names)    a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
             df = xl.parse() 
             x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
-        else:             ## for all remaining filetypes, try to interpret as a text table
+        elif file_type == 'csv':
             #from io import StringIO ## this is just a hack to avoid loading different comment lines
             #output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
             #df = pd.read_csv(output, comment='#', delim_whitespace=True, error_bad_lines=False) 
@@ -273,6 +278,9 @@ class Handler:
             #x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
             data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000000)
             x, y, header = data_array.T[xcolumn], data_array.T[ycolumn], header
+        else:
+            ## for all remaining filetypes, abort plotting quietly
+            return
 
         #try:
             #x, y = self.safe_to_float(x, y, x0=[float(header[xcolumn])], y0=[float(header[ycolumn])])
