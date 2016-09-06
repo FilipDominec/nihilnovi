@@ -159,25 +159,21 @@ class Handler:
             ## Populate a file with files/subdirs in a directory
             columnNames = header
 
-            ## Filter the column names TODO
-            #columnFilterString = w('enColumnFilter').get_text().strip()
-            #if columnFilterString != "":
-                #itemFullNames = [item for item in itemFullNames 
-                        #if (columnFilterString in os.path.basename(itemFullName) or self.isFolder(itemFullName))]
-
             ## Populate the node
+            columnFilterString = w('enColFilter').get_text().strip()
             itemCounter = 0
             for columnNumber, columnName in enumerate(columnNames):
-                itemIcon = Gtk.IconTheme.get_default().load_icon('go-next', 8, 0)
-                plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
-                plotstyleIcon.fill(0xffffffff)
-                currentIter = treeStore.append(parent, [basepath, itemIcon, columnName, plotstyleIcon, columnNumber])
-                itemCounter += 1                                    #increment the item counter
-            if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
+                if columnFilterString == "" or columnFilterString in columnName:            ## Filter the column names
+                    itemIcon = Gtk.IconTheme.get_default().load_icon('go-next', 8, 0)
+                    plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+                    plotstyleIcon.fill(0xffffffff)
+                    currentIter = treeStore.append(parent, [basepath, itemIcon, columnName, plotstyleIcon, columnNumber])
+                    itemCounter += 1                                    #increment the item counter
+            if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back
         elif basepath[-4:] == ".opj":
             warnings.warn("Not implemented: Origin projects plotting not implemented yet")
         else:
-            print("Warning: file type not recognized")
+            warnings.warn("File type not recognized")
 
     ## === GRAPHICAL PRESENTATION ===
     def array2rgbhex(self,arr3,alpha=1): # {{{
@@ -281,7 +277,6 @@ class Handler:
         #except ValueError:      ## if conversion fails, use the first row as column names instead
             #x, y = self.safe_to_float(x, y, x0=[], y0=[])
             #xlabel, ylabel = header[xcolumn], header[ycolumn]
-
             #print("Warning, file %s could not be loaded as data file" % infile)
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
         self.ax.set_xlabel(header[xcolumn])
@@ -299,7 +294,6 @@ class Handler:
                 remember_treeview_states(treeStore.iter_children(treeIter))
                 treeIter=treeStore.iter_next(treeIter)
         remember_treeview_states(treeStore.get_iter_first())
-        print("remember_treeView_expanded_rows: expanded_row_names", expanded_row_names)
         return expanded_row_names
         # }}}
     def remember_treeView_selected_rows(self, treeStore, treeView):# {{{
@@ -343,6 +337,7 @@ class Handler:
         ## The dummy row has to be removed AFTER this, otherwise the empty treeView row will NOT expand)
         if treeStore.iter_children(treeIter):  
             treeStore.remove(treeStore.iter_children(treeIter))         
+    #}}}
     def on_treeview1_row_collapsed(self, treeView, treeIter, treePath):# {{{ 
         ## Remove all child nodes of the given row (useful mostly to prevent de-syncing from some changes in the filesystem)
         #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
@@ -376,13 +371,10 @@ class Handler:
                 selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
                 self.populateTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
                         parent=None, include_up_dir=True)       
-                #self.restore_treeView_expanded_rows(expanded_row_names) TODO TEST
-                #self.restore_treeView_selected_rows(selected_row_names) TODO TEST
             elif w('treeview1').row_expanded(treePath):
                 w('treeview1').collapse_row(treePath)
             elif not w('treeview1').row_expanded(treePath) :
                 w('treeview1').expand_row(treePath, open_all=False)
-            #self.restore_treeView_selected_rows(selected_row_names)
             return False
         else:
             return True
