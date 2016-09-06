@@ -247,14 +247,6 @@ class Handler:
         else:
             return 'unknown'
         # }}}
-    def safe_to_float(self, x_raw, y_raw, x0=[], y0=[]):# {{{
-        
-        # safe simultaneous conversion of both data columns; error in either value leads to skipped row
-        for x_raw, y_raw in zip(x_raw,y_raw): 
-            try: x1, y1 = float(x_raw), float(y_raw); x0.append(x1); y0.append(y1)
-            except: pass
-        return np.array(x0),  np.array(y0)
-        # }}}
     def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
@@ -271,29 +263,15 @@ class Handler:
             df = xl.parse() 
             x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
         elif file_type == 'csv':
-            #from io import StringIO ## this is just a hack to avoid loading different comment lines
-            #output = StringIO(); output.writelines(line for line in open(infile) if line[:1] not in "!;,%"); output.seek(0)
-            #df = pd.read_csv(output, comment='#', delim_whitespace=True, error_bad_lines=False) 
-            #output.close()
-            #x, y = df.values.T[0], df.values.T[1] ## TODO: selection of columns!
             data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000000)
             x, y, header = data_array.T[xcolumn], data_array.T[ycolumn], header
         else:
-            ## for all remaining filetypes, abort plotting quietly
-            return
+            return          ## for all remaining filetypes, abort plotting quietly
 
-        #try:
-            #x, y = self.safe_to_float(x, y, x0=[float(header[xcolumn])], y0=[float(header[ycolumn])])
-            #xlabel, ylabel = "x", "y"
-        #except ValueError:      ## if conversion fails, use the first row as column names instead
-            #x, y = self.safe_to_float(x, y, x0=[], y0=[])
-            #xlabel, ylabel = header[xcolumn], header[ycolumn]
-            #print("Warning, file %s could not be loaded as data file" % infile)
+        ## Plot them
         self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
         self.ax.set_xlabel(header[xcolumn])
         self.ax.set_ylabel(header[ycolumn])
-        #except:
-            #pass
 # }}}
     def remember_treeView_expanded_rows(self, treeStore, treeView):    # {{{
         ## returns a list of paths of expanded files/directories
