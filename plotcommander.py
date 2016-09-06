@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
-import gi, sys, os, signal, stat, traceback
+import gi, sys, os, signal, stat
 import numpy as np
 import robust_csv_parser
+
+import traceback, faulthandler ## Debugging library crashes
+faulthandler.enable()
 
 ## Plotting dependencies and settings
 gi.require_version('Gtk', '3.0')
@@ -361,6 +364,10 @@ class Handler:
         columnNumber    = self.tsFiles.get_value(treeIter, 4)
 
         #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events OBSOLETED?
+        #lockTreeViewEvents_tmp = self.lockTreeViewEvents       ## TODO understand and clear out when select events can occur
+        #self.lockTreeViewEvents = True
+        # ...
+        #self.lockTreeViewEvents = lockTreeViewEvents_tmp
 
         ## Actions must be available even on un-selectable rows:
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
