@@ -236,6 +236,8 @@ class Handler:
         # }}}
     ## == FILE AND DATA UTILITIES ==
     def guess_file_type(self, infile):# {{{
+        if type(infile) != str: 
+            return 'unknown'
         if   infile[-4:].lower() in ('.csv', '.dat',):
             return 'csv'
         elif infile[-4:].lower() in ('.xls'):
