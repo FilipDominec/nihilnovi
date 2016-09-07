@@ -5,12 +5,12 @@ A lightweight application allowing to browse data files on your disk, and see th
 
 
 Key points:
- * Data file viewing, comparison and other simple tasks should be **as easy as browsing one's photo gallery**
- * Data preprocessing should **allow the flexibility of writing standalone scripts** in *[Python](https://www.python.org/)*+*[NumPy](http://www.numpy.org/)*
- * Plot options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
- * Keep the **program code reusable**, i.e., as short and clean as possible.
- * Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
- * **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
+ * [x] Data file viewing, comparison and other simple tasks should be **as easy as browsing one's photo gallery**
+ * [ ] Data preprocessing should **allow the flexibility of writing standalone scripts** in *[Python](https://www.python.org/)*+*[NumPy](http://www.numpy.org/)*
+ * [ ] Plot options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
+ * [ ] **Program code is kept short** and as clean as possible to enable its reuse in other projects
+ * [ ] Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
+ * [x] **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
 
 ### Motivation 
 Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results after 10 or 20 years.
@@ -73,7 +73,26 @@ Running `./plotcommander.py test_files/minimal.dat` will open a window showing a
 
 Using the excel parser, it can also plot the first pair of columns (from the first sheet) XLS files. An example is in `./plotcommander.py test_files/xlstest.xls`.
 
+### Reusable parts of the code (which may be useful for other projects)
+#### Robust CSV parser
+I tried to write a module that determines the number of columns in a text file and returns all data as a *numpy* array. Currently I believe it is more reliable than similar functions from pandas and numpy. 
+
+#### Alpha-numeric sorting of files
+Usual sorting algorithms do not care much about the numerical values embedded in a string.
+This means e.g. that 'temperature-12' may wrongly come after 'temperature12', or '12200fish' will in 
+most cases come after '0.123E+05fish'. For scientific data manipulation, this is not satisfactory.
+
+The `sort_alpha_numeric.py` module offers the `sort_alpha_numeric()` function which accepts a list of strings. For each of them,
+it uses a regular expression to split it into a sub-list of interleaved non-numeric and numeric sections, the 
+latter being converted to true float numbers. Then, the proper order of these sub-lists can be efficiently found, 
+and the original names are returned. 
+
+To test the intelligent alpha-numeric sorting, try to call it add arguments as such:
+```python3 sort_alpha_numeric.py xx-123.4zz xx-1.233e+002yy xx-123.2yy xx-123.4yy```
+
 ### PAQ - presumably asked questions
+#### Q: Can I open Origin (\*.opj) files now?
+A: Not yet, since *liborigin* needs to be translated to python3. I will try to fix it. 
 
 
 ### To-Do 
