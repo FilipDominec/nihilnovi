@@ -140,7 +140,9 @@ class Handler:
                         if (fileFilterString in os.path.basename(itemFullName) or self.isFolder(itemFullName))]
 
             ## Sort alphabetically, all folders above files
-            itemFullNames.sort()
+            #itemFullNames.sort()
+            import sort_alpha_numeric
+            itemFullNames = sort_alpha_numeric.sort_alpha_numeric(itemFullNames)
             itemFullNames = [f for f in itemFullNames if self.isFolder(f)] + [f for f in itemFullNames if not self.isFolder(f)] 
 
             ## Populate the node
