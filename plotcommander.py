@@ -142,7 +142,7 @@ class Handler:
             ## Sort alphabetically, all folders above files
             #itemFullNames.sort()
             import sort_alpha_numeric
-            itemFullNames = sort_alpha_numeric.sort_alpha_numeric(itemFullNames)
+            itemFullNames = sorted(itemFullNames, key=sort_alpha_numeric.split_alpha_numeric)
             itemFullNames = [f for f in itemFullNames if self.isFolder(f)] + [f for f in itemFullNames if not self.isFolder(f)] 
 
             ## Populate the node

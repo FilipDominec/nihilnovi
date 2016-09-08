@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 #-*- coding: utf-8 -*-
 """
 Usual sorting algorithms do not care much about the numerical values embedded in a string.
@@ -14,34 +14,17 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
 >>> python3 sort_alpha_numeric.py xx-123.4zz xx-1.233e+002yy xx-123.2yy xx-123.4yy
 """
 
-
 import re
-#regExpPar = re.compile('[-+]?\d+(\.(\d*)?)?([eE]([-+])?\d+)?')
-#regExpPar = re.compile('\d+(\.(\d*)?)?([eE]([-+])?\d+)?')
-#regExpPar = re.compile('(\d+(\.\d*)?(e[+-]?\d+)?)')
-#print(regExpPar.findall(test))
-
-
 def generate_numeric_pairs(instring):
     span0, span2 = 0, 0
-    for match in re.finditer('-?(((\d+(\.\d*)?)|(\.\d+))([eE][+-]?\d+)?)', instring):
+    for match in re.finditer('[-+]?(((\d+(\.\d*)?)|(\.\d+))([eE][+-]?\d+)?)', instring):
         span1, span2 = match.span()
-        #alphic, numeric = instring[span0:span1], instring[span1:span2]
-        yield instring[span0:span1], float(instring[span1:span2])
-        #print('_'*span0 + alphic + '\n' + '_'*(span1) + numeric)
+        yield instring[span0:span1], float(instring[span1:span2])   ## non-numeric part and numeric part
         span0 = span2
     if len(instring)>0 and span2<len(instring):
-        yield '', instring[span2:]
-        #print('_'*(span2) + instring[span2:])
-        #print "'%s' was found between the indices %d" % (match.group(), match.span()))
-#def sort_array_by_another(being_sorted, determining_order):
+        yield instring[span2:], 0                  ## do not forget the last non-numeric part, pad with zero
 def split_alpha_numeric(instring):
     return list(generate_numeric_pairs(instring))
-def sort_alpha_numeric(inlist):
-    splitted_and_original_names = [(split_alpha_numeric(name), name) for name in inlist]
-    splitted_and_original_names.sort()
-    return [name[1] for name in splitted_and_original_names]
-
 
 if __name__ == "__main__":
     import sys
@@ -51,4 +34,4 @@ if __name__ == "__main__":
         print("Unsorted:")
         print(sys.argv[1:])
         print("\nSorted:")
-        print(sort_alpha_numeric(sys.argv[1:]))
+        print(sorted(sys.argv[1:], key=split_alpha_numeric))
