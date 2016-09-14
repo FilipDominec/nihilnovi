@@ -238,13 +238,13 @@ class Handler:
         # }}}
     ## == FILE AND DATA UTILITIES ==
     def guess_file_type(self, infile):# {{{
-        if type(infile) != str: 
+        if not isinstance(infile, str):         ## maybe a directory
             return 'unknown'
-        if   infile[-4:].lower() in ('.csv', '.dat', '.txt',):
+        if   infile.lower().endswith('.csv') or infile.lower().endswith('.dat') or infile.lower().endswith('.txt',):
             return 'csv'
-        elif infile[-4:].lower() in ('.xls'):
+        elif infile.lower().endswith('.xls'):
             return 'xls'
-        elif infile[-4:].lower() in ('.opj'):       
+        elif infile.lower().endswith('.opj'):
             return 'opj'
         else:
             return 'unknown'
@@ -410,6 +410,8 @@ Gtk.main()
 
 
     # future todos:
+    #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
+    #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
     #  * select record by clicking in the graph, right-click menu in the list)
     #        http://scienceoss.com/interactively-select-points-from-a-plot-in-matplotlib/#more-14
     #        http://scienceoss.com/interacting-with-figures-in-python/
