@@ -1,13 +1,11 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
-import gi, sys, os, signal, stat
-import numpy as np
-import robust_csv_parser
 
+import gi, sys, os, signal, stat, warnings
+import numpy as np
 import traceback, faulthandler ## Debugging library crashes
 faulthandler.enable()
 
-## Plotting dependencies and settings
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from gi.repository import Gdk
@@ -16,7 +14,9 @@ from gi.repository.GdkPixbuf import Pixbuf,Colorspace
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
-import pandas as pd
+
+import robust_csv_parser
+import sort_alpha_numeric
 
 
 ## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
@@ -26,6 +26,7 @@ matplotlib.rcParams['axes.linewidth'] = .5
 matplotlib.rcParams['savefig.facecolor'] = "white"
 #import FDMeasurementRecords
 
+NO_COLUMN, NO_SPREADSHEET = -1, -1  
 class Handler:
     ## == initialization == 
     def __init__(self): #{{{
@@ -52,9 +53,9 @@ class Handler:
 
 
         ## TreeStore and ListStore initialization
-        self.tsFiles = Gtk.TreeStore(str,        Pixbuf, str,        Pixbuf,            int)
-        ## column meaning:           0:filepath  1:icon  2:name      3:plotstyleicon    4:column
-        self.dummy_treestore_row = [None, None, None, None, None]
+        self.tsFiles = Gtk.TreeStore(str,          Pixbuf,   str,      Pixbuf,            int,        int,             str)
+        self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
+        self.dummy_treestore_row = [None for x in self.treeStoreColumns.keys()]
 
         treeViewCol0 = Gtk.TreeViewColumn("Plot")        # Create a TreeViewColumn
         colCellPlot = Gtk.CellRendererPixbuf()        # Create a column cell to display text
@@ -78,7 +79,7 @@ class Handler:
 
         ## If a directory is specified, just set it as the root of the file list. If none, use current working dir.
         self.treeViewRootDir = os.getcwd() if len(sys.argv)<=1  else  sys.argv[1]
-        self.populateTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)
+        self.populateTreeStore(self.tsFiles, reset_path=self.treeViewRootDir)
         self.plot_reset()
         self.plot_all_sel_records()
 
@@ -89,6 +90,153 @@ class Handler:
 
         #}}}
     ## === FILE HANDLING ===
+    def is_dir(self,filename): # {{{
+        return stat.S_ISDIR(os.stat(filename).st_mode)
+        # }}}
+    def row_type_from_fullpath(self, fullpath):# {{{
+        """
+        Known row types:
+
+            #Type                   row_is_leaf row_can_plot    row_icon
+            dir                     0           0               ''
+            updir                   1           0               'go-up'
+            csvtwocolumn            1           1               ''
+            csvmulticolumn          0           0               ''
+            xlsfile                 0           0               ''
+            xlsspread               0           0               ''
+            xlscolumn               1           1               ''
+            opjfile                 0           0               ''
+            opjgraph                0           0               ''
+            opjspread               0           0               ''
+            opjcolumn               1           1               ''
+            unknown                 1           0               ''
+        """
+        ## Note: Remaining row types not returned by this function (i.e. xlsspread, xlscolumn, opjgraph etc.) are 
+        ## never assigned to files; they are added only when a file or spreadsheet is unpacked and populated.
+        ## The determination of file type from its name is a bit sloppy, but it works and it is fast. 
+        assert isinstance(fullpath, str)
+
+        if self.is_dir(fullpath):
+            return 'dir'
+        elif fullpath.lower().endswith('.csv') or fullpath.lower().endswith('.dat') or fullpath.lower().endswith('.txt'):
+            try:
+                ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
+                data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=10000)
+                return 'csvtwocolumn' if len(header)>2 else 'csvmulticolumn'
+            except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
+                return 'unknown'
+        elif fullpath.lower().endswith('.xls'):
+            return 'xlsfile'
+        elif fullpath.lower().endswith('.opj'):
+            return 'opj'
+        else:
+            return 'unknown'
+
+        # }}}
+    def rowtype_is_leaf(self, rowtype):# {{{
+        """ Determines if row shall be selected (or unpacked, otherwise)
+        
+        Rows representing containers (e.g. directories, multicolumn CSV files or Origin files)  
+        are not "leaves", since they contain some structure that can be further unpacked. In contrast, 
+        ordinary two-column CSV files or columns of CSV files are "leaves" and can be directly plotted.
+        """
+        return (rowtype in ('updir', 'csvtwocolumn', 'xlscolumn', 'opjcolumn', 'unknown'))
+    # }}}
+    def rowtype_can_plot(self, rowtype):# {{{
+        """ Determines if row shall be plotted """
+        return (rowtype in ('csvtwocolumn', 'xlscolumn', 'opjcolumn'))
+    # }}}
+    def rowtype_icon(self, rowtype, iconsize=8):# {{{
+        iconname = {
+                'updir':            'go-up',
+                'csvtwocolumn':     'empty',
+                'dir':              'folder',
+                'csvmulticolumn':   'zip', 
+                'opj':              'zip', 
+                'opjgraph':         'go-next', 
+                'opjcolumn':        'empty', 
+                'xlsfile':          'zip', 
+                'xlsspread':        'go-next', 
+                'xlscolumn':        'empty', 
+                'unknown':          'stop'
+                }
+        return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
+    # }}}
+    def populateTreeStore(self, treeStore, parent_row=None, reset_path=''):
+        if parent_row is None and reset_path != '':
+            ## without any parent specified, rows will be added to the very left of the TreeView
+
+            basepath = reset_path
+
+            ## On startup, or when the 'updir' node is selected, we update the whole tree. 
+            ## Initially, it has to be cleared of all rows. 
+            ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
+            self.lockTreeViewEvents = True
+            self.tsFiles.clear()            ## TODO: remember the unpacked rows, and also the selected ones
+            self.clearAllPlotIcons(self.tsFiles.get_iter_first())
+            self.treeViewRootDir = basepath ## TODO: obsolete, rm!
+            self.lockTreeViewEvents = False
+
+            ## The first node of cleared treeStore will point to the above directory, enabling one to browse whole filesystem 
+            plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+            plotstyleIcon.fill(0xffffffff)
+            currentIter = treeStore.append(None, 
+                    [basepath, self.rowtype_icon('updir'), '..', plotstyleIcon, NO_COLUMN, NO_SPREADSHEET, 'updir'])
+                        ## ^^ FIXME basepath? or basepath/../  ?
+            treeStore.append(currentIter, self.dummy_treestore_row)
+        elif parent_row:
+            ## If not resetting the whole tree, get the basepath from the parent row
+            basepath = treeStore.get_value(parent_row, self.treeStoreColumns['filepath'])
+        else:
+            raise()
+
+
+        ## Prepare the lists of paths, column numbers and spreadsheet numbers to be added
+        rowtype = self.row_type_from_fullpath(basepath)
+        assert not self.rowtype_is_leaf(rowtype)
+        if rowtype == 'dir':             ## Populate a directory with files/subdirs
+            ## Get the directory contents, filtering the files
+            fileFilterString = w('enFileFilter').get_text().strip()
+            listdir = [n for n in os.listdir(basepath) if (fileFilterString in os.path.basename(basepath))]
+
+            ## Sort alphabetically, all folders above files
+            itemFullNames = sorted(listdir, key=sort_alpha_numeric.split_alpha_numeric)
+            itemFullNames = [f for f in listdir if self.is_dir(f)] + [f for f in itemFullNames if not self.is_dir(f)] 
+
+            itemFullNames = [os.path.join(basepath, filename) for filename in listdir]
+            itemShowNames = [filename                         for filename in listdir]
+            columnNumbers = [None for item in itemFullNames]    # obviously files/subdirs are assigned no column number
+            spreadNumbers = [None for item in itemFullNames]    # nor they are assigned any spreadsheet number
+        elif 'csvmulticolumn':
+            ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
+            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
+            columnFilterString = w('enColFilter').get_text().strip()
+            if columnFilterString != "":
+                header = [n for n in header if (fileFilterString in n)]
+
+            itemFullNames = [basepath] * len(header)    # all columns are from one file
+            itemShowNames = header                      # column numbers are either in file header, or auto-generated
+            columnNumbers = list(range(len(header)))    # enumerate the columns
+            spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
+
+        ## Go through all items and populate the node
+        itemCounter = 0
+        for itemFullName, itemShowName, columnNumber, spreadNumber in zip(itemFullNames, itemShowNames, columnNumbers, spreadNumbers):
+            rowtype = self.row_type_from_fullpath(itemFullName)
+            plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
+            plotstyleIcon.fill(0xffffffff)
+            currentIter = treeStore.append(parent_row, 
+                    [itemFullName, self.rowtype_icon(rowtype), itemShowName, plotstyleIcon, columnNumber, spreadNumber, rowtype])
+            if not self.rowtype_is_leaf(rowtype): ## TODO row---> rowtype
+                treeStore.append(currentIter, self.dummy_treestore_row)     # shows the "unpacking arrow" left of the item
+                treeStore.set_value(currentIter, 4, NO_COLUMN)                 # mark that it cannot be plotted
+            itemCounter += 1                                    #increment the item counter
+        if itemCounter < 1: treeStore.append(parent_row, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
+        ## TODO ^^ shall be removed?
+
+
+
+    ## === GRAPHICAL PRESENTATION ===
     def clearAllPlotIcons(self, treeIter):# {{{
         while treeIter != None: 
             iterpixbuf = self.tsFiles.get_value(treeIter, 3)
@@ -96,91 +244,6 @@ class Handler:
             self.clearAllPlotIcons(self.tsFiles.iter_children(treeIter))
             treeIter=self.tsFiles.iter_next(treeIter)
         # }}}
-    def isFolder(self, itemFullName): # {{{
-        try:
-            return stat.S_ISDIR(os.stat(itemFullName).st_mode) # Extract metadata from the item
-        except:
-            return False    ## catch errors - the user might supply, e.g., a name of a data column
-        # }}}
-    def isMulticolumnFile(self, itemFullName): # {{{
-        try:                    
-            data_array, header, parameters = robust_csv_parser.loadtxt(itemFullName, sizehint=10000)
-            return len(header)>2
-        except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
-            return False
-        # }}}
-    def populateTreeStore(self, treeStore, basepath, parent=None, include_up_dir=False):
-        ## Returns whether the row at basepath can be selected
-
-        ## If we update the whole tree, it has to be cleared first. 
-        ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
-        if parent == None:
-            self.lockTreeViewEvents = True
-            self.tsFiles.clear()
-            self.clearAllPlotIcons(self.tsFiles.get_iter_first())
-            self.treeViewRootDir = basepath
-            self.lockTreeViewEvents = False
-
-        ## The first node may point to the above directory, enabling the user to browse whole filesystem (used together with parent=None)
-        if include_up_dir:
-            itemIcon = Gtk.IconTheme.get_default().load_icon('go-up', 8, 0) # Generate a default icon
-            plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
-            plotstyleIcon.fill(0xffffffff)
-            currentIter = treeStore.append(parent, [basepath, itemIcon, '..', plotstyleIcon, -1])  # Append the item to the TreeStore
-            treeStore.append(currentIter, self.dummy_treestore_row)
-
-        if self.isFolder(basepath):
-            ## Populate a folder with files/subdirs in a directory
-            itemFullNames = [os.path.join(basepath, filename) for filename in os.listdir(basepath)]
-
-            ## Filter the files
-            fileFilterString = w('enFileFilter').get_text().strip()
-            if fileFilterString != "":
-                itemFullNames = [itemFullName for itemFullName in itemFullNames 
-                        if (fileFilterString in os.path.basename(itemFullName) or self.isFolder(itemFullName))]
-
-            ## Sort alphabetically, all folders above files
-            #itemFullNames.sort()
-            import sort_alpha_numeric
-            itemFullNames = sorted(itemFullNames, key=sort_alpha_numeric.split_alpha_numeric)
-            itemFullNames = [f for f in itemFullNames if self.isFolder(f)] + [f for f in itemFullNames if not self.isFolder(f)] 
-
-            ## Populate the node
-            itemCounter = 0
-            for itemFullName in itemFullNames:
-                isFolder, isMultiColumnFile = self.isFolder(itemFullName),  self.isMulticolumnFile(itemFullName)
-                itemIcon = Gtk.IconTheme.get_default().load_icon('folder' if isFolder else 
-                        ('zip' if isMultiColumnFile else 'empty'), 8, 0)
-                displayedName = os.path.basename(itemFullName)
-                plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
-                plotstyleIcon.fill(0xffffffff)
-                currentIter = treeStore.append(parent, [itemFullName, itemIcon, displayedName, plotstyleIcon, -1])
-                if isFolder or isMultiColumnFile:  
-                    treeStore.append(currentIter, self.dummy_treestore_row)      # add dummy if current item was a folder
-                itemCounter += 1                                    #increment the item counter
-            if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
-        elif self.isMulticolumnFile(basepath):          ## Multicolumn means x-column and two or more y-columns
-            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
-            ## Populate a file with files/subdirs in a directory
-            columnNames = header
-
-            ## Populate the node
-            columnFilterString = w('enColFilter').get_text().strip()
-            itemCounter = 0
-            for columnNumber, columnName in enumerate(columnNames):
-                if columnFilterString == "" or columnFilterString in columnName:            ## Filter the column names
-                    itemIcon = Gtk.IconTheme.get_default().load_icon('go-next', 8, 0)
-                    plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
-                    plotstyleIcon.fill(0xffffffff)
-                    currentIter = treeStore.append(parent, [basepath, itemIcon, columnName, plotstyleIcon, columnNumber])
-                    itemCounter += 1                                    #increment the item counter
-            if itemCounter < 1: treeStore.append(parent, self.dummy_treestore_row)        # add the dummy node back
-        elif basepath[-4:] == ".opj":
-            warnings.warn("Not implemented: Origin projects plotting not implemented yet")
-        else:
-            warnings.warn("File type not recognized")
-
-    ## === GRAPHICAL PRESENTATION ===
     def array2rgbhex(self,arr3,alpha=1): # {{{
         return  int(arr3[0]*256-.5)*(256**3) +\
                 int(arr3[1]*256-.5)*(256**2) +\
@@ -237,18 +300,6 @@ class Handler:
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
         # }}}
     ## == FILE AND DATA UTILITIES ==
-    def guess_file_type(self, infile):# {{{
-        if not isinstance(infile, str):         ## maybe a directory
-            return 'unknown'
-        if   infile.lower().endswith('.csv') or infile.lower().endswith('.dat') or infile.lower().endswith('.txt',):
-            return 'csv'
-        elif infile.lower().endswith('.xls'):
-            return 'xls'
-        elif infile.lower().endswith('.opj'):
-            return 'opj'
-        else:
-            return 'unknown'
-        # }}}
     def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
@@ -324,6 +375,7 @@ class Handler:
         newFilePath = treeStore.get_value(treeIter, 0)      # get the full path of the position
 
         ## Add the children 
+        print("on_treeview1_row_expanded print(self.populateTreeStore)")
         self.populateTreeStore(treeStore, newFilePath, treeIter)
         ## The dummy row has to be removed AFTER this, otherwise the empty treeView row will NOT expand)
         if treeStore.iter_children(treeIter):  
@@ -357,10 +409,11 @@ class Handler:
         # ...
         #self.lockTreeViewEvents = lockTreeViewEvents_tmp
 
-        ## Actions must be available even on un-selectable rows:
-        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-        if self.isFolder(fileNamePath) or (self.isMulticolumnFile(fileNamePath) and columnNumber in (None, -1, 0)):
-            if self.tsFiles.get_value(treeIter, 2) == "..":  
+        ## Clicking action of non-leaf un-selectable rows:
+        if self.row_is_leaf(fileNamePath, columnNumber):       
+            return True                                     ## allow selecting or unselecting
+        else:
+            if self.tsFiles.get_value(treeIter, self.treeStoreColumns['rowtype']) == "updir":  
                 ## If the expanded row was "..", do not expand it, instead change to up-dir and refresh whole tree
                 expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
                 selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
@@ -371,8 +424,6 @@ class Handler:
             elif not w('treeview1').row_expanded(treePath) :
                 w('treeview1').expand_row(treePath, open_all=False)
             return False
-        else:
-            return True
 
 # }}}
     def on_enFileFilter_activate(self, *args):# {{{
