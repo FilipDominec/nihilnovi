@@ -15,6 +15,7 @@ import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
 
+import liborigin
 import robust_csv_parser
 import sort_alpha_numeric
 
@@ -54,7 +55,7 @@ class Handler:
 
         ## TreeStore and ListStore initialization
         self.tsFiles = Gtk.TreeStore(str,          Pixbuf,   str,      Pixbuf,            int,        int,             str)
-        self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
+        self.treeStoreColumns =     {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
         self.dummy_treestore_row = [None for x in self.treeStoreColumns.keys()]
 
         treeViewCol0 = Gtk.TreeViewColumn("Plot")        # Create a TreeViewColumn
@@ -128,7 +129,7 @@ class Handler:
         elif fullpath.lower().endswith('.xls'):
             return 'xlsfile'
         elif fullpath.lower().endswith('.opj'):
-            return 'opj'
+            return 'opjfile'
         else:
             return 'unknown'
 
@@ -140,7 +141,7 @@ class Handler:
         are not "leaves", since they contain some structure that can be further unpacked. In contrast, 
         ordinary two-column CSV files or columns of CSV files are "leaves" and can be directly plotted.
         """
-        return (rowtype in ('updir', 'csvtwocolumn', 'xlscolumn', 'opjcolumn', 'unknown'))
+        return (rowtype in ('csvtwocolumn', 'xlscolumn', 'opjcolumn', 'unknown'))
     # }}}
     def rowtype_can_plot(self, rowtype):# {{{
         """ Determines if row shall be plotted """
@@ -149,10 +150,12 @@ class Handler:
     def rowtype_icon(self, rowtype, iconsize=8):# {{{
         iconname = {
                 'updir':            'go-up',
-                'csvtwocolumn':     'empty',
                 'dir':              'folder',
+                'csvtwocolumn':     'empty',
                 'csvmulticolumn':   'zip', 
-                'opj':              'zip', 
+                'csvcolumn':        'empty', 
+                'opjfile':          'zip', 
+                'opjspread':        'go-next', 
                 'opjgraph':         'go-next', 
                 'opjcolumn':        'empty', 
                 'xlsfile':          'zip', 
@@ -180,7 +183,7 @@ class Handler:
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
             currentIter = treeStore.append(None, 
-                    [basepath, self.rowtype_icon('updir'), '..', plotstyleIcon, NO_COLUMN, NO_SPREADSHEET, 'updir'])
+                    [basepath, self.rowtype_icon('updir'), '..', plotstyleIcon, None, None, 'updir'])
                         ## ^^ FIXME basepath? or basepath/../  ?
             treeStore.append(currentIter, self.dummy_treestore_row)
         elif parent_row is not None  and  reset_path is None:
@@ -189,11 +192,11 @@ class Handler:
         else:
             raise()
 
-
         ## Prepare the lists of paths, column numbers and spreadsheet numbers to be added
-        rowtype = self.row_type_from_fullpath(basepath)
-        assert not self.rowtype_is_leaf(rowtype)
-        if rowtype == 'dir':             ## Populate a directory with files/subdirs
+        parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
+        assert not self.rowtype_is_leaf(parentrowtype)
+        print ('basepath, parentrowtype', basepath, parentrowtype)
+        if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents, filtering the files
             fileFilterString = w('enFileFilter').get_text().strip()
             filenames = [n for n in os.listdir(basepath) if (fileFilterString in os.path.basename(basepath))]
@@ -206,29 +209,54 @@ class Handler:
             itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
             spreadNumbers = [None] * len(itemFullNames)    # nor they are assigned any spreadsheet number
-        elif 'csvmulticolumn':
+            rowTypes      = [self.row_type_from_fullpath(f) for f in itemFullNames]
+        elif parentrowtype == 'csvmulticolumn':
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
             columnFilterString = w('enColFilter').get_text().strip()
-            if columnFilterString != "":
-                header = [n for n in header if (fileFilterString in n)]
-
+            if columnFilterString != "": header = [n for n in header if (fileFilterString in n)]
             itemFullNames = [basepath] * len(header)    # all columns are from one file
             itemShowNames = header                      # column numbers are either in file header, or auto-generated
             columnNumbers = list(range(len(header)))    # enumerate the columns
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
+            rowTypes      = ['csvcolumn'] * len(header)
+        elif parentrowtype == 'opjfile':
+            import liborigin
+            opj = liborigin.parseOriginFile(basepath)
+            itemShowNames = [spread.name.decode('utf-8') for spread in opj['spreads']]
+            print("parentrowtype == 'opjfile'", itemShowNames)
+            itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
+            columnNumbers = [None] * len(itemShowNames)
+            spreadNumbers = list(range(len(itemShowNames)))  
+            rowTypes      = ['opjspread'] * len(itemShowNames)
+            del(opj)
+        elif parentrowtype == 'opjspread':
+            import liborigin
+            opj = liborigin.parseOriginFile(basepath)
+            parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
+            itemShowNames = [column.name.decode('utf-8') for column in opj['spreads'][parent_spreadsheet].columns]
+            print("parentrowtype == 'opjSPREAD'", itemShowNames)
+            itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
+            columnNumbers = list(range(len(itemShowNames)))  
+            spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
+            rowTypes      = ['opjcolumn'] * len(itemShowNames)
+            del(opj)
+        else:
+            warnings.warn('Not prepared yet to show listings of this file')
+            return
+
 
         ## Go through all items and populate the node
         itemCounter = 0
-        for itemFullName, itemShowName, columnNumber, spreadNumber in zip(itemFullNames, itemShowNames, columnNumbers, spreadNumbers):
-            rowtype = self.row_type_from_fullpath(itemFullName)
+        for itemFullName, itemShowName, columnNumber, spreadNumber, rowtype in \
+                zip(itemFullNames, itemShowNames, columnNumbers, spreadNumbers, rowTypes):
+            print(itemShowName, columnNumber, spreadNumber, rowtype)
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
             currentIter = treeStore.append(parent_row, 
                     [itemFullName, self.rowtype_icon(rowtype), itemShowName, plotstyleIcon, columnNumber, spreadNumber, rowtype])
-            if not self.rowtype_is_leaf(rowtype): ## TODO row---> rowtype
+            if not self.rowtype_is_leaf(rowtype): ## TODO row---> parentrowtype
                 treeStore.append(currentIter, self.dummy_treestore_row)     # shows the "unpacking arrow" left of the item
-                treeStore.set_value(currentIter, 4, NO_COLUMN)                 # mark that it cannot be plotted
             itemCounter += 1                                    #increment the item counter
         if itemCounter < 1: treeStore.append(parent_row, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
         ## TODO ^^ shall be removed?
@@ -238,7 +266,7 @@ class Handler:
     ## === GRAPHICAL PRESENTATION ===
     def clearAllPlotIcons(self, treeIter):# {{{
         while treeIter != None: 
-            iterpixbuf = self.tsFiles.get_value(treeIter, 3)
+            iterpixbuf = self.row_prop(treeIter, 'plotstyleicon')
             if iterpixbuf: iterpixbuf.fill(self.array2rgbhex([.5,.5,1], alpha=0)) ## some nodes may have pixbuf set to None
             self.clearAllPlotIcons(self.tsFiles.iter_children(treeIter))
             treeIter=self.tsFiles.iter_next(treeIter)
@@ -274,16 +302,11 @@ class Handler:
         for (path, color_from_palette) in zip(pathlist, color_palette):
             try:
                 ## Plot the line first
-                file_name       = self.tsFiles.get_value(self.tsFiles.get_iter(path), 0)
-                column_number   = self.tsFiles.get_value(self.tsFiles.get_iter(path), 4)
-                self.plot_record(file_name, 
-                        xcolumn=0, ycolumn=column_number if column_number>0 else 1, 
-                        plot_style={'color':color_from_palette})
+                self.plot_row(self.tsFiles.get_iter(path), plot_style={'color':color_from_palette})
 
                 ## If no exception occurs, colour the icon according to the line colour
-                icon = self.tsFiles.get_value(self.tsFiles.get_iter(path), 3)
+                icon = self.row_prop(self.tsFiles.get_iter(path), 'plotstyleicon')
                 if icon: icon.fill(self.array2rgbhex(color_from_palette))
-
             except ValueError:
                 traceback.print_exc()
                 error_counter += 1
@@ -298,33 +321,52 @@ class Handler:
         self.canvas.draw()
         w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
         # }}}
-    ## == FILE AND DATA UTILITIES ==
-    def plot_record(self, infile, plot_style={}, xcolumn=0, ycolumn=1):# {{{
+    def plot_row(self, row, plot_style={}):# {{{
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
         ## Load the data
-        rowtype = self.row_type_from_fullpath(infile)
-        if  rowtype == 'opj':
-            warnings.warn('support for liborigin not implemented yet!')
-            return 
+        rowfilepath = self.row_prop(row, 'filepath')
+        rowtype     = self.row_prop(row, 'rowtype')
+        rowcolumn   = self.row_prop(row, 'column')
+        rowsheet    = self.row_prop(row, 'spreadsheet')
+        if  rowtype == 'opjcolumn':
+            warnings.warn('full support for liborigin not implemented yet!')
+            opj = liborigin.parseOriginFile(rowfilepath)
+            opj['spreads'][rowsheet]            # TODO: what does opj['spreads'][3].multisheet mean?
+            x = opj['spreads'][rowsheet].columns[0].data
+            print('rowcolumn',rowcolumn)
+            y = opj['spreads'][rowsheet].columns[rowcolumn].data
+            print(len(x),len(y))
+            #x, y =           [opj['spreads'][rowsheet].columns[c].data                 for c in [0, rowcolumn]]
+            xlabel, ylabel = [opj['spreads'][rowsheet].columns[c].name.decode('utf-8') for c in [0, rowcolumn]]
         elif rowtype == 'xls':
             warnings.warn('support for multiple xls sheets not implemented  yet!')
             return 
             xl = pd.ExcelFile(infile, header=1) ##  
-            ## TODO: print(xl.sheet_names)    a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
+            print(xl.sheet_names)  ##  a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
+            print(xl.sheets[rowsheet])
             df = xl.parse() 
-            x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
-        elif rowtype == 'csv':
-            data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000000)
-            x, y, header = data_array.T[xcolumn], data_array.T[ycolumn], header
+            x, y, xlabel, ylabel = df.values.T[0], df.values.T[rowcolumn], header[0], header[rowcolumn]
+            ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
+        elif rowtype == 'csvtwocolumn':
+            ycolumn = 1
+            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=1000000)
+            x, y, xlabel, ylabel = data_array.T[0], data_array.T[1], header[0], header[1]
+        elif rowtype == 'csvcolumn':
+            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=1000000)
+            x, y, xlabel, ylabel = data_array.T[0], data_array.T[rowcolumn], header[0], header[rowcolumn]
         else:
             return          ## for all remaining filetypes, abort plotting quietly
 
         ## Plot them
-        self.ax.plot(x, y, label=os.path.basename(infile), **plot_style) # TODO apply plotting options
-        self.ax.set_xlabel(header[xcolumn])
-        self.ax.set_ylabel(header[ycolumn])
+        self.ax.plot(x, y, label=os.path.basename(self.row_prop(row, 'name')), **plot_style) # TODO apply plotting options
+        self.ax.set_xlabel(xlabel)
+        self.ax.set_ylabel(ylabel)
 # }}}
+    ## == FILE AND DATA UTILITIES ==
+    def row_prop(self, row, prop):# {{{
+        return self.tsFiles.get_value(row, self.treeStoreColumns[prop])
+        # }}}
     def remember_treeView_expanded_rows(self, treeStore, treeView):    # {{{
         ## returns a list of paths of expanded files/directories
         expanded_row_names = []
@@ -416,8 +458,7 @@ class Handler:
                 ## If the expanded row was "..", do not expand it, instead change to up-dir and refresh whole tree
                 expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
                 selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-                self.populateTreeStore(self.tsFiles, basepath=os.path.dirname(self.treeViewRootDir), 
-                        parent=None, include_up_dir=True)       
+                self.populateTreeStore(self.tsFiles, reset_path=os.path.dirname(self.row_prop(treeIter, 'filepath')))       
             elif w('treeview1').row_expanded(treePath):
                 w('treeview1').collapse_row(treePath)
             elif not w('treeview1').row_expanded(treePath) :
