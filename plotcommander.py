@@ -162,10 +162,9 @@ class Handler:
                 }
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
-    def populateTreeStore(self, treeStore, parent_row=None, reset_path=''):
-        if parent_row is None and reset_path != '':
+    def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):
+        if parent_row is None  and  reset_path is not None:
             ## without any parent specified, rows will be added to the very left of the TreeView
-
             basepath = reset_path
 
             ## On startup, or when the 'updir' node is selected, we update the whole tree. 
@@ -184,7 +183,7 @@ class Handler:
                     [basepath, self.rowtype_icon('updir'), '..', plotstyleIcon, NO_COLUMN, NO_SPREADSHEET, 'updir'])
                         ## ^^ FIXME basepath? or basepath/../  ?
             treeStore.append(currentIter, self.dummy_treestore_row)
-        elif parent_row:
+        elif parent_row is not None  and  reset_path is None:
             ## If not resetting the whole tree, get the basepath from the parent row
             basepath = treeStore.get_value(parent_row, self.treeStoreColumns['filepath'])
         else:
@@ -197,16 +196,16 @@ class Handler:
         if rowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents, filtering the files
             fileFilterString = w('enFileFilter').get_text().strip()
-            listdir = [n for n in os.listdir(basepath) if (fileFilterString in os.path.basename(basepath))]
+            filenames = [n for n in os.listdir(basepath) if (fileFilterString in os.path.basename(basepath))]
 
             ## Sort alphabetically, all folders above files
-            itemFullNames = sorted(listdir, key=sort_alpha_numeric.split_alpha_numeric)
-            itemFullNames = [f for f in listdir if self.is_dir(f)] + [f for f in itemFullNames if not self.is_dir(f)] 
-
-            itemFullNames = [os.path.join(basepath, filename) for filename in listdir]
-            itemShowNames = [filename                         for filename in listdir]
-            columnNumbers = [None for item in itemFullNames]    # obviously files/subdirs are assigned no column number
-            spreadNumbers = [None for item in itemFullNames]    # nor they are assigned any spreadsheet number
+            filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
+            itemFullNames = [os.path.join(basepath, filename) for filename in filenames]
+            itemFullNames = ([ f for f in itemFullNames if     self.is_dir(f)] 
+                            + [f for f in itemFullNames if not self.is_dir(f)])         # dirs will be listed first, files below
+            itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
+            columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
+            spreadNumbers = [None] * len(itemFullNames)    # nor they are assigned any spreadsheet number
         elif 'csvmulticolumn':
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
@@ -304,18 +303,18 @@ class Handler:
         ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
 
         ## Load the data
-        file_type = self.guess_file_type(infile)
-        if  file_type == 'opj':
+        rowtype = self.row_type_from_fullpath(infile)
+        if  rowtype == 'opj':
             warnings.warn('support for liborigin not implemented yet!')
             return 
-        elif file_type == 'xls':
+        elif rowtype == 'xls':
             warnings.warn('support for multiple xls sheets not implemented  yet!')
             return 
             xl = pd.ExcelFile(infile, header=1) ##  
             ## TODO: print(xl.sheet_names)    a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
             df = xl.parse() 
             x,y = df.values.T[xcolumn], df.values.T[ycolumn] ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
-        elif file_type == 'csv':
+        elif rowtype == 'csv':
             data_array, header, parameters = robust_csv_parser.loadtxt(infile, sizehint=1000000)
             x, y, header = data_array.T[xcolumn], data_array.T[ycolumn], header
         else:
@@ -376,7 +375,7 @@ class Handler:
 
         ## Add the children 
         print("on_treeview1_row_expanded print(self.populateTreeStore)")
-        self.populateTreeStore(treeStore, newFilePath, treeIter)
+        self.populateTreeStore(treeStore, parent_row=treeIter)
         ## The dummy row has to be removed AFTER this, otherwise the empty treeView row will NOT expand)
         if treeStore.iter_children(treeIter):  
             treeStore.remove(treeStore.iter_children(treeIter))         
@@ -400,8 +399,7 @@ class Handler:
         ## TODO reasonable behaviour for block-selection over different unpacked directories/files
         ## Expand a directory by clicking, but do not allow user to select it
         treeIter        = self.tsFiles.get_iter(treePath)
-        fileNamePath    = self.tsFiles.get_value(treeIter, 0)
-        columnNumber    = self.tsFiles.get_value(treeIter, 4)
+        self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
 
         #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events OBSOLETED?
         #lockTreeViewEvents_tmp = self.lockTreeViewEvents       ## TODO understand and clear out when select events can occur
@@ -410,10 +408,11 @@ class Handler:
         #self.lockTreeViewEvents = lockTreeViewEvents_tmp
 
         ## Clicking action of non-leaf un-selectable rows:
-        if self.row_is_leaf(fileNamePath, columnNumber):       
+        rowtype = self.tsFiles.get_value(treeIter, self.treeStoreColumns['rowtype'])
+        if self.rowtype_is_leaf(rowtype):       
             return True                                     ## allow selecting or unselecting
         else:
-            if self.tsFiles.get_value(treeIter, self.treeStoreColumns['rowtype']) == "updir":  
+            if rowtype == "updir":  
                 ## If the expanded row was "..", do not expand it, instead change to up-dir and refresh whole tree
                 expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
                 selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
