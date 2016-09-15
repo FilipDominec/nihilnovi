@@ -141,7 +141,7 @@ class Handler:
         are not "leaves", since they contain some structure that can be further unpacked. In contrast, 
         ordinary two-column CSV files or columns of CSV files are "leaves" and can be directly plotted.
         """
-        return (rowtype in ('csvtwocolumn', 'xlscolumn', 'opjcolumn', 'unknown'))
+        return (rowtype in ('csvtwocolumn', 'csvcolumn', 'xlscolumn', 'opjcolumn', 'unknown'))
     # }}}
     def rowtype_can_plot(self, rowtype):# {{{
         """ Determines if row shall be plotted """
@@ -152,7 +152,7 @@ class Handler:
                 'updir':            'go-up',
                 'dir':              'folder',
                 'csvtwocolumn':     'empty',
-                'csvmulticolumn':   'zip', 
+                'csvmulticolumn':   'gtk-directory', 
                 'csvcolumn':        'empty', 
                 'opjfile':          'zip', 
                 'opjspread':        'go-next', 
@@ -195,7 +195,6 @@ class Handler:
         ## Prepare the lists of paths, column numbers and spreadsheet numbers to be added
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
         assert not self.rowtype_is_leaf(parentrowtype)
-        print ('basepath, parentrowtype', basepath, parentrowtype)
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents, filtering the files
             fileFilterString = w('enFileFilter').get_text().strip()
@@ -221,28 +220,24 @@ class Handler:
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
             rowTypes      = ['csvcolumn'] * len(header)
         elif parentrowtype == 'opjfile':
-            import liborigin
             opj = liborigin.parseOriginFile(basepath)
             itemShowNames = [spread.name.decode('utf-8') for spread in opj['spreads']]
-            print("parentrowtype == 'opjfile'", itemShowNames)
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = [None] * len(itemShowNames)
             spreadNumbers = list(range(len(itemShowNames)))  
             rowTypes      = ['opjspread'] * len(itemShowNames)
             del(opj)
         elif parentrowtype == 'opjspread':
-            import liborigin
             opj = liborigin.parseOriginFile(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
             itemShowNames = [column.name.decode('utf-8') for column in opj['spreads'][parent_spreadsheet].columns]
-            print("parentrowtype == 'opjSPREAD'", itemShowNames)
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
             del(opj)
         else:
-            warnings.warn('Not prepared yet to show listings of this file')
+            warnings.warn('Not prepared yet to show listings of this file: %s' % parentrowtype)
             return
 
 
@@ -250,7 +245,6 @@ class Handler:
         itemCounter = 0
         for itemFullName, itemShowName, columnNumber, spreadNumber, rowtype in \
                 zip(itemFullNames, itemShowNames, columnNumbers, spreadNumbers, rowTypes):
-            print(itemShowName, columnNumber, spreadNumber, rowtype)
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
             currentIter = treeStore.append(parent_row, 
@@ -330,20 +324,34 @@ class Handler:
         rowcolumn   = self.row_prop(row, 'column')
         rowsheet    = self.row_prop(row, 'spreadsheet')
         if  rowtype == 'opjcolumn':
-            warnings.warn('full support for liborigin not implemented yet!')
             opj = liborigin.parseOriginFile(rowfilepath)
-            opj['spreads'][rowsheet]            # TODO: what does opj['spreads'][3].multisheet mean?
+            #opj['spreads'][rowsheet]            # TODO: what does opj['spreads'][3].multisheet mean?
             x = opj['spreads'][rowsheet].columns[0].data
-            print('rowcolumn',rowcolumn)
-            y = opj['spreads'][rowsheet].columns[rowcolumn].data
-            print(len(x),len(y))
-            #x, y =           [opj['spreads'][rowsheet].columns[c].data                 for c in [0, rowcolumn]]
+            #print('rowcolumn',rowcolumn)
+            #y = opj['spreads'][rowsheet].columns[rowcolumn].data
+            x, y =           [opj['spreads'][rowsheet].columns[c].data                 for c in [0, rowcolumn]]
+            if len(x)>2 and x[-2]>x[-1]*1e6: 
+                print(x[-20:])
+                x=x[:-1]       ## the last row from liborigin is sometimes erroneous zero
+            y = y[0:len(x)]                                 ## truncate y if longer than x
+            try:
+                x,y = [np.array(arr) for arr in (x,y)]
+            except ValueError:
+                x0, y0 = [], []
+                for x1,y1 in zip(x,y):
+                    try:
+                        xf, yf = float(x1), float(y1)
+                        x0.append(xf); y0.append(yf)
+                    except:
+                        pass
+                x,y = x0, y0
             xlabel, ylabel = [opj['spreads'][rowsheet].columns[c].name.decode('utf-8') for c in [0, rowcolumn]]
         elif rowtype == 'xls':
             warnings.warn('support for multiple xls sheets not implemented  yet!')
             return 
             xl = pd.ExcelFile(infile, header=1) ##  
-            print(xl.sheet_names)  ##  a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
+            ## TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
+            print(xl.sheet_names)  
             print(xl.sheets[rowsheet])
             df = xl.parse() 
             x, y, xlabel, ylabel = df.values.T[0], df.values.T[rowcolumn], header[0], header[rowcolumn]
@@ -416,8 +424,8 @@ class Handler:
         newFilePath = treeStore.get_value(treeIter, 0)      # get the full path of the position
 
         ## Add the children 
-        print("on_treeview1_row_expanded print(self.populateTreeStore)")
         self.populateTreeStore(treeStore, parent_row=treeIter)
+
         ## The dummy row has to be removed AFTER this, otherwise the empty treeView row will NOT expand)
         if treeStore.iter_children(treeIter):  
             treeStore.remove(treeStore.iter_children(treeIter))         
@@ -503,6 +511,7 @@ Gtk.main()
     # future todos:
     #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
     #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
+    #  * 'keramika 06062016.opj' and 'srovnani27a28.opj'  makes liborigin eat up all memory
     #  * select record by clicking in the graph, right-click menu in the list)
     #        http://scienceoss.com/interactively-select-points-from-a-plot-in-matplotlib/#more-14
     #        http://scienceoss.com/interacting-with-figures-in-python/
