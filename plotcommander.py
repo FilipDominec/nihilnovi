@@ -274,6 +274,10 @@ class Handler:
                 legends = [re.sub(r'\\l\(\d\)\s', '', legend_row.strip()) for legend_row in legend_box[:len(curves)]]
                 comment = "".join([legendrow.strip() for legendrow in legend_box[:len(curves)]])
                 ## todo: \g(l)\-(ex) should translate into (greek lambda)_ex
+                ## def togreek(l): return chr(ord(l) + ord('α') - ord('a'))
+                ## string.ascii_letters, "".join([togreek(g) for g in string.ascii_letters])
+                ## 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+                ## 'αβγδεζηθι κλμνοπρςστυφχξψωΑΒΓΔΕΖΗΘΙ ΚΛΜΝΟΠ ΡΣΤΥΦΧΞΨΩ'
                 print(legends, comment)
             else:
                 legends = [""] * len(curves)
