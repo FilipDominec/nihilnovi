@@ -80,8 +80,7 @@ class Handler:
         ## TODO: If files are specified as arguments, select these at start, and plot them at once
 
         ## If a directory is specified, just set it as the root of the file list. If none, use current working dir.
-        self.treeViewRootDir = os.getcwd() if len(sys.argv)<=1  else  sys.argv[1]
-        self.populateTreeStore(self.tsFiles, reset_path=self.treeViewRootDir)
+        self.populateTreeStore(self.tsFiles, reset_path=os.getcwd() if len(sys.argv)<=1  else  sys.argv[1])
         self.plot_reset()
         self.plot_all_sel_records()
 
@@ -128,6 +127,7 @@ class Handler:
             except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
                 return 'unknown'
         elif fullpath.lower().endswith('.xls'):
+            ## TODO XLS support : determine if single spreadsheet, and/or if spreadsheet(s) contain single column
             return 'xlsfile'
         elif fullpath.lower().endswith('.opj'):
             return 'opjfile'
@@ -167,17 +167,23 @@ class Handler:
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):
-        if parent_row is None  and  reset_path is not None:
-            ## without any parent specified, rows will be added to the very left of the TreeView
-            basepath = reset_path
+        ## without any parent specified, rows will be added to the very left of the TreeView, 
+        ## otherwise they will become childs thereof
+        if parent_row is None:
+            if reset_path is not None:
+                basepath = reset_path
+            else:
+                if self.row_prop(self.tsFiles.get_iter_first(), 'rowtype') == 'updir':
+                    basepath = self.row_prop(self.tsFiles.get_iter_first(), 'filepath')
+                else:
+                    raise AttributeError('Specify either parent_row, reset_path, or ensure the first row is of "updir" type')
 
             ## On startup, or when the 'updir' node is selected, we update the whole tree. 
             ## Initially, it has to be cleared of all rows. 
             ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
             self.lockTreeViewEvents = True
             self.tsFiles.clear()            ## TODO: remember the unpacked rows, and also the selected ones
-            self.clearAllPlotIcons(self.tsFiles.get_iter_first())
-            self.treeViewRootDir = basepath ## TODO: obsolete, rm!
+            self.clearAllPlotIcons(self.tsFiles.get_iter_first())  ## TODO: obsolete, rm!
             self.lockTreeViewEvents = False
 
             ## The first node of cleared treeStore will point to the above directory, enabling one to browse whole filesystem 
@@ -185,7 +191,7 @@ class Handler:
             plotstyleIcon.fill(0xffffffff)
             currentIter = treeStore.append(None, 
                     [basepath, self.rowtype_icon('updir'), '..', plotstyleIcon, None, None, 'updir'])
-                        ## ^^ FIXME basepath? or basepath/../  ?
+                        ## ^^ FIXME basepath? or os.path.dirname(basepath) ?
             treeStore.append(currentIter, self.dummy_treestore_row)
         elif parent_row is not None  and  reset_path is None:
             ## If not resetting the whole tree, get the basepath from the parent row
@@ -200,6 +206,7 @@ class Handler:
             ## Get the directory contents, filtering the files
             fileFilterString = w('enFileFilter').get_text().strip()
             filenames = [n for n in os.listdir(basepath) if (fileFilterString in os.path.basename(basepath))]
+            print(filenames)
 
             ## Sort alphabetically, all folders above files
             filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
@@ -480,7 +487,7 @@ class Handler:
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         # Passing parent=None will populate the whole tree again
         #self.lockTreeViewEvents = True
-        self.populateTreeStore(self.tsFiles, basepath=self.treeViewRootDir, parent=None, include_up_dir=True)       
+        self.populateTreeStore(self.tsFiles, reset_path=None)       
         #self.lockTreeViewEvents = False
         self.restore_treeView_expanded_rows(expanded_row_names)
         self.restore_treeView_selected_rows(selected_row_names)
