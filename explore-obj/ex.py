@@ -12,6 +12,7 @@ if coloured:
 else:
     normal, bold  , grey   = '', '', ''
 maxlistlen = 5
+allstrings = []
 def explore(obj, parentstr, indent):
     print(indent + parentstr)
     if coloured: indent = indent + grey + parentstr + normal ## prints ancestry objects with grey color for better clarity (terminal only)
@@ -34,6 +35,7 @@ def explore(obj, parentstr, indent):
         print(indent+bold+'}', normal)
     elif type(obj) == str:
         print(indent+bold+'"'+obj+'"', normal)
+        allstrings.append(obj)
     elif type(obj) == bytes:
         print(indent+bold+' b"'+obj.decode('utf-8').strip()+'"')
     elif type(obj) in (float, int, bool):
@@ -45,5 +47,5 @@ def explore(obj, parentstr, indent):
         for attrname in usefulattrs:
             explore(getattr(obj, attrname), '.'+attrname, indent)
     
-
 explore(opj, '', '')
+print(allstrings)

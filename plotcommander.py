@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
 
-import gi, sys, os, signal, stat, warnings
+import gi, sys, os, signal, stat, warnings, re
 import numpy as np
 import traceback, faulthandler ## Debugging library crashes
 faulthandler.enable()
@@ -238,7 +238,7 @@ class Handler:
             rowTypes      = ['opjgraph'] * len(itemShowNames)
 
 #["graphs"][0].layers[0]  <liborigin.GraphLayer object at 0x7fbdbb29f6a0>  <class 'liborigin.GraphLayer'> 
-                                                                                  #['backgroundColor', 'bitmaps', 'borderType', 'clientRect', 'colorScale', 'curves', 'figures', 'hLine', 'histogramBegin', 'histogramBin', 'histogramEnd', 'imageProfileTool', 'isXYY3D', 'legend', 'lines', 'percentile', 'pieTexts', 'texts', 'vLine', 'xAxis', 'xAxisBreak', 'xLength', 'yAxis', 'yAxisBreak', 'yLength', 'zAxis', 'zAxisBreak', 'zLength']  
+                                                                                  #['b'figures', 'hLine', 'histogramBegin', 'histogramBin', 'histogramEnd', 'imageProfileTool', 'isXYY3D', 'legend', 'lines', 'percentile', 'pieTexts', 'texts', 'vLine', 'xAxis', 'xAxisBreak', 'xLength', 'yAxis', 'yAxisBreak', 'yLength', 'zAxis', 'zAxisBreak', 'zLength']  
 #
 #["graphs"][0].layers[0].curves[0]  <liborigin.GraphCurve object at 0x7fbdbb3506b0>  <class 'liborigin.GraphCurve'> 
                                                                                                                     #['boxWidth', 'colorMap', 'connectSymbols', 'dataName', 'fillArea', 'fillAreaColor', 'fillAreaPattern', 'fillAreaPatternBorderColor', 'fillAreaPatternBorderStyle', 'fillAreaPatternBorderWidth', 'fillAreaPatternColor', 'fillAreaPatternWidth', 'fillAreaType', 'lineColor', 'lineConnect', 'lineStyle', 'lineWidth', 'pie', 'pointOffset', 'surface', 'symbolColor', 'symbolFillColor', 'symbolSize', 'symbolThickness', 'symbolType', 'text', 'type', 'vector', 'xColumnName', 'yColumnName', 'zColumnName']
@@ -265,8 +265,22 @@ class Handler:
             opj = liborigin.parseOriginFile(basepath)
             parent_graph = self.row_prop(parent_row, 'spreadsheet') ## The key 'spreadsheet' is misused here to mean 'graph'
             layerNumber = 0 ## Fixme support for multiple opjlayers:    ["graphs"][1].layers[0].curves[3].xColumnName
+
+            ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
+            curves = opj['graphs'][parent_graph].layers[layerNumber].curves
+            legend_box = opj['graphs'][parent_graph].layers[layerNumber].legend.text.decode('utf-8').split('\n')
+            if len(legend_box) >= len(curves):
+                ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
+                legends = [re.sub(r'\\l\(\d\)\s', '', legend_row.strip()) for legend_row in legend_box[:len(curves)]]
+                comment = "".join([legendrow.strip() for legendrow in legend_box[:len(curves)]])
+                ## todo: \g(l)\-(ex) should translate into (greek lambda)_ex
+                print(legends, comment)
+            else:
+                legends = [""] * len(curves)
+                comment = ""
+
             itemShowNames, itemFullNames, columnNumbers, spreadNumbers = [], [], [], []
-            for curve in opj['graphs'][parent_graph].layers[layerNumber].curves:
+            for curve, legend in zip(curves, legends):
                 ## FIXME add support for xColumn different than the first one in Spreadsheet, also here
                 #print("curve t xCol yCol:", curve.dataName.decode('utf-8'), 
                         #curve.xColumnName.decode('utf-8'), curve.yColumnName.decode('utf-8'))
@@ -276,10 +290,10 @@ class Handler:
                 spreadsheet_index = [spread.name for spread in opj['spreads']].index(curve.dataName[2:])
                 y_column_index = [column.name for column in 
                         opj['spreads'][spreadsheet_index].columns].index(curve.yColumnName)
-                print(curve.dataName[2:].decode('utf-8'), spreadsheet_index, curve.yColumnName.decode('utf-8'), y_column_index)
+                #print(curve.dataName[2:].decode('utf-8'), spreadsheet_index, curve.yColumnName.decode('utf-8'), y_column_index)
 
-                itemShowNames.append("spreadsheet " + opj['spreads'][spreadsheet_index].name.decode('utf-8') + 
-                        ', column ' + opj['spreads'][spreadsheet_index].columns[y_column_index].name.decode('utf-8'))
+                itemShowNames.append(legend + " (from sheet " + opj['spreads'][spreadsheet_index].name.decode('utf-8') + 
+                        ', column ' + opj['spreads'][spreadsheet_index].columns[y_column_index].name.decode('utf-8') + ")")
                 itemFullNames.append(basepath)          # all columns are from one file
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
