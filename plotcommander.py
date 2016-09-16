@@ -156,8 +156,8 @@ class Handler:
                 'csvmulticolumn':   'gtk-directory', 
                 'csvcolumn':        'empty', 
                 'opjfile':          'zip', 
-                'opjspread':        'go-next', 
-                'opjgraph':         'go-next', 
+                'opjspread':        'gtk-directory', 
+                'opjgraph':         'zip', 
                 'opjcolumn':        'empty', 
                 'xlsfile':          'zip', 
                 'xlsspread':        'go-next', 
@@ -229,11 +229,28 @@ class Handler:
             rowTypes      = ['csvcolumn'] * len(header)
         elif parentrowtype == 'opjfile':
             opj = liborigin.parseOriginFile(basepath)
-            itemShowNames = [spread.name.decode('utf-8') for spread in opj['spreads']]
+            ## Add "graphs" - which show the selected columns in presentation-ready format
+            ## Fixme support for multiple opjlayers also here
+            itemShowNames = [graph.name.decode('utf-8') for graph in opj['graphs']]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = [None] * len(itemShowNames)
             spreadNumbers = list(range(len(itemShowNames)))  
-            rowTypes      = ['opjspread'] * len(itemShowNames)
+            rowTypes      = ['opjgraph'] * len(itemShowNames)
+
+#["graphs"][0].layers[0]  <liborigin.GraphLayer object at 0x7fbdbb29f6a0>  <class 'liborigin.GraphLayer'> 
+                                                                                  #['backgroundColor', 'bitmaps', 'borderType', 'clientRect', 'colorScale', 'curves', 'figures', 'hLine', 'histogramBegin', 'histogramBin', 'histogramEnd', 'imageProfileTool', 'isXYY3D', 'legend', 'lines', 'percentile', 'pieTexts', 'texts', 'vLine', 'xAxis', 'xAxisBreak', 'xLength', 'yAxis', 'yAxisBreak', 'yLength', 'zAxis', 'zAxisBreak', 'zLength']  
+#
+#["graphs"][0].layers[0].curves[0]  <liborigin.GraphCurve object at 0x7fbdbb3506b0>  <class 'liborigin.GraphCurve'> 
+                                                                                                                    #['boxWidth', 'colorMap', 'connectSymbols', 'dataName', 'fillArea', 'fillAreaColor', 'fillAreaPattern', 'fillAreaPatternBorderColor', 'fillAreaPatternBorderStyle', 'fillAreaPatternBorderWidth', 'fillAreaPatternColor', 'fillAreaPatternWidth', 'fillAreaType', 'lineColor', 'lineConnect', 'lineStyle', 'lineWidth', 'pie', 'pointOffset', 'surface', 'symbolColor', 'symbolFillColor', 'symbolSize', 'symbolThickness', 'symbolType', 'text', 'type', 'vector', 'xColumnName', 'yColumnName', 'zColumnName']
+#
+
+            ## Add "columns" - which enable to access all data in the file, including those not used in "graphs"
+            itemShowNames = itemShowNames + [spread.name.decode('utf-8') for spread in opj['spreads']]
+            itemFullNames = itemFullNames + [basepath] * len(itemShowNames)    # all columns are from one file
+            columnNumbers = columnNumbers + [None] * len(itemShowNames)
+            spreadNumbers = spreadNumbers + list(range(len(itemShowNames)))  
+            rowTypes      = rowTypes      + ['opjspread'] * len(itemShowNames)
+
             del(opj)
         elif parentrowtype == 'opjspread':
             opj = liborigin.parseOriginFile(basepath)
@@ -244,6 +261,32 @@ class Handler:
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
             del(opj)
+        elif parentrowtype == 'opjgraph':
+            opj = liborigin.parseOriginFile(basepath)
+            parent_graph = self.row_prop(parent_row, 'spreadsheet') ## The key 'spreadsheet' is misused here to mean 'graph'
+            layerNumber = 0 ## Fixme support for multiple opjlayers:    ["graphs"][1].layers[0].curves[3].xColumnName
+            itemShowNames, itemFullNames, columnNumbers, spreadNumbers = [], [], [], []
+            for curve in opj['graphs'][parent_graph].layers[layerNumber].curves:
+                ## FIXME add support for xColumn different than the first one in Spreadsheet, also here
+                #print("curve t xCol yCol:", curve.dataName.decode('utf-8'), 
+                        #curve.xColumnName.decode('utf-8'), curve.yColumnName.decode('utf-8'))
+                #print([spread.name for spread in opj['spreads']], (curve.dataName[2:]))
+
+                ## Seek the corresponding spreadsheet and column by their name
+                spreadsheet_index = [spread.name for spread in opj['spreads']].index(curve.dataName[2:])
+                y_column_index = [column.name for column in 
+                        opj['spreads'][spreadsheet_index].columns].index(curve.yColumnName)
+                print(curve.dataName[2:].decode('utf-8'), spreadsheet_index, curve.yColumnName.decode('utf-8'), y_column_index)
+
+                itemShowNames.append("spreadsheet " + opj['spreads'][spreadsheet_index].name.decode('utf-8') + 
+                        ', column ' + opj['spreads'][spreadsheet_index].columns[y_column_index].name.decode('utf-8'))
+                itemFullNames.append(basepath)          # all columns are from one file
+                columnNumbers.append(y_column_index)  
+                spreadNumbers.append(spreadsheet_index)
+            rowTypes      = ['opjcolumn'] * len(itemShowNames) ## TODO or introduce opjgraphcurve ?
+            del(opj)
+
+            pass
         else:
             warnings.warn('Not prepared yet to show listings of this file: %s' % parentrowtype)
             return
