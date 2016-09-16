@@ -5,6 +5,7 @@ import gi, sys, os, signal, stat, warnings
 import numpy as np
 import traceback, faulthandler ## Debugging library crashes
 faulthandler.enable()
+# https://docs.python.org/3/library/sys.html#sys.settrace
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
