@@ -153,11 +153,11 @@ class Handler:
                 'updir':            'go-up',
                 'dir':              'folder',
                 'csvtwocolumn':     'empty',
-                'csvmulticolumn':   'gtk-directory', 
+                'csvmulticolumn':   'zip', 
                 'csvcolumn':        'empty', 
                 'opjfile':          'zip', 
-                'opjspread':        'gtk-directory', 
-                'opjgraph':         'zip', 
+                'opjspread':        'go-next', 
+                'opjgraph':         'go-previous', 
                 'opjcolumn':        'empty', 
                 'xlsfile':          'zip', 
                 'xlsspread':        'go-next', 
@@ -294,10 +294,13 @@ class Handler:
                 spreadsheet_index = [spread.name for spread in opj['spreads']].index(curve.dataName[2:])
                 y_column_index = [column.name for column in 
                         opj['spreads'][spreadsheet_index].columns].index(curve.yColumnName)
+                x_column_index = [column.name for column in 
+                        opj['spreads'][spreadsheet_index].columns].index(curve.xColumnName)
                 #print(curve.dataName[2:].decode('utf-8'), spreadsheet_index, curve.yColumnName.decode('utf-8'), y_column_index)
 
                 itemShowNames.append(legend + " (from sheet " + opj['spreads'][spreadsheet_index].name.decode('utf-8') + 
-                        ', column ' + opj['spreads'][spreadsheet_index].columns[y_column_index].name.decode('utf-8') + ")")
+                        ', column ' + opj['spreads'][spreadsheet_index].columns[y_column_index].name.decode('utf-8') +
+                        ' against ' + opj['spreads'][spreadsheet_index].columns[x_column_index].name.decode('utf-8') + ")")
                 itemFullNames.append(basepath)          # all columns are from one file
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
