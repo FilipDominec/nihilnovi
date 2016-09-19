@@ -123,7 +123,7 @@ class Handler:
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
                 data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=10000)
-                return 'csvtwocolumn' if len(header)>2 else 'csvmulticolumn'
+                return 'csvtwocolumn' if len(header)==2 else 'csvmulticolumn'
             except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
                 return 'unknown'
         elif fullpath.lower().endswith('.xls'):
