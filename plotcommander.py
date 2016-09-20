@@ -231,7 +231,7 @@ class Handler:
             opj = liborigin.parseOriginFile(basepath)
             ## Add "graphs" - which show the selected columns in presentation-ready format
             ## Fixme support for multiple opjlayers also here
-            itemShowNames = [graph.name.decode('utf-8') for graph in opj['graphs']]
+            itemShowNames = ['%s "%s"' % (graph.name.decode('utf-8'), graph.label.decode('utf-8')) for graph in opj['graphs']]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = [None] * len(itemShowNames)
             spreadNumbers = list(range(len(itemShowNames)))  
@@ -245,7 +245,8 @@ class Handler:
 #
 
             ## Add "columns" - which enable to access all data in the file, including those not used in "graphs"
-            itemShowNames = itemShowNames + [spread.name.decode('utf-8') for spread in opj['spreads']]
+            itemShowNames = itemShowNames + ['%s "%s"' % (spread.name.decode('utf-8'), spread.label.decode('utf-8')) 
+                    for spread in opj['spreads']]
             itemFullNames = itemFullNames + [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = columnNumbers + [None] * len(itemShowNames)
             spreadNumbers = spreadNumbers + list(range(len(itemShowNames)))  
@@ -292,15 +293,15 @@ class Handler:
 
                 ## Seek the corresponding spreadsheet and column by their name
                 spreadsheet_index = [spread.name for spread in opj['spreads']].index(curve.dataName[2:])
-                y_column_index = [column.name for column in 
-                        opj['spreads'][spreadsheet_index].columns].index(curve.yColumnName)
-                x_column_index = [column.name for column in 
-                        opj['spreads'][spreadsheet_index].columns].index(curve.xColumnName)
+                spread = opj['spreads'][spreadsheet_index]
+                y_column_index = [column.name for column in spread.columns].index(curve.yColumnName)
+                x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
                 #print(curve.dataName[2:].decode('utf-8'), spreadsheet_index, curve.yColumnName.decode('utf-8'), y_column_index)
 
-                itemShowNames.append(legend + " (from sheet " + opj['spreads'][spreadsheet_index].name.decode('utf-8') + 
-                        ', column ' + opj['spreads'][spreadsheet_index].columns[y_column_index].name.decode('utf-8') +
-                        ' against ' + opj['spreads'][spreadsheet_index].columns[x_column_index].name.decode('utf-8') + ")")
+                itemShowNames.append('%s -> spread %s "%s": column %s (against  %s)' % 
+                        (legend, spread.name.decode('utf-8'), spread.label.decode('utf-8'), 
+                                spread.columns[y_column_index].name.decode('utf-8'), 
+                                spread.columns[x_column_index].name.decode('utf-8')))
                 itemFullNames.append(basepath)          # all columns are from one file
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
