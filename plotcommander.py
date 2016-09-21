@@ -27,7 +27,7 @@ import robust_csv_parser
 import sort_alpha_numeric
 
 default_plot_command = \
-"""for x, y, parameters, ylabel, xlabel, ylabel, color_from_palette in \
+"""for x, y, parameters, ylabel, xlabel, ylabel, color_from_palette in \\
         zip(xs, ys, params, labels, xlabels, ylabels, color_palette):
     self.ax.plot(x, y, label=ylabel, color=color_from_palette) """
 
@@ -442,7 +442,14 @@ class Handler:
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
-        if plot_command.strip() != "":
+        if plot_command.strip() == 'contour':
+            ys = np.log(np.array(ys)+0.00001)
+            cmaprange1 = np.min(ys) 
+            cmaprange2 = np.max(ys) 
+            levels = np.linspace(cmaprange1, cmaprange2, 50) 
+            contours = self.ax.contourf(h*c/1e-9/e/xs[0], np.linspace(0, 200, len(ys)), ys, levels=levels, extend='both')
+            for contour in contours.collections: contour.set_antialiased(False)
+        elif plot_command.strip() != '':
             exec(plot_command)
         else:
             plot_command = default_plot_command
@@ -458,9 +465,8 @@ class Handler:
             #self.ax.autoscale_view()
         self.canvas.draw()
 
-
-        self.ax.set_xlabel(xlabel)
-        self.ax.set_ylabel(ylabel)
+        #self.ax.set_xlabel(xlabel)
+        #self.ax.set_ylabel(ylabel)
         # }}}
     ## == FILE AND DATA UTILITIES ==
     def row_prop(self, row, prop):# {{{
