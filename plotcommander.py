@@ -3,6 +3,7 @@
 
 import gi, sys, os, signal, stat, warnings, re
 import numpy as np
+from scipy.constants import c,h,e
 import traceback, faulthandler ## Debugging library crashes
 faulthandler.enable()
 # https://docs.python.org/3/library/sys.html#sys.settrace
@@ -15,20 +16,21 @@ from gi.repository.GdkPixbuf import Pixbuf,Colorspace
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
-
-import liborigin
-import robust_csv_parser
-import sort_alpha_numeric
-
-
 ## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
 matplotlib.rcParams['font.family'] = 'serif'        
 matplotlib.rcParams['font.size'] = 9
 matplotlib.rcParams['axes.linewidth'] = .5
 matplotlib.rcParams['savefig.facecolor'] = "white"
-#import FDMeasurementRecords
 
-NO_COLUMN, NO_SPREADSHEET = -1, -1  
+import liborigin
+import robust_csv_parser
+import sort_alpha_numeric
+
+default_plot_command = \
+"""for x, y, parameters, ylabel, xlabel, ylabel, color_from_palette in \
+        zip(xs, ys, params, labels, xlabels, ylabels, color_palette):
+    self.ax.plot(x, y, label=ylabel, color=color_from_palette) """
+
 class Handler:
     ## == initialization == 
     def __init__(self): #{{{
@@ -85,6 +87,8 @@ class Handler:
         self.plot_reset()
         self.plot_all_sel_records()
 
+        ## Initialize the default plotting commands 
+        w('txt_rc').get_buffer().set_text(default_plot_command)
 
         ## Add the data cursor by default  # TODO - make this work
         from matplotlib.widgets import Cursor
@@ -396,7 +400,6 @@ class Handler:
                     header[rowxcolumn], header[rowycolumn]
         #elif rowtype == 'xls':
             # TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
-            #warnings.warn('support for multiple xls sheets not implemented  yet!')
             #return 
             #xl = pd.ExcelFile(infile, header=1) ##  
             #print(xl.sheet_names)  
@@ -418,17 +421,16 @@ class Handler:
         plotted_paths = []
         for path in pathlist:
             try:
-                ## Plot the line first
                 row_data.append(self.load_row_data(self.tsFiles.get_iter(path)))
                 plotted_paths.append(path)
-            except ValueError:
+            except (RuntimeError, ValueError):
                 traceback.print_exc()
                 error_counter += 1
         xs, ys, params, labels, xlabels, ylabels = zip(*row_data)
-        w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
+        w('statusbar1').push(0, "During last file-selection operation, %d errors were encountered" % error_counter)
 
         ## Generate the color palette for curves
-        color_pre_map = np.linspace(0.05, .95, len(pathlist)+1)[:-1]
+        color_pre_map = np.linspace(0.05, .95, len(plotted_paths)+1)[:-1]
         color_palette = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
         for path, color_from_palette in zip(plotted_paths, color_palette):
             ## If no exception occured during loading, colour the icon according to the line colour
@@ -437,9 +439,14 @@ class Handler:
             plotted_paths.append(path)
 
         ## Plot all curves sequentially
-        for x, y, parameters, ylabel, xlabel, ylabel, color_from_palette in \
-                zip(xs, ys, params, labels, xlabels, ylabels, color_palette):
-            self.ax.plot(x, y, label=ylabel, color=color_from_palette)
+        plot_cmd_buffer = w('txt_rc').get_buffer() 
+        plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
+                include_hidden_chars=True)
+        if plot_command.strip() != "":
+            exec(plot_command)
+        else:
+            plot_command = default_plot_command
+            plot_cmd_buffer.set_text(default_plot_command)
 
         #self.ax.legend(loc="auto")
         self.ax.grid(True)
