@@ -32,11 +32,19 @@ line_plot_command = \
     self.ax.plot(x, y, label=ylabel, color=color_from_palette) """
 contour_plot_command = \
 """
-ys = np.array(ys)
+#ys = np.array(ys)
+#cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
+#levels = np.linspace(cmaprange1, cmaprange2, 50) 
+#contours = self.ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
+        #levels=levels, extend='both')
+ys = np.log(0.0001+np.array(ys))
 cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
 levels = np.linspace(cmaprange1, cmaprange2, 50) 
-contours = self.ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
-        levels=levels, extend='both')
+contours = self.ax.contourf(h*c/1e-9/e/xs[0], np.linspace(0, 11, len(ys)), ys, \
+       #levels=levels, extend='both')
+self.ax.set_xlabel('optical energy (eV)')
+self.ax.set_ylabel('e-beam energy (keV)')
+self.ax.set_title('Sample 033, 30x1nm QW')
 """
 custom_plot_command = \
 """
@@ -377,6 +385,14 @@ class Handler:
         """
        
 
+#ys = np.log(0.0001+np.array(ys))
+#cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
+#levels = np.linspace(cmaprange1, cmaprange2, 50) 
+#contours = self.ax.contourf(h*c/1e-9/e/xs[0], np.linspace(0, 11, len(ys)), ys, \
+        #levels=levels, extend='both')
+#self.ax.set_xlabel('optical energy (eV)')
+#self.ax.set_ylabel('e-beam energy (keV)')
+#self.ax.set_title('Sample 033, 30x1nm QW')
         ## Load the data
         rowfilepath = self.row_prop(row, 'filepath')
         rowtype     = self.row_prop(row, 'rowtype')
@@ -388,7 +404,8 @@ class Handler:
             # TODO: what does opj['spreads'][3].multisheet mean?
             x, y = [opj['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
             if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## the last row from liborigin is sometimes erroneous zero
-            y = y[0:len(x)]                                 ## truncate y if longer than x
+            if len(x) < len(y): y = y[0:len(x)]             ## in any case, match the length of x- and y-data
+            if len(y) < len(x): x = x[0:len(y)] 
             try:                                    ## fast string-to-float conversion
                 x, y = [np.array(arr) for arr in (x,y)] ## TODO dtype=float
             except ValueError:                      ## failsafe string-to-float conversion
@@ -460,6 +477,8 @@ class Handler:
         else:
             plot_command = default_plot_command
             plot_cmd_buffer.set_text(default_plot_command)
+        ## FIXME     Why can not load graph5?
+
 
         #self.ax.legend(loc="auto")
         self.ax.grid(True)
