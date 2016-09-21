@@ -53,6 +53,7 @@ class Handler:
         #TODO http://stackoverflow.com/questions/26433169/personalize-matplotlib-toolbar-with-log-feature
         #TODO http://dalelane.co.uk/blog/?p=778
 
+        self.opj_file_cache = {}
 
         ## TreeStore and ListStore initialization
         self.tsFiles = Gtk.TreeStore(str,          Pixbuf,   str,      Pixbuf,            int,        int,             str)
@@ -166,6 +167,14 @@ class Handler:
                 }
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
+    def origin_parse_or_cache(self, basepath):# {{{
+        if basepath in self.opj_file_cache.keys():      
+            return self.opj_file_cache[basepath]
+        else: 
+            opj = liborigin.parseOriginFile(basepath)
+            self.opj_file_cache[basepath] = opj
+            return opj
+        # }}}
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):
         ## without any parent specified, rows will be added to the very left of the TreeView, 
         ## otherwise they will become childs thereof
@@ -228,7 +237,7 @@ class Handler:
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
             rowTypes      = ['csvcolumn'] * len(header)
         elif parentrowtype == 'opjfile':
-            opj = liborigin.parseOriginFile(basepath)
+            opj = self.origin_parse_or_cache(basepath)
             ## Add "graphs" - which show the selected columns in presentation-ready format
             ## Fixme support for multiple opjlayers also here
             itemShowNames = ['%s "%s"' % (graph.name.decode('utf-8'), graph.label.decode('utf-8')) for graph in opj['graphs']]
@@ -237,13 +246,6 @@ class Handler:
             spreadNumbers = list(range(len(itemShowNames)))  
             rowTypes      = ['opjgraph'] * len(itemShowNames)
 
-#["graphs"][0].layers[0]  <liborigin.GraphLayer object at 0x7fbdbb29f6a0>  <class 'liborigin.GraphLayer'> 
-                                                                                  #['b'figures', 'hLine', 'histogramBegin', 'histogramBin', 'histogramEnd', 'imageProfileTool', 'isXYY3D', 'legend', 'lines', 'percentile', 'pieTexts', 'texts', 'vLine', 'xAxis', 'xAxisBreak', 'xLength', 'yAxis', 'yAxisBreak', 'yLength', 'zAxis', 'zAxisBreak', 'zLength']  
-#
-#["graphs"][0].layers[0].curves[0]  <liborigin.GraphCurve object at 0x7fbdbb3506b0>  <class 'liborigin.GraphCurve'> 
-                                                                                                                    #['boxWidth', 'colorMap', 'connectSymbols', 'dataName', 'fillArea', 'fillAreaColor', 'fillAreaPattern', 'fillAreaPatternBorderColor', 'fillAreaPatternBorderStyle', 'fillAreaPatternBorderWidth', 'fillAreaPatternColor', 'fillAreaPatternWidth', 'fillAreaType', 'lineColor', 'lineConnect', 'lineStyle', 'lineWidth', 'pie', 'pointOffset', 'surface', 'symbolColor', 'symbolFillColor', 'symbolSize', 'symbolThickness', 'symbolType', 'text', 'type', 'vector', 'xColumnName', 'yColumnName', 'zColumnName']
-#
-
             ## Add "columns" - which enable to access all data in the file, including those not used in "graphs"
             itemShowNames = itemShowNames + ['%s "%s"' % (spread.name.decode('utf-8'), spread.label.decode('utf-8')) 
                     for spread in opj['spreads']]
@@ -251,19 +253,16 @@ class Handler:
             columnNumbers = columnNumbers + [None] * len(itemShowNames)
             spreadNumbers = spreadNumbers + list(range(len(itemShowNames)))  
             rowTypes      = rowTypes      + ['opjspread'] * len(itemShowNames)
-
-            del(opj)
         elif parentrowtype == 'opjspread':
-            opj = liborigin.parseOriginFile(basepath)
+            opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
             itemShowNames = [column.name.decode('utf-8') for column in opj['spreads'][parent_spreadsheet].columns]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
-            del(opj)
         elif parentrowtype == 'opjgraph':
-            opj = liborigin.parseOriginFile(basepath)
+            opj = self.origin_parse_or_cache(basepath)
             parent_graph = self.row_prop(parent_row, 'spreadsheet') ## The key 'spreadsheet' is misused here to mean 'graph'
             layerNumber = 0 ## Fixme support for multiple opjlayers:    ["graphs"][1].layers[0].curves[3].xColumnName
 
@@ -306,9 +305,6 @@ class Handler:
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
             rowTypes      = ['opjcolumn'] * len(itemShowNames) ## TODO or introduce opjgraphcurve ?
-            del(opj)
-
-            pass
         else:
             warnings.warn('Not prepared yet to show listings of this file: %s' % parentrowtype)
             return
