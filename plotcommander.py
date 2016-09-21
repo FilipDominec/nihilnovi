@@ -352,94 +352,109 @@ class Handler:
         recursive_clear_icon(self.tsFiles.get_iter_first())
         w('treeview1').queue_draw()
         # }}}
-    def plot_all_sel_records(self):# {{{
-        (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
-        if len(pathlist) == 0: return
+    def load_row_data(self, row):# {{{
+        """ loads all relevant data for a given treestore row, and returns: x, y, label, parameters, xlabel, ylabel
 
-        ## Generate the color palette
-        color_pre_map = np.linspace(0.05, .95, len(pathlist)+1)[:-1]
-        color_palette = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
-
-        ## Plot all curves sequentially
-        error_counter = 0
-        for (path, color_from_palette) in zip(pathlist, color_palette):
-            try:
-                ## Plot the line first
-                self.plot_row(self.tsFiles.get_iter(path), plot_style={'color':color_from_palette})
-
-                ## If no exception occurs, colour the icon according to the line colour
-                icon = self.row_prop(self.tsFiles.get_iter(path), 'plotstyleicon')
-                if icon: icon.fill(self.array2rgbhex(color_from_palette))
-            except ValueError:
-                traceback.print_exc()
-                error_counter += 1
-        #self.ax.legend(loc="auto")
-        self.ax.grid(True)
-
-        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
-        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
-        #if w('chk_autoscale').get_active():
-            #self.ax.relim()
-            #self.ax.autoscale_view()
-        self.canvas.draw()
-        w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
-        # }}}
-    def plot_row(self, row, plot_style={}):# {{{
-        ## Plotting "on-the-fly", i.e., program does not store any data and loads them from disk upon every (re)plot
+        Plotting is "on-the-fly", i.e., program does not store any data (except OPJ file cache) and loads them 
+        from disk upon every (re)plot.
+        """
+       
 
         ## Load the data
         rowfilepath = self.row_prop(row, 'filepath')
         rowtype     = self.row_prop(row, 'rowtype')
-        rowcolumn   = self.row_prop(row, 'column')
+        rowxcolumn  = 0 ## TODO allow ordinate also on >0th column 
+        rowycolumn  = self.row_prop(row, 'column')
         rowsheet    = self.row_prop(row, 'spreadsheet')
         if  rowtype == 'opjcolumn':
             opj = liborigin.parseOriginFile(rowfilepath)
-            #opj['spreads'][rowsheet]            # TODO: what does opj['spreads'][3].multisheet mean?
-            x = opj['spreads'][rowsheet].columns[0].data
-            #print('rowcolumn',rowcolumn)
-            #y = opj['spreads'][rowsheet].columns[rowcolumn].data
-            x, y =           [opj['spreads'][rowsheet].columns[c].data                 for c in [0, rowcolumn]]
-            if len(x)>2 and x[-2]>x[-1]*1e6: 
-                print(x[-20:])
-                x=x[:-1]       ## the last row from liborigin is sometimes erroneous zero
+            # TODO: what does opj['spreads'][3].multisheet mean?
+            x, y = [opj['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
+            if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## the last row from liborigin is sometimes erroneous zero
             y = y[0:len(x)]                                 ## truncate y if longer than x
-            try:
-                x,y = [np.array(arr) for arr in (x,y)]
-            except ValueError:
+            try:                                    ## fast string-to-float conversion
+                x, y = [np.array(arr) for arr in (x,y)] ## TODO dtype=float
+            except ValueError:                      ## failsafe string-to-float conversion
                 x0, y0 = [], []
                 for x1,y1 in zip(x,y):
                     try:
                         xf, yf = float(x1), float(y1)
                         x0.append(xf); y0.append(yf)
-                    except:
+                    except ValueError:
                         pass
                 x,y = x0, y0
-            xlabel, ylabel = [opj['spreads'][rowsheet].columns[c].name.decode('utf-8') for c in [0, rowcolumn]]
-        elif rowtype == 'xls':
-            warnings.warn('support for multiple xls sheets not implemented  yet!')
-            return 
-            xl = pd.ExcelFile(infile, header=1) ##  
-            ## TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
-            print(xl.sheet_names)  
-            print(xl.sheets[rowsheet])
-            df = xl.parse() 
-            x, y, xlabel, ylabel = df.values.T[0], df.values.T[rowcolumn], header[0], header[rowcolumn]
-            ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
+            xlabel, ylabel = [opj['spreads'][rowsheet].columns[c].name.decode('utf-8') for c in [rowxcolumn, rowycolumn]] 
+            parameters = {} ## todo: is it possible to load parameters from origin column?
+            return x, y, ylabel, parameters, xlabel, ylabel
         elif rowtype == 'csvtwocolumn':
             ycolumn = 1
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=1000000)
-            x, y, xlabel, ylabel = data_array.T[0], data_array.T[1], header[0], header[1]
+            return  data_array.T[0], data_array.T[1], header[1], parameters, header[0], header[1]
         elif rowtype == 'csvcolumn':
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=1000000)
-            x, y, xlabel, ylabel = data_array.T[0], data_array.T[rowcolumn], header[0], header[rowcolumn]
+            return data_array.T[rowxcolumn], data_array.T[rowycolumn], header[rowycolumn], parameters, \
+                    header[rowxcolumn], header[rowycolumn]
+        #elif rowtype == 'xls':
+            # TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
+            #warnings.warn('support for multiple xls sheets not implemented  yet!')
+            #return 
+            #xl = pd.ExcelFile(infile, header=1) ##  
+            #print(xl.sheet_names)  
+            #print(xl.sheets[rowsheet])
+            #df = xl.parse() 
+            #x, y, xlabel, ylabel = df.values.T[rowxcolumn], df.values.T[rowycolumn], header[rowxcolumn], header[rowycolumn]
+            ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
         else:
-            return          ## for all remaining filetypes, abort plotting quietly
+            raise RuntimeError         ## for all remaining filetypes, abort plotting quietly
 
-        ## Plot them
-        self.ax.plot(x, y, label=os.path.basename(self.row_prop(row, 'name')), **plot_style) # TODO apply plotting options
+# }}}
+    def plot_all_sel_records(self):# {{{
+
+        ## Load all row data
+        (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
+        if len(pathlist) == 0: return
+        error_counter = 0
+        row_data = []
+        plotted_paths = []
+        for path in pathlist:
+            try:
+                ## Plot the line first
+                row_data.append(self.load_row_data(self.tsFiles.get_iter(path)))
+                plotted_paths.append(path)
+            except ValueError:
+                traceback.print_exc()
+                error_counter += 1
+        xs, ys, params, labels, xlabels, ylabels = zip(*row_data)
+        w('statusbar1').push(0,"During last file-selection operation, %d errors were encountered" % error_counter)
+
+        ## Generate the color palette for curves
+        color_pre_map = np.linspace(0.05, .95, len(pathlist)+1)[:-1]
+        color_palette = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
+        for path, color_from_palette in zip(plotted_paths, color_palette):
+            ## If no exception occured during loading, colour the icon according to the line colour
+            icon = self.row_prop(self.tsFiles.get_iter(path), 'plotstyleicon')
+            if icon: icon.fill(self.array2rgbhex(color_from_palette))
+            plotted_paths.append(path)
+
+        ## Plot all curves sequentially
+        for x, y, parameters, ylabel, xlabel, ylabel, color_from_palette in \
+                zip(xs, ys, params, labels, xlabels, ylabels, color_palette):
+            self.ax.plot(x, y, label=ylabel, color=color_from_palette)
+
+        #self.ax.legend(loc="auto")
+        self.ax.grid(True)
+        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
+        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
+        #if w('chk_legend').get_active(): self.ax.legend(True)
+        #if w('chk_autoscale').get_active():
+            #self.ax.relim()
+            #self.ax.autoscale_view()
+        self.canvas.draw()
+
+
         self.ax.set_xlabel(xlabel)
         self.ax.set_ylabel(ylabel)
-# }}}
+        # }}}
     ## == FILE AND DATA UTILITIES ==
     def row_prop(self, row, prop):# {{{
         return self.tsFiles.get_value(row, self.treeStoreColumns[prop])
