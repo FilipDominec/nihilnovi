@@ -26,10 +26,22 @@ import liborigin
 import robust_csv_parser
 import sort_alpha_numeric
 
-default_plot_command = \
-"""for x, y, parameters, ylabel, xlabel, ylabel, color_from_palette in \\
+line_plot_command = \
+"""for x, y, parameters, label, xlabel, ylabel, color_from_palette in \\
         zip(xs, ys, params, labels, xlabels, ylabels, color_palette):
     self.ax.plot(x, y, label=ylabel, color=color_from_palette) """
+contour_plot_command = \
+"""
+ys = np.log(np.array(ys))
+cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
+levels = np.linspace(cmaprange1, cmaprange2, 50) 
+contours = self.ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
+        levels=levels, extend='both')
+"""
+custom_plot_command = \
+"""
+"""
+plot_commands = {'Lines':line_plot_command, 'Contours':contour_plot_command, 'Custom':custom_plot_command}
 
 class Handler:
     ## == initialization == 
@@ -88,7 +100,7 @@ class Handler:
         self.plot_all_sel_records()
 
         ## Initialize the default plotting commands 
-        w('txt_rc').get_buffer().set_text(default_plot_command)
+        w('txt_rc').get_buffer().set_text(line_plot_command)
 
         ## Add the data cursor by default  # TODO - make this work
         from matplotlib.widgets import Cursor
@@ -442,14 +454,7 @@ class Handler:
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
-        if plot_command.strip() == 'contour':
-            ys = np.log(np.array(ys)+0.00001)
-            cmaprange1 = np.min(ys) 
-            cmaprange2 = np.max(ys) 
-            levels = np.linspace(cmaprange1, cmaprange2, 50) 
-            contours = self.ax.contourf(h*c/1e-9/e/xs[0], np.linspace(0, 200, len(ys)), ys, levels=levels, extend='both')
-            for contour in contours.collections: contour.set_antialiased(False)
-        elif plot_command.strip() != '':
+        if plot_command.strip() != '':
             exec(plot_command)
         else:
             plot_command = default_plot_command
@@ -515,6 +520,14 @@ class Handler:
         # }}}
 
     ## == USER INTERFACE HANDLERS ==
+    def on_plotcommand_toggled(self, *args):
+        radiobutton = args[0]
+        buf = w('txt_rc').get_buffer()
+        if radiobutton.get_active(): 
+            buf.set_text(plot_commands[radiobutton.get_label().strip()])
+        else:
+            plot_commands[radiobutton.get_label().strip()] = buf.get_text(buf.get_start_iter(), 
+                    buf.get_end_iter(), include_hidden_chars=True)
     def on_treeview1_row_expanded(self, treeView, treeIter, treePath):# {{{
         ## if present, remove the dummy node (which is only used to draw the expander arrow)
         treeStore = treeView.get_model()
