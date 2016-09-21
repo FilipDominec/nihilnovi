@@ -145,3 +145,4 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
  * [ ] merge functions from python-meep-utils:multiplot.py
  * [ ] enable browsing HDF5 files if libhdf available (dtto)
  * [ ] plotcommander.py RC files should be searched for in the directory (and all updirs, too)
+ * [ ] try porting GtkSourceView to python3 

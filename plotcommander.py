@@ -32,7 +32,7 @@ line_plot_command = \
     self.ax.plot(x, y, label=ylabel, color=color_from_palette) """
 contour_plot_command = \
 """
-ys = np.log(np.array(ys))
+ys = np.array(ys)
 cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
 levels = np.linspace(cmaprange1, cmaprange2, 50) 
 contours = self.ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
@@ -40,6 +40,7 @@ contours = self.ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
 """
 custom_plot_command = \
 """
+## Each file is represented by a row in the [xs, ys, params, labels, xlabels, ylabels, color_palette] table
 """
 plot_commands = {'Lines':line_plot_command, 'Contours':contour_plot_command, 'Custom':custom_plot_command}
 
