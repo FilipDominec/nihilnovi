@@ -193,12 +193,13 @@ class Handler:
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
     def origin_parse_or_cache(self, basepath):# {{{
-        if basepath in self.opj_file_cache.keys():      
-            return self.opj_file_cache[basepath]
-        else: 
-            opj = liborigin.parseOriginFile(basepath)
-            self.opj_file_cache[basepath] = opj
-            return opj
+        return self.opj_file_cache[basepath]
+        #if basepath in self.opj_file_cache.keys():      
+            #return self.opj_file_cache[basepath]
+        #else: 
+            #opj = liborigin.parseOriginFile(basepath)
+            #self.opj_file_cache[basepath] = opj
+            #return opj
         # }}}
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):
         ## without any parent specified, rows will be added to the very left of the TreeView, 
@@ -278,6 +279,7 @@ class Handler:
             columnNumbers = columnNumbers + [None] * len(itemShowNames)
             spreadNumbers = spreadNumbers + list(range(len(itemShowNames)))  
             rowTypes      = rowTypes      + ['opjspread'] * len(itemShowNames)
+            del(opj)
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
@@ -286,6 +288,7 @@ class Handler:
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
+            del(opj)
         elif parentrowtype == 'opjgraph':
             opj = self.origin_parse_or_cache(basepath)
             parent_graph = self.row_prop(parent_row, 'spreadsheet') ## The key 'spreadsheet' is misused here to mean 'graph'
@@ -330,6 +333,7 @@ class Handler:
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
             rowTypes      = ['opjcolumn'] * len(itemShowNames) ## TODO or introduce opjgraphcurve ?
+            del(opj)
         else:
             warnings.warn('Not prepared yet to show listings of this file: %s' % parentrowtype)
             return
