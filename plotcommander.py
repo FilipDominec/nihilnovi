@@ -233,12 +233,12 @@ class Handler:
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
     def origin_parse_or_cache(self, basepath):# {{{
-        #if basepath in self.opj_file_cache.keys():      
-            #return self.opj_file_cache[basepath]
-        #else: 
-        opj = liborigin.parseOriginFile(basepath)
-        self.opj_file_cache[basepath] = opj
-        return opj
+        if basepath in self.opj_file_cache.keys():      
+            return self.opj_file_cache[basepath]
+        else: 
+            opj = liborigin.parseOriginFile(basepath)
+            self.opj_file_cache[basepath] = opj
+            return opj
         # }}}
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):
         ## without any parent specified, rows will be added to the very left of the TreeView, 
@@ -318,7 +318,6 @@ class Handler:
             columnNumbers = columnNumbers + [None] * len(itemShowNames)
             spreadNumbers = spreadNumbers + list(range(len(itemShowNames)))  
             rowTypes      = rowTypes      + ['opjspread'] * len(itemShowNames)
-            del(opj)
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
@@ -327,7 +326,6 @@ class Handler:
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
-            del(opj)
         elif parentrowtype == 'opjgraph':
             opj = self.origin_parse_or_cache(basepath)
             parent_graph = self.row_prop(parent_row, 'spreadsheet') ## The key 'spreadsheet' is misused here to mean 'graph'
@@ -372,7 +370,6 @@ class Handler:
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
             rowTypes      = ['opjcolumn'] * len(itemShowNames) ## TODO or introduce opjgraphcurve ?
-            del(opj)
         else:
             warnings.warn('Not prepared yet to show listings of this file: %s' % parentrowtype)
             return
@@ -443,7 +440,7 @@ class Handler:
         rowycolumn  = self.row_prop(row, 'column')
         rowsheet    = self.row_prop(row, 'spreadsheet')
         if  rowtype == 'opjcolumn':
-            opj = liborigin.parseOriginFile(rowfilepath)
+            opj = self.origin_parse_or_cache(rowfilepath)
             # TODO: what does opj['spreads'][3].multisheet mean?
             x, y = [opj['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
             if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## the last row from liborigin is sometimes erroneous zero
@@ -512,54 +509,17 @@ class Handler:
             plotted_paths.append(path)
 
         ## Plot all curves sequentially
-        #plot_cmd_buffer = w('txt_rc').get_buffer() 
-        #plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
-                #include_hidden_chars=True)
-        #if plot_command.strip() != '':
-            #exec(plot_command)
-        #else:
-            #plot_command = default_plot_command
-            #plot_cmd_buffer.set_text(default_plot_command)
-        ## FIXME     Why can not load graph5?
+        plot_cmd_buffer = w('txt_rc').get_buffer() 
+        plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
+                include_hidden_chars=True)
+        if plot_command.strip() != '':
+            exec(plot_command, locals())
+        else:
+            plot_command = default_plot_command
+            plot_cmd_buffer.set_text(default_plot_command)
+        # FIXME     Why can not load graph5?
 
         ## XXX
-        ys = np.array(ys)
-        cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
-        levels = 10**(np.linspace(np.log10(cmaprange1), np.log10(cmaprange2), 20)) 
-        x = h*c/1e-9/xs[0]/e
-        p = np.hstack([np.arange(2, 4.6, 0.5), np.arange(5, 9.1, 1.0)])
-
-        contours = self.ax.contourf(x, p, ys, levels=levels, extend='both', cmap='gist_earth_r')
-        contours = self.ax.contour(x, p, ys, levels=levels, extend='both', cmap='gist_earth_r')
-        self.ax.set_xlabel('optical energy (eV)')
-        self.ax.set_ylabel('electron energy (keV)')
-
-        self.ax.set_title('Aixtron sample cathodoluminescence')
-        self.ax.set_xlim([1.6,4])
-
-
-
-
-        self.ax2 = self.ax.twinx()
-        def tick_function(r): return 10.46*(r**1.68)
-
-        def tick_function_inv(r): return (r/10.46)**(1/1.68)
-
-        ## Step 1: Let us Matplotlib decide what the right-axis tick values would be
-        ylim2 = self.ax.get_ylim()
-        self.ax2.set_ylim([tick_function(self.ax.get_ylim()[0]),tick_function(self.ax.get_ylim()[1])])
-        yticks2=self.ax2.get_yticks() 
-
-        ## Step 2: Compute their corresponding positions on the left y-axis (i.e. invert the user function)
-        print(tick_function_inv(yticks2))
-        label_pos_legend = [(tick_function_inv(ytick2), ytick2) for ytick2 in yticks2 if not np.isnan(tick_function_inv(ytick2))]
-        pos, legend = zip(*label_pos_legend[:-1])  ## last value left out, since it shifted the upper self.ax2 limit
-
-        ## Step 3: Set the same limits on right y-axis as are on the left one
-        self.ax2.set_ylim(ylim2)
-        self.ax2.set_yticks(pos)
-        self.ax2.set_yticklabels(legend)
-        self.ax2.set_ylabel('electron penetration depth (nm)')
         ## XXX
 
 
