@@ -30,6 +30,7 @@ line_plot_command = \
 """for x, y, parameters, label, xlabel, ylabel, color_from_palette in \\
         zip(xs, ys, params, labels, xlabels, ylabels, color_palette):
     self.ax.plot(x, y, label=ylabel, color=color_from_palette) """
+
 contour_plot_command = \
 """
 #ys = np.array(ys)
@@ -44,8 +45,46 @@ contours = self.ax.contourf(h*c/1e-9/e/xs[0], np.linspace(0, 11, len(ys)), ys, \
        #levels=levels, extend='both')
 self.ax.set_xlabel('optical energy (eV)')
 self.ax.set_ylabel('e-beam energy (keV)')
-self.ax.set_title('Sample 033, 30x1nm QW')
+sel
+
+f.ax.set_title('Sample 033, 30x1nm QW')
 """
+
+
+
+
+"""
+ys = np.array(ys)
+cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
+levels = 10**(np.linspace(np.log10(cmaprange1), np.log10(cmaprange2), 20)) 
+
+p = np.hstack([np.arange(2, 4.6, 0.5), np.arange(5, 9.1, 1.0)])
+
+contours = self.ax.contourf(x, p, ys, levels=levels, extend='both', cmap='gist_earth_r')
+contours = self.ax.contour(x, p, ys, levels=levels, extend='both', cmap='gist_earth_r')
+self.ax.set_xlabel('optical energy (eV)')
+self.ax.set_ylabel('electron energy (keV)')
+
+self.ax.set_title('Aixtron sample cathodoluminescence')
+self.ax.set_xlim([1.6,4])
+
+ax2 = self.ax.twiny()
+def tick_function(p):
+    return 10.46*(p**1.68)
+ax2.set_xlim(ax.get_ylim())
+new_tick_locations = np.arange(2, 9, .5)
+ax2.set_xticks(new_tick_locations)
+ax2.set_yticklabels(tick_function(new_tick_locations))
+ax2.set_ylabel('electron penetration depth (nm)')
+"""
+
+contour_plot_command = \
+"""
+
+"""
+
+
+
 custom_plot_command = \
 """
 ## Each file is represented by a row in the [xs, ys, params, labels, xlabels, ylabels, color_palette] table
@@ -67,6 +106,7 @@ class Handler:
         self.sw = Gtk.ScrolledWindow()
         self.sw.add_with_viewport(self.canvas)
         w('box4').pack_start(self.toolbar, False, True, 0)
+
         #self.toolbar.append_item(Gtk.Button('tetet')) 
         ## TODO find out how to modify the NavigationToolbar...
         w('box4').pack_start(self.sw, True, True, 0)
@@ -193,13 +233,12 @@ class Handler:
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
     def origin_parse_or_cache(self, basepath):# {{{
-        return self.opj_file_cache[basepath]
         #if basepath in self.opj_file_cache.keys():      
             #return self.opj_file_cache[basepath]
         #else: 
-            #opj = liborigin.parseOriginFile(basepath)
-            #self.opj_file_cache[basepath] = opj
-            #return opj
+        opj = liborigin.parseOriginFile(basepath)
+        self.opj_file_cache[basepath] = opj
+        return opj
         # }}}
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):
         ## without any parent specified, rows will be added to the very left of the TreeView, 
@@ -473,15 +512,55 @@ class Handler:
             plotted_paths.append(path)
 
         ## Plot all curves sequentially
-        plot_cmd_buffer = w('txt_rc').get_buffer() 
-        plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
-                include_hidden_chars=True)
-        if plot_command.strip() != '':
-            exec(plot_command)
-        else:
-            plot_command = default_plot_command
-            plot_cmd_buffer.set_text(default_plot_command)
+        #plot_cmd_buffer = w('txt_rc').get_buffer() 
+        #plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
+                #include_hidden_chars=True)
+        #if plot_command.strip() != '':
+            #exec(plot_command)
+        #else:
+            #plot_command = default_plot_command
+            #plot_cmd_buffer.set_text(default_plot_command)
         ## FIXME     Why can not load graph5?
+
+        ## XXX
+        ys = np.array(ys)
+        cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
+        levels = 10**(np.linspace(np.log10(cmaprange1), np.log10(cmaprange2), 20)) 
+        x = h*c/1e-9/xs[0]/e
+        p = np.hstack([np.arange(2, 4.6, 0.5), np.arange(5, 9.1, 1.0)])
+
+        contours = self.ax.contourf(x, p, ys, levels=levels, extend='both', cmap='gist_earth_r')
+        contours = self.ax.contour(x, p, ys, levels=levels, extend='both', cmap='gist_earth_r')
+        self.ax.set_xlabel('optical energy (eV)')
+        self.ax.set_ylabel('electron energy (keV)')
+
+        self.ax.set_title('Aixtron sample cathodoluminescence')
+        self.ax.set_xlim([1.6,4])
+
+
+
+
+        self.ax2 = self.ax.twinx()
+        def tick_function(r): return 10.46*(r**1.68)
+
+        def tick_function_inv(r): return (r/10.46)**(1/1.68)
+
+        ## Step 1: Let us Matplotlib decide what the right-axis tick values would be
+        ylim2 = self.ax.get_ylim()
+        self.ax2.set_ylim([tick_function(self.ax.get_ylim()[0]),tick_function(self.ax.get_ylim()[1])])
+        yticks2=self.ax2.get_yticks() 
+
+        ## Step 2: Compute their corresponding positions on the left y-axis (i.e. invert the user function)
+        print(tick_function_inv(yticks2))
+        label_pos_legend = [(tick_function_inv(ytick2), ytick2) for ytick2 in yticks2 if not np.isnan(tick_function_inv(ytick2))]
+        pos, legend = zip(*label_pos_legend[:-1])  ## last value left out, since it shifted the upper self.ax2 limit
+
+        ## Step 3: Set the same limits on right y-axis as are on the left one
+        self.ax2.set_ylim(ylim2)
+        self.ax2.set_yticks(pos)
+        self.ax2.set_yticklabels(legend)
+        self.ax2.set_ylabel('electron penetration depth (nm)')
+        ## XXX
 
 
         #self.ax.legend(loc="auto")
