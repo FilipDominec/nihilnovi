@@ -3,7 +3,7 @@
 
 import gi, sys, os, signal, stat, warnings, re
 import numpy as np
-from scipy.constants import c,h,e
+import scipy.constants as sc
 import traceback, faulthandler ## Debugging library crashes
 faulthandler.enable()
 # https://docs.python.org/3/library/sys.html#sys.settrace
@@ -27,9 +27,10 @@ import robust_csv_parser
 import sort_alpha_numeric
 
 line_plot_command = \
-"""for x, y, parameters, label, xlabel, ylabel, color_from_palette in \\
-        zip(xs, ys, params, labels, xlabels, ylabels, color_palette):
-    self.ax.plot(x, y, label=ylabel, color=color_from_palette) """
+"""for x, y, param, labelkey, labelval, color in \
+        (xs, ys, params, labelkeys, labelvals, colors):
+    ax.plot(x, y, label="%s=%s" % (labelkey, labelval), color=color)
+"""
 
 contour_plot_command = \
 """
@@ -87,7 +88,7 @@ contour_plot_command = \
 
 custom_plot_command = \
 """
-## Each file is represented by a row in the [xs, ys, params, labels, xlabels, ylabels, color_palette] table
+## Each file is represented by a row in the [xs, ys, params, labels, xlabels, ylabels, colors] table
 """
 plot_commands = {'Lines':line_plot_command, 'Contours':contour_plot_command, 'Custom':custom_plot_command}
 
@@ -482,7 +483,6 @@ class Handler:
 
 # }}}
     def plot_all_sel_records(self):# {{{
-
         ## Load all row data
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
@@ -501,19 +501,30 @@ class Handler:
 
         ## Generate the color palette for curves
         color_pre_map = np.linspace(0.05, .95, len(plotted_paths)+1)[:-1]
-        color_palette = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
-        for path, color_from_palette in zip(plotted_paths, color_palette):
+        colors = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
+        for path, color_from_palette in zip(plotted_paths, colors):
             ## If no exception occured during loading, colour the icon according to the line colour
             icon = self.row_prop(self.tsFiles.get_iter(path), 'plotstyleicon')
             if icon: icon.fill(self.array2rgbhex(color_from_palette))
             plotted_paths.append(path)
+
+        ## TODO: decide what is the distinguishing parameter for the given plot ---> <str> labelkey, <labelvals
+        # 1) (almost) all curves should have it defined
+        # 2) it should differ among (almost) all curves 
+        # 3) it may be in the params dict, or in the filename (for csvtwocolumn), or in the header of csvcolumn, opjcolumn etc.
 
         ## Plot all curves sequentially
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
         if plot_command.strip() != '':
-            exec(plot_command, locals())
+            #np = numpy
+            exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib,     'ax':self.ax, 'fig': self.fig, 
+                    'xs':xs, 'ys':ys, 'params':params, 'labelkeys':['TODO']*len(xs), 'labelvals':['TODO']*len(xs), 'colors':colors}
+            self.fig.clf() ## clear figure
+            exec(plot_command, exec_env)
+            #code = compile(plot_command, "somefile.py", 'exec') TODO
+            #exec(code, global_vars, local_vars)
         else:
             plot_command = default_plot_command
             plot_cmd_buffer.set_text(default_plot_command)
