@@ -16,9 +16,10 @@ from gi.repository.GdkPixbuf import Pixbuf,Colorspace
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
+from matplotlib.widgets import Cursor
 ## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
 matplotlib.rcParams['font.family'] = 'serif'        
-matplotlib.rcParams['font.size'] = 9
+matplotlib.rcParams['font.size'] = 10
 matplotlib.rcParams['axes.linewidth'] = .5
 matplotlib.rcParams['savefig.facecolor'] = "white"
 
@@ -28,7 +29,7 @@ import sort_alpha_numeric
 
 line_plot_command = \
 """for x, y, param, labelkey, labelval, color in \
-        (xs, ys, params, labelkeys, labelvals, colors):
+        zip(xs, ys, params, labelkeys, labelvals, colors):
     ax.plot(x, y, label="%s=%s" % (labelkey, labelval), color=color)
 """
 
@@ -153,8 +154,8 @@ class Handler:
         w('txt_rc').get_buffer().set_text(line_plot_command)
 
         ## Add the data cursor by default  # TODO - make this work
-        from matplotlib.widgets import Cursor
-        cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
+        #cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
+
 
         #}}}
     ## === FILE HANDLING ===
@@ -281,7 +282,6 @@ class Handler:
             ## Get the directory contents, filtering the files
             fileFilterString = w('enFileFilter').get_text().strip()
             filenames = [n for n in os.listdir(basepath) if (fileFilterString in os.path.basename(basepath))]
-            print(filenames)
 
             ## Sort alphabetically, all folders above files
             filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
@@ -344,7 +344,7 @@ class Handler:
                 ## string.ascii_letters, "".join([togreek(g) for g in string.ascii_letters])
                 ## 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
                 ## 'αβγδεζηθι κλμνοπρςστυφχξψωΑΒΓΔΕΖΗΘΙ ΚΛΜΝΟΠ ΡΣΤΥΦΧΞΨΩ'
-                print(legends, comment)
+                #print(legends, comment)
             else:
                 legends = [""] * len(curves)
                 comment = ""
@@ -521,13 +521,14 @@ class Handler:
             #np = numpy
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib,     'ax':self.ax, 'fig': self.fig, 
                     'xs':xs, 'ys':ys, 'params':params, 'labelkeys':['TODO']*len(xs), 'labelvals':['TODO']*len(xs), 'colors':colors}
-            self.fig.clf() ## clear figure
+            #self.fig.clf() ## clear figure
             exec(plot_command, exec_env)
             #code = compile(plot_command, "somefile.py", 'exec') TODO
             #exec(code, global_vars, local_vars)
-        else:
-            plot_command = default_plot_command
-            plot_cmd_buffer.set_text(default_plot_command)
+        #else:
+            #plot_command = default_plot_command
+            #plot_cmd_buffer.set_text(default_plot_command)
+        cursor = Cursor(self.ax, color='red', linewidth=.5) # useblit=True, 
         # FIXME     Why can not load graph5?
 
         ## XXX
