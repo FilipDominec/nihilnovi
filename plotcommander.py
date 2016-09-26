@@ -35,21 +35,11 @@ line_plot_command = \
 
 contour_plot_command = \
 """
-#ys = np.array(ys)
-#cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
-#levels = np.linspace(cmaprange1, cmaprange2, 50) 
-#contours = self.ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
-        #levels=levels, extend='both')
-ys = np.log(0.0001+np.array(ys))
+ys = np.array(ys)
 cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
 levels = np.linspace(cmaprange1, cmaprange2, 50) 
-contours = self.ax.contourf(h*c/1e-9/e/xs[0], np.linspace(0, 11, len(ys)), ys, \
-       #levels=levels, extend='both')
-self.ax.set_xlabel('optical energy (eV)')
-self.ax.set_ylabel('e-beam energy (keV)')
-sel
-
-f.ax.set_title('Sample 033, 30x1nm QW')
+contours = ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
+       levels=levels, extend='both')
 """
 
 
@@ -80,10 +70,6 @@ ax2.set_yticklabels(tick_function(new_tick_locations))
 ax2.set_ylabel('electron penetration depth (nm)')
 """
 
-contour_plot_command = \
-"""
-
-"""
 
 
 
@@ -100,8 +86,8 @@ class Handler:
         np.seterr(all='ignore')
 
         ## Plotting initialization
-        self.fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee', tight_layout=1)
-        self.ax = self.fig.add_subplot(111) 
+        self.fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee', tight_layout=1) 
+        # (figure is static, axes clear on every replot)
         self.canvas = FigureCanvas(self.fig)
         self.canvas.set_size_request(300,300)
         self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas, w('box4').get_parent_window())
@@ -403,7 +389,9 @@ class Handler:
                 int(alpha*255  -.5)
         # }}}
     def plot_reset(self):# {{{
-        self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
+        #self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
+        self.fig.clf()
+        self.ax = self.fig.add_subplot(111) 
 
         def recursive_clear_icon(treeIter):
             while treeIter != None: 
@@ -421,15 +409,6 @@ class Handler:
         from disk upon every (re)plot.
         """
        
-
-#ys = np.log(0.0001+np.array(ys))
-#cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
-#levels = np.linspace(cmaprange1, cmaprange2, 50) 
-#contours = self.ax.contourf(h*c/1e-9/e/xs[0], np.linspace(0, 11, len(ys)), ys, \
-        #levels=levels, extend='both')
-#self.ax.set_xlabel('optical energy (eV)')
-#self.ax.set_ylabel('e-beam energy (keV)')
-#self.ax.set_title('Sample 033, 30x1nm QW')
         ## Load the data
         rowfilepath = self.row_prop(row, 'filepath')
         rowtype     = self.row_prop(row, 'rowtype')
@@ -591,14 +570,88 @@ class Handler:
         # }}}
 
     ## == USER INTERFACE HANDLERS ==
-    def on_plotcommand_toggled(self, *args):
+    def on_btn_plotrc_save_clicked(self, *args):
+        pass
+
+
+    def possible_rc_filenames(self):
+        (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
+        if pathlist:
+            firstselfilenamepath = self.row_prop(self.tsFiles.get_iter(pathlist[0]), 'filepath')
+            firstselfilepath, firstselfilename = os.path.dirname(firstselfilenamepath), os.path.basename(firstselfilenamepath) 
+            testrcfilenamepath1 = os.path.join(firstselfilepath, 'plotrc_%s.py' % firstselfilename)
+            testrcfilenamepath2 = os.path.join(firstselfilepath, 'plotrc.py') 
+            return (testrcfilenamepath1, testrcfilenamepath2)
+        else:
+            return None
+
+    def relevant_rc_filename(self):
+        prf = self.possible_rc_filenames()
+        if prf: 
+            rc_filename = prf[0] if os.path.isfile(prf[0]) else prf[1] if os.path.isfile(prf[1]) else None
+            return rc_filename
+        else:
+            return None
+
+    def load_plotcommand_from_rcfile(self):
+        rc_filename = self.relevant_rc_filename()
+        if rc_filename:
+            with open(rc_filename) as rcfile:
+                return rcfile.read()
+        else:
+            return ''
+
+    def update_plotcommand_from_rcfile(self):
+        print('          -- update_plotcommand_from_rcfile')
+        buf = w('txt_rc').get_buffer()
+        buf.set_text(self.load_plotcommand_from_rcfile())        
+
+
+    def on_plotcommand_toggled(self, *args):# {{{
         radiobutton = args[0]
         buf = w('txt_rc').get_buffer()
-        if radiobutton.get_active(): 
-            buf.set_text(plot_commands[radiobutton.get_label().strip()])
+
+        if radiobutton is w('rad_plotstyle_rc'):
+            if radiobutton.get_active():        ## selecting action
+                self.update_plotcommand_from_rcfile()
+            else:
+                pass ## todo - ask whether to save the command file, if changed
         else:
-            plot_commands[radiobutton.get_label().strip()] = buf.get_text(buf.get_start_iter(), 
-                    buf.get_end_iter(), include_hidden_chars=True)
+            if radiobutton.get_active():        ## selecting action
+                print('select get_active() = true')
+                buf.set_text(plot_commands[radiobutton.get_label().strip()])        
+            else:                               ## deselecting action
+                print('deselect get_active() = false')
+                plot_commands[radiobutton.get_label().strip()] = buf.get_text(buf.get_start_iter(), 
+                        buf.get_end_iter(), include_hidden_chars=True)
+
+        ## Update the graphical presentation
+        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
+        self.plot_all_sel_records()     ## then show the selected ones
+    # }}}
+    """
+    if radio changes to some defaultcommand
+                    ---> change to selected command
+    if radio changes to rcfile
+        if relevant rcfile exists
+                    ---> change to selected command ( LOAD rcfile command)
+                    ---> then REPLOT
+        if rcfile does not exist
+                    ---> EMPTy txtbox 
+        if nothing selected
+                    ---> EMPTy txtbox 
+    if selection changes 
+        if relevant rcfile exists   
+                    ---> CHANGE radio TO RCFILE
+                    ---> change to selected command ( LOAD rcfile command) (automatic event handler?)
+        if rcfile does not exist
+                    ---> CHANGE radio TO DEFAULT
+        if nothing selected
+                    --->
+
+    ---> then always REPLOT
+        
+    """
     def on_treeview1_row_expanded(self, treeView, treeIter, treePath):# {{{
         ## if present, remove the dummy node (which is only used to draw the expander arrow)
         treeStore = treeView.get_model()
@@ -622,6 +675,13 @@ class Handler:
     # }}}
     def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
         if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
+
+        ## Update the plot command
+        if w('rad_plotstyle_rc').get_active():
+            self.update_plotcommand_from_rcfile()
+        elif self.relevant_rc_filename():
+            w('rad_plotstyle_rc').set_active(True)
+
         ## Update the graphical presentation
         self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
         self.plot_all_sel_records()     ## then show the selected ones
