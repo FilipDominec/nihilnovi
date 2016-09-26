@@ -15,6 +15,7 @@ from gi.repository.GdkPixbuf import Pixbuf, Colorspace
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
+#from mpl_toolkits.axes_grid1 import host_subplot ## allows better axes handling than fig.subplot
 from matplotlib.widgets import Cursor
 ## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
 matplotlib.rcParams['font.family'] = 'serif'        
@@ -386,6 +387,8 @@ class Handler:
         #self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
         self.fig.clf()
         self.ax = self.fig.add_subplot(111) 
+        ## TODO: this may enable better handling of axes, but needs to make compatible with the object model of figure.Figure 
+        #self.ax = host_subplot(111, figure=self.fig.gcf() ) 
 
         def recursive_clear_icon(treeIter):
             while treeIter != None: 
