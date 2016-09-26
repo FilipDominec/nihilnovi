@@ -242,7 +242,7 @@ class Handler:
             self.opj_file_cache[basepath] = opj
             return opj
         # }}}
-    def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):
+    def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):# {{{
         ## without any parent specified, rows will be added to the very left of the TreeView, 
         ## otherwise they will become childs thereof
         if parent_row is None:
@@ -273,7 +273,7 @@ class Handler:
             ## If not resetting the whole tree, get the basepath from the parent row
             basepath = treeStore.get_value(parent_row, self.treeStoreColumns['filepath'])
         else:
-            raise()
+            raise AttributeError()
 
         ## Prepare the lists of paths, column numbers and spreadsheet numbers to be added
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
@@ -377,7 +377,6 @@ class Handler:
 
 
         ## Go through all items and populate the node
-        itemCounter = 0
         for itemFullName, itemShowName, columnNumber, spreadNumber, rowtype in \
                 zip(itemFullNames, itemShowNames, columnNumbers, spreadNumbers, rowTypes):
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
@@ -386,10 +385,7 @@ class Handler:
                     [itemFullName, self.rowtype_icon(rowtype), itemShowName, plotstyleIcon, columnNumber, spreadNumber, rowtype])
             if not self.rowtype_is_leaf(rowtype): ## TODO row---> parentrowtype
                 treeStore.append(currentIter, self.dummy_treestore_row)     # shows the "unpacking arrow" left of the item
-            itemCounter += 1                                    #increment the item counter
-        if itemCounter < 1: treeStore.append(parent_row, self.dummy_treestore_row)        # add the dummy node back if nothing was inserted before
-        ## TODO ^^ shall be removed?
-
+        # }}}
 
 
     ## === GRAPHICAL PRESENTATION ===
