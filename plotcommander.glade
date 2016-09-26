@@ -420,7 +420,6 @@
                                   <object class="GtkTextView" id="txt_rc">
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
-                                    <property name="margin_bottom">1</property>
                                     <property name="hscroll_policy">natural</property>
                                     <property name="right_margin">6</property>
                                     <property name="buffer">textbuffer1</property>
@@ -448,6 +447,7 @@
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
+                                    <signal name="clicked" handler="on_btn_plotrc_save_clicked" swapped="no"/>
                                   </object>
                                   <packing>
                                     <property name="expand">False</property>

@@ -9,9 +9,8 @@ faulthandler.enable()
 # https://docs.python.org/3/library/sys.html#sys.settrace
 
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
-from gi.repository import Gdk
-from gi.repository.GdkPixbuf import Pixbuf,Colorspace
+from gi.repository import Gtk, Gdk, Pango
+from gi.repository.GdkPixbuf import Pixbuf, Colorspace
 
 import matplotlib
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
@@ -138,6 +137,7 @@ class Handler:
 
         ## Initialize the default plotting commands 
         w('txt_rc').get_buffer().set_text(line_plot_command)
+        w('txt_rc').modify_font(Pango.FontDescription("monospace 10"))
 
         ## Add the data cursor by default  # TODO - make this work
         #cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
@@ -497,7 +497,12 @@ class Handler:
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib,     'ax':self.ax, 'fig': self.fig, 
                     'xs':xs, 'ys':ys, 'params':params, 'labelkeys':['TODO']*len(xs), 'labelvals':['TODO']*len(xs), 'colors':colors}
             #self.fig.clf() ## clear figure
-            exec(plot_command, exec_env)
+            try:
+                exec(plot_command, exec_env)
+            except SyntaxError:
+                print("SYNTAX ERROR:")
+                traceback.print_exc()
+
             #code = compile(plot_command, "somefile.py", 'exec') TODO
             #exec(code, global_vars, local_vars)
         #else:
@@ -570,10 +575,6 @@ class Handler:
         # }}}
 
     ## == USER INTERFACE HANDLERS ==
-    def on_btn_plotrc_save_clicked(self, *args):
-        pass
-
-
     def possible_rc_filenames(self):
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if pathlist:
@@ -601,10 +602,10 @@ class Handler:
         else:
             return ''
 
-    def update_plotcommand_from_rcfile(self):
-        print('          -- update_plotcommand_from_rcfile')
-        buf = w('txt_rc').get_buffer()
-        buf.set_text(self.load_plotcommand_from_rcfile())        
+    def update_plotcommand_from_rcfile(self, allow_overwrite_by_empty=True):
+        plotcommand =  self.load_plotcommand_from_rcfile()
+        if plotcommand or allow_overwrite_by_empty:
+            w('txt_rc').get_buffer().set_text(plotcommand)
 
 
     def on_plotcommand_toggled(self, *args):# {{{
@@ -629,6 +630,14 @@ class Handler:
         self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
         self.plot_all_sel_records()     ## then show the selected ones
     # }}}
+    def on_btn_plotrc_save_clicked(self, *args):# {{{
+        rc_filename = self.relevant_rc_filename()
+        if rc_filename:
+            with open(rc_filename, 'w') as rcfile:
+                buf = w('txt_rc').get_buffer()
+                rcfile.write(buf.get_text(buf.get_start_iter(), buf.get_end_iter(), include_hidden_chars=True) )
+    # }}}
+
     """
     if radio changes to some defaultcommand
                     ---> change to selected command
@@ -678,7 +687,8 @@ class Handler:
 
         ## Update the plot command
         if w('rad_plotstyle_rc').get_active():
-            self.update_plotcommand_from_rcfile()
+             ## TODO if it does not exist
+            self.update_plotcommand_from_rcfile(allow_overwrite_by_empty=False)
         elif self.relevant_rc_filename():
             w('rad_plotstyle_rc').set_active(True)
 
