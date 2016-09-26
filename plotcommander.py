@@ -70,13 +70,7 @@ ax2.set_ylabel('electron penetration depth (nm)')
 """
 
 
-
-
-custom_plot_command = \
-"""
-## Each file is represented by a row in the [xs, ys, params, labels, xlabels, ylabels, colors] table
-"""
-plot_commands = {'Lines':line_plot_command, 'Contours':contour_plot_command, 'Custom':custom_plot_command}
+plot_commands = {'Lines':line_plot_command, 'Contours':contour_plot_command}
 
 class Handler:
     ## == initialization == 
@@ -607,10 +601,14 @@ class Handler:
         if plotcommand or allow_overwrite_by_empty:
             w('txt_rc').get_buffer().set_text(plotcommand)
 
-
+    def plotcommand_get_text(self):
+        buf = w('txt_rc').get_buffer()
+        return buf.get_text(buf.get_start_iter(), buf.get_end_iter(), include_hidden_chars=True)
+    def plotcommand_set_text(self, text):
+        buf = w('txt_rc').get_buffer()
+        buf.set_text(text)
     def on_plotcommand_toggled(self, *args):# {{{
         radiobutton = args[0]
-        buf = w('txt_rc').get_buffer()
 
         if radiobutton is w('rad_plotstyle_rc'):
             if radiobutton.get_active():        ## selecting action
@@ -620,22 +618,19 @@ class Handler:
         else:
             if radiobutton.get_active():        ## selecting action
                 print('select get_active() = true')
-                buf.set_text(plot_commands[radiobutton.get_label().strip()])        
+                self.plotcommand_set_text(plot_commands[radiobutton.get_label().strip()])        
             else:                               ## deselecting action
                 print('deselect get_active() = false')
-                plot_commands[radiobutton.get_label().strip()] = buf.get_text(buf.get_start_iter(), 
-                        buf.get_end_iter(), include_hidden_chars=True)
+                plot_commands[radiobutton.get_label().strip()] = self.plotcommand_get_text()
 
         ## Update the graphical presentation
         self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
         self.plot_all_sel_records()     ## then show the selected ones
     # }}}
     def on_btn_plotrc_save_clicked(self, *args):# {{{
-        rc_filename = self.relevant_rc_filename()
-        if rc_filename:
-            with open(rc_filename, 'w') as rcfile:
-                buf = w('txt_rc').get_buffer()
-                rcfile.write(buf.get_text(buf.get_start_iter(), buf.get_end_iter(), include_hidden_chars=True) )
+        rc_filename = self.relevant_rc_filename() or self.possible_rc_filenames()[0]
+        with open(rc_filename, 'w') as rcfile:
+            rcfile.write(self.plotcommand_get_text())
     # }}}
 
     """
