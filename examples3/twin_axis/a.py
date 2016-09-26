@@ -22,10 +22,11 @@ ax2.set_ylabel('bar cross-section (cm$^{2}$)')
 def tick_function(r,q=0): return 10.46*(r**1.68)
 #def tick_function_inv(r): return ((r/10.46)**(1/1.68))
 from scipy.optimize import brentq
-def tick_function_inv(r, target_value): 
-    return brentq(lambda r,q: tick_function(r) - target_value, 0, 20000, 1e6)
+def tick_function_inv(r): 
+    return brentq(lambda r, q: tick_function(r) - q, 0, 20000, 1e6)
 
-print('tick_function_inv', tick_function_inv(0, 10000))
+print('tick_function_inv', tick_function_inv(2000))
+print('tick_function_inv', tick_function_inv(10000))
 
 
 ylim2 = ax.get_ylim()
@@ -33,9 +34,9 @@ ax2.set_ylim([tick_function(ax.get_ylim()[0]), tick_function(ax.get_ylim()[1])])
 yticks2=ax2.get_yticks() 
 ax2.set_ylim(ylim2)
 
-label_pos_legend = [(tick_function_inv(ytick2), ytick2) 
-        for ytick2 in yticks2 if not np.isnan(tick_function_inv(ytick2))]
+label_pos_legend = [[tick_function_inv(0,ytick2), ytick2] for ytick2 in yticks2]
 pos, legend = zip(*label_pos_legend[:-1])  ## last value left out, since it shifted the upper ax2 limit
+print(pos, legend)
 ax2.set_yticks(pos)
 
 
