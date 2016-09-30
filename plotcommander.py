@@ -263,15 +263,15 @@ class Handler:
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
         assert not self.rowtype_is_leaf(parentrowtype)
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
-            ## Get the directory contents, filtering the files
-            fileFilterString = w('enFileFilter').get_text().strip()
-            filenames = [n for n in os.listdir(basepath) if (fileFilterString in os.path.basename(basepath))]
-
-            ## Sort alphabetically, all folders above files
+            ## Get the directory contents and sort it alphabetically
+            filenames = os.listdir(basepath) 
             filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
-            itemFullNames = [os.path.join(basepath, filename) for filename in filenames]
-            itemFullNames = ([ f for f in itemFullNames if     self.is_dir(f)] 
-                            + [f for f in itemFullNames if not self.is_dir(f)])         # dirs will be listed first, files below
+            fileFilterString = w('enFileFilter').get_text().strip()
+            itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
+            # dirs will be listed first and files below; filter the files 
+            itemFullNames =  [f for f in itemFullNames if     self.is_dir(f)] + \
+                    [f for f in itemFullNames if (not self.is_dir(f) and       
+                                  (fileFilterString == '' or fileFilterString in os.path.basename(basepath))]    
             itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
             spreadNumbers = [None] * len(itemFullNames)    # nor they are assigned any spreadsheet number
