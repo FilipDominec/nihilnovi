@@ -13,6 +13,7 @@ from gi.repository import Gtk, Gdk, Pango
 from gi.repository.GdkPixbuf import Pixbuf, Colorspace
 
 import matplotlib
+import matplotlib.cm as cm
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar
 #from mpl_toolkits.axes_grid1 import host_subplot ## allows better axes handling than fig.subplot
@@ -491,7 +492,7 @@ class Handler:
                 include_hidden_chars=True)
         if plot_command.strip() != '':
             #np = numpy
-            exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib,     'ax':self.ax, 'fig': self.fig, 
+            exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                     'xs':xs, 'ys':ys, 'params':params, 'labelkeys':['TODO']*len(xs), 'labelvals':['TODO']*len(xs), 'colors':colors}
             #self.fig.clf() ## clear figure
             try:
