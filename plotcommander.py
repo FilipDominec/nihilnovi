@@ -257,7 +257,6 @@ class Handler:
             basepath = treeStore.get_value(parent_row, self.treeStoreColumns['filepath'])
         else:
             raise AttributeError()
-        print("POPULATE", basepath)
 
         ## Prepare the lists of paths, column numbers and spreadsheet numbers to be added
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
@@ -271,7 +270,7 @@ class Handler:
             # dirs will be listed first and files below; filter the files 
             itemFullNames =  [f for f in itemFullNames if     self.is_dir(f)] + \
                     [f for f in itemFullNames if (not self.is_dir(f) and       
-                                  (fileFilterString == '' or fileFilterString in os.path.basename(basepath))]    
+                                  (fileFilterString == '' or fileFilterString in os.path.basename(basepath)))]    
             itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
             spreadNumbers = [None] * len(itemFullNames)    # nor they are assigned any spreadsheet number
@@ -664,7 +663,6 @@ class Handler:
         ## Add the children 
         treeStore = treeView.get_model()
         newFilePath = treeStore.get_value(treeIter, 0)      # get the full path of the position
-        print("EXPAND", newFilePath)
         self.populateTreeStore(treeStore, parent_row=treeIter)
 
         ## The dummy row has to be removed AFTER this, otherwise the empty treeView row will NOT expand)
@@ -675,7 +673,6 @@ class Handler:
         ## Remove all child nodes of the given row (useful mostly to prevent de-syncing from some changes in the filesystem)
         #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
         currentChildIter = self.tsFiles.iter_children(treeIter)
-        print("--REMOVE--")
         while currentChildIter:         
             self.tsFiles.remove(currentChildIter)
             currentChildIter = self.tsFiles.iter_children(treeIter)
@@ -699,7 +696,6 @@ class Handler:
         ## TODO reasonable behaviour for block-selection over different unpacked directories/files
         ## Expand a directory by clicking, but do not allow user to select it
         treeIter        = self.tsFiles.get_iter(treePath)
-        print("SELECT",self.tsFiles.get_value(treeIter, self.treeStoreColumns['filepath']))
         #self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
 
         if self.lockTreeViewEvents: return      ## during folding, prevent triggering 'on_select' events on all node children 
