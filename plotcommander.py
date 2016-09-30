@@ -217,6 +217,7 @@ class Handler:
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
     def origin_parse_or_cache(self, basepath):# {{{
+        return
         if basepath in self.opj_file_cache.keys():      
             return self.opj_file_cache[basepath]
         else: 
@@ -256,6 +257,7 @@ class Handler:
             basepath = treeStore.get_value(parent_row, self.treeStoreColumns['filepath'])
         else:
             raise AttributeError()
+        print("POPULATE", basepath)
 
         ## Prepare the lists of paths, column numbers and spreadsheet numbers to be added
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
@@ -285,6 +287,7 @@ class Handler:
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
             rowTypes      = ['csvcolumn'] * len(header)
         elif parentrowtype == 'opjfile':
+            print ("parentrowtype == 'opjfile':", basepath)
             opj = self.origin_parse_or_cache(basepath)
             ## Add "graphs" - which show the selected columns in presentation-ready format
             ## Fixme support for multiple opjlayers also here
@@ -467,10 +470,11 @@ class Handler:
                 row_data.append(self.load_row_data(self.tsFiles.get_iter(path)))
                 plotted_paths.append(path)
             except (RuntimeError, ValueError):
-                traceback.print_exc()
+                #traceback.print_exc()
                 error_counter += 1
-        xs, ys, params, labels, xlabels, ylabels = zip(*row_data)
         w('statusbar1').push(0, "During last file-selection operation, %d errors were encountered" % error_counter)
+        if row_data == []: return False
+        xs, ys, params, labels, xlabels, ylabels = zip(*row_data)
 
         ## Generate the color palette for curves
         color_pre_map = np.linspace(0.05, .95, len(plotted_paths)+1)[:-1]
@@ -481,10 +485,11 @@ class Handler:
             if icon: icon.fill(self.array2rgbhex(color_from_palette))
             plotted_paths.append(path)
 
-        ## TODO: decide what is the distinguishing parameter for the given plot ---> <str> labelkey, <labelvals
+        ## TODO: decide what is the distinguishing parameter for the given set of rows ---> <str> labelkey, <labelvals
         # 1) (almost) all curves should have it defined
         # 2) it should differ among (almost) all curves 
         # 3) it may be in the params dict, or in the filename (for csvtwocolumn), or in the header of csvcolumn, opjcolumn etc.
+
 
         ## Plot all curves sequentially
         plot_cmd_buffer = w('txt_rc').get_buffer() 
@@ -499,19 +504,15 @@ class Handler:
                 exec(plot_command, exec_env)
             except SyntaxError:
                 print("SYNTAX ERROR:")
-                traceback.print_exc()
+                traceback.print_exc() ## TODO locate the error
 
             #code = compile(plot_command, "somefile.py", 'exec') TODO
             #exec(code, global_vars, local_vars)
         #else:
             #plot_command = default_plot_command
             #plot_cmd_buffer.set_text(default_plot_command)
+
         cursor = Cursor(self.ax, color='red', linewidth=.5) # useblit=True, 
-        # FIXME     Why can not load graph5?
-
-        ## XXX
-        ## XXX
-
 
         #self.ax.legend(loc="auto")
         self.ax.grid(True)
@@ -522,7 +523,7 @@ class Handler:
             #self.ax.relim()
             #self.ax.autoscale_view()
         self.canvas.draw()
-
+        return True
         #self.ax.set_xlabel(xlabel)
         #self.ax.set_ylabel(ylabel)
         # }}}
@@ -621,10 +622,8 @@ class Handler:
                 pass ## todo - ask whether to save the command file, if changed
         else:
             if radiobutton.get_active():        ## selecting action
-                print('select get_active() = true')
                 self.plotcommand_set_text(plot_commands[radiobutton.get_label().strip()])        
             else:                               ## deselecting action
-                print('deselect get_active() = false')
                 plot_commands[radiobutton.get_label().strip()] = self.plotcommand_get_text()
 
         ## Update the graphical presentation
@@ -661,11 +660,11 @@ class Handler:
         
     """
     def on_treeview1_row_expanded(self, treeView, treeIter, treePath):# {{{
-        ## if present, remove the dummy node (which is only used to draw the expander arrow)
-        treeStore = treeView.get_model()
-        newFilePath = treeStore.get_value(treeIter, 0)      # get the full path of the position
 
         ## Add the children 
+        treeStore = treeView.get_model()
+        newFilePath = treeStore.get_value(treeIter, 0)      # get the full path of the position
+        print("EXPAND", newFilePath)
         self.populateTreeStore(treeStore, parent_row=treeIter)
 
         ## The dummy row has to be removed AFTER this, otherwise the empty treeView row will NOT expand)
@@ -676,6 +675,7 @@ class Handler:
         ## Remove all child nodes of the given row (useful mostly to prevent de-syncing from some changes in the filesystem)
         #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
         currentChildIter = self.tsFiles.iter_children(treeIter)
+        print("--REMOVE--")
         while currentChildIter:         
             self.tsFiles.remove(currentChildIter)
             currentChildIter = self.tsFiles.iter_children(treeIter)
@@ -699,9 +699,10 @@ class Handler:
         ## TODO reasonable behaviour for block-selection over different unpacked directories/files
         ## Expand a directory by clicking, but do not allow user to select it
         treeIter        = self.tsFiles.get_iter(treePath)
-        self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
+        print("SELECT",self.tsFiles.get_value(treeIter, self.treeStoreColumns['filepath']))
+        #self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
 
-        #if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events OBSOLETED?
+        if self.lockTreeViewEvents: return      ## during folding, prevent triggering 'on_select' events on all node children 
         #lockTreeViewEvents_tmp = self.lockTreeViewEvents       ## TODO understand and clear out when select events can occur
         #self.lockTreeViewEvents = True
         # ...
