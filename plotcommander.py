@@ -278,10 +278,9 @@ class Handler:
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
             columnFilterString = w('enColFilter').get_text().strip()
-            if columnFilterString != "": header = [n for n in header if (columnFilterString in n)]
+            columnNumbers, header = zip(*[n for n in enumerate(header) if (columnFilterString in n[1])]) ## filter the columns
             itemFullNames = [basepath] * len(header)    # all columns are from one file
             itemShowNames = header                      # column numbers are either in file header, or auto-generated
-            columnNumbers = list(range(len(header)))    # enumerate the columns
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
             rowTypes      = ['csvcolumn'] * len(header)
         elif parentrowtype == 'opjfile':
