@@ -28,6 +28,9 @@ import liborigin
 import robust_csv_parser
 import sort_alpha_numeric
 
+SIZELIMIT_FOR_HEADER = 10000
+SIZELIMIT_FOR_DATA   = 1000000
+
 line_plot_command = \
 """for x, y, param, labelkey, labelval, color in \
         zip(xs, ys, params, labelkeys, labelvals, colors):
@@ -172,7 +175,7 @@ class Handler:
         elif fullpath.lower().endswith('.csv') or fullpath.lower().endswith('.dat') or fullpath.lower().endswith('.txt'):
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
-                data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=10000)
+                data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER)
                 return 'csvtwocolumn' if len(header)==2 else 'csvmulticolumn'
             except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
                 return 'unknown'
@@ -436,10 +439,10 @@ class Handler:
             return x, y, ylabel, parameters, xlabel, ylabel
         elif rowtype == 'csvtwocolumn':
             ycolumn = 1
-            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=1000000)
+            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
             return  data_array.T[0], data_array.T[1], header[1], parameters, header[0], header[1]
         elif rowtype == 'csvcolumn':
-            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=1000000)
+            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
             return data_array.T[rowxcolumn], data_array.T[rowycolumn], header[rowycolumn], parameters, \
                     header[rowxcolumn], header[rowycolumn]
         #elif rowtype == 'xls':
@@ -511,7 +514,7 @@ class Handler:
 
         cursor = Cursor(self.ax, color='red', linewidth=.5) # useblit=True, 
 
-        #self.ax.legend(loc="auto")
+        #self.ax.legend(loc="best")
         self.ax.grid(True)
         self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
         self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
