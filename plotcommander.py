@@ -29,7 +29,7 @@ import robust_csv_parser
 import sort_alpha_numeric
 
 SIZELIMIT_FOR_HEADER = 10000
-SIZELIMIT_FOR_DATA   = 1000000
+SIZELIMIT_FOR_DATA   = 10000000
 
 line_plot_command = \
 """for x, y, param, labelkey, labelval, color in \
@@ -220,7 +220,6 @@ class Handler:
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
     def origin_parse_or_cache(self, basepath):# {{{
-        return
         if basepath in self.opj_file_cache.keys():      
             return self.opj_file_cache[basepath]
         else: 
