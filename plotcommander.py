@@ -145,7 +145,10 @@ class Handler:
         #}}}
     ## === FILE HANDLING ===
     def is_dir(self,filename): # {{{
-        return stat.S_ISDIR(os.stat(filename).st_mode)
+        try:
+            return stat.S_ISDIR(os.stat(filename).st_mode)
+        except FileNotFoundError: ## this may be e.g. due to a broken symlink
+            return False
         # }}}
     def row_type_from_fullpath(self, fullpath):# {{{
         """
