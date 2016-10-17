@@ -146,3 +146,5 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
  * [ ] enable browsing HDF5 files if libhdf available (dtto)
  * [ ] plotcommander.py RC files should be searched for in the directory (and all updirs, too)
  * [ ] try porting GtkSourceView to python3 
+ * [ ] trace the memleaks and errors in the liborigin code
+ * [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
