@@ -616,6 +616,7 @@ class Handler:
         buf.set_text(text)
     def on_plotcommand_toggled(self, *args):# {{{
         radiobutton = args[0]
+        
 
         if radiobutton is w('rad_plotstyle_rc'):
             if radiobutton.get_active():        ## selecting action
@@ -628,9 +629,11 @@ class Handler:
             else:                               ## deselecting action
                 plot_commands[radiobutton.get_label().strip()] = self.plotcommand_get_text()
 
-        ## Update the graphical presentation
-        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
-        self.plot_all_sel_records()     ## then show the selected ones
+        if radiobutton.get_active():        ## selecting action
+            ## Update the graphical presentation
+            self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
+            self.plot_all_sel_records()     ## then show the selected ones
+
     # }}}
     def on_btn_plotrc_save_clicked(self, *args):# {{{
         rc_filename = self.relevant_rc_filename() or self.possible_rc_filenames()[0]
