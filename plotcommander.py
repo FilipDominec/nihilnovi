@@ -304,7 +304,15 @@ class Handler:
             opj = self.origin_parse_or_cache(basepath)
             ## Add "graphs" - which show the selected columns in presentation-ready format
             ## Fixme support for multiple opjlayers also here
-            itemShowNames = ['%s "%s"' % (self.decode_origin_label(graph.name), self.decode_origin_label(graph.label)) for graph in opj['graphs']]
+            def generate_graph_annotation(graph): 
+                layerNumber = 0  ## Fixme support for multiple opjlayers:    ["graphs"][1].layers[0].curves[3].xColumnName
+                legend_box = self.decode_origin_label(graph.layers[0].legend.text, splitrows=True)
+                comment = ""
+                for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
+                    newline = re.sub(r'\\l\(\d\)\s', '', legendline) 
+                    if newline == legendline: comment += newline + ' '
+                return comment
+            itemShowNames = ['%s; name: %s; label: %s' % (self.decode_origin_label(graph.name), self.decode_origin_label(graph.label), generate_graph_annotation(graph)) for graph in opj['graphs']]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = [None] * len(itemShowNames)
             spreadNumbers = list(range(len(itemShowNames)))  
@@ -335,12 +343,10 @@ class Handler:
             ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
             curves = opj['graphs'][parent_graph].layers[layerNumber].curves
             legend_box = self.decode_origin_label(opj['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
-            legends, comment = [], ''
+            legends = []
             for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
                 newline = re.sub(r'\\l\(\d\)\s', '', legendline) 
-                print(newline, legendline, newline == legendline)
                 if newline != legendline:   legends.append(newline)
-                else:                       comment += '\n'+newline
             legends = legends[:len(curves)] + (['']*(len(curves)-len(legends))) ## trim or extend the legends to match the curves
 
             itemShowNames, itemFullNames, columnNumbers, spreadNumbers = [], [], [], []
