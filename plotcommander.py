@@ -230,6 +230,17 @@ class Handler:
             self.opj_file_cache[basepath] = opj
             return opj
         # }}}
+    def decode_origin_label(self, bb, splitrows=False): 
+        bb = bb.decode('utf-8').replace('\r', '').strip()
+        bb = bb.replace('\\-', '_')     ## this is the lower index - todo: use latex notation?
+        for asc,greek in zip('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 'αβγδεζηθιjκλμνοπρςστυφχξψωΑΒΓΔΕΖΗΘΙJΚΛΜΝΟΠQΡΣΤΥΦΧΞΨΩ'):
+            bb = bb.replace('\\g(%s)' % asc, greek)
+        if not splitrows:   return bb.replace('\n', ' ')
+        else:               return bb.split('\n')
+            ## todo: \g(l)\-(ex) should translate into (greek lambda)_ex
+            ## def togreek(l): return chr(ord(l) + ord('α') - ord('a'))
+            ## string.ascii_letters, "".join([togreek(g) for g in string.ascii_letters])
+            ## 
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):# {{{
         ## without any parent specified, rows will be added to the very left of the TreeView, 
         ## otherwise they will become childs thereof
@@ -293,14 +304,16 @@ class Handler:
             opj = self.origin_parse_or_cache(basepath)
             ## Add "graphs" - which show the selected columns in presentation-ready format
             ## Fixme support for multiple opjlayers also here
-            itemShowNames = ['%s "%s"' % (graph.name.decode('utf-8'), graph.label.decode('utf-8')) for graph in opj['graphs']]
+            itemShowNames = ['%s "%s"' % (self.decode_origin_label(graph.name), self.decode_origin_label(graph.label)) for graph in opj['graphs']]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = [None] * len(itemShowNames)
             spreadNumbers = list(range(len(itemShowNames)))  
             rowTypes      = ['opjgraph'] * len(itemShowNames)
 
             ## Add "columns" - which enable to access all data in the file, including those not used in "graphs"
-            itemShowNames = itemShowNames + ['%s "%s"' % (spread.name.decode('utf-8'), spread.label.decode('utf-8')) 
+            for spread in opj['spreads']:
+                print(spread.label, self.decode_origin_label(spread.label))
+            itemShowNames = itemShowNames + ['%s "%s"' % (self.decode_origin_label(spread.name), self.decode_origin_label(spread.label)) 
                     for spread in opj['spreads']]
             itemFullNames = itemFullNames + [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = columnNumbers + [None] * len(itemShowNames)
@@ -309,7 +322,7 @@ class Handler:
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
-            itemShowNames = [column.name.decode('utf-8') for column in opj['spreads'][parent_spreadsheet].columns]
+            itemShowNames = [self.decode_origin_label(column.name) for column in opj['spreads'][parent_spreadsheet].columns]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
@@ -321,26 +334,20 @@ class Handler:
 
             ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
             curves = opj['graphs'][parent_graph].layers[layerNumber].curves
-            legend_box = opj['graphs'][parent_graph].layers[layerNumber].legend.text.decode('utf-8').split('\n')
-            if len(legend_box) >= len(curves):
-                ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
-                legends = [re.sub(r'\\l\(\d\)\s', '', legend_row.strip()) for legend_row in legend_box[:len(curves)]]
-                comment = "".join([legendrow.strip() for legendrow in legend_box[:len(curves)]])
-                ## todo: \g(l)\-(ex) should translate into (greek lambda)_ex
-                ## def togreek(l): return chr(ord(l) + ord('α') - ord('a'))
-                ## string.ascii_letters, "".join([togreek(g) for g in string.ascii_letters])
-                ## 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-                ## 'αβγδεζηθι κλμνοπρςστυφχξψωΑΒΓΔΕΖΗΘΙ ΚΛΜΝΟΠ ΡΣΤΥΦΧΞΨΩ'
-                #print(legends, comment)
-            else:
-                legends = [""] * len(curves)
-                comment = ""
+            legend_box = self.decode_origin_label(opj['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
+            legends, comment = [], ''
+            for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
+                newline = re.sub(r'\\l\(\d\)\s', '', legendline) 
+                print(newline, legendline, newline == legendline)
+                if newline != legendline:   legends.append(newline)
+                else:                       comment += '\n'+newline
+            legends = legends[:len(curves)] + (['']*(len(curves)-len(legends))) ## trim or extend the legends to match the curves
 
             itemShowNames, itemFullNames, columnNumbers, spreadNumbers = [], [], [], []
             for curve, legend in zip(curves, legends):
                 ## FIXME add support for xColumn different than the first one in Spreadsheet, also here
-                #print("curve t xCol yCol:", curve.dataName.decode('utf-8'), 
-                        #curve.xColumnName.decode('utf-8'), curve.yColumnName.decode('utf-8'))
+                #print("curve t xCol yCol:", curve.dataName.self.decode_origin_label('utf-8'), 
+                        #curve.xColumnName.self.decode_origin_label('utf-8'), curve.yColumnName.self.decode_origin_label('utf-8'))
                 #print([spread.name for spread in opj['spreads']], (curve.dataName[2:]))
 
                 ## Seek the corresponding spreadsheet and column by their name
@@ -348,12 +355,12 @@ class Handler:
                 spread = opj['spreads'][spreadsheet_index]
                 y_column_index = [column.name for column in spread.columns].index(curve.yColumnName)
                 x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
-                #print(curve.dataName[2:].decode('utf-8'), spreadsheet_index, curve.yColumnName.decode('utf-8'), y_column_index)
+                #print(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, curve.yColumnName.self.decode_origin_label('utf-8'), y_column_index)
 
-                itemShowNames.append('%s -> spread %s "%s": column %s (against  %s)' % 
-                        (legend, spread.name.decode('utf-8'), spread.label.decode('utf-8'), 
-                                spread.columns[y_column_index].name.decode('utf-8'), 
-                                spread.columns[x_column_index].name.decode('utf-8')))
+                itemShowNames.append('%s -> spread %s: column %s (against  %s)' % 
+                        (legend, self.decode_origin_label(spread.name), 
+                                self.decode_origin_label(spread.columns[y_column_index].name), 
+                                self.decode_origin_label(spread.columns[x_column_index].name)))
                 itemFullNames.append(basepath)          # all columns are from one file
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
@@ -436,7 +443,7 @@ class Handler:
                     except ValueError:
                         pass
                 x,y = x0, y0
-            xlabel, ylabel = [opj['spreads'][rowsheet].columns[c].name.decode('utf-8') for c in [rowxcolumn, rowycolumn]] 
+            xlabel, ylabel = [self.decode_origin_label(opj['spreads'][rowsheet].columns[c].name) for c in [rowxcolumn, rowycolumn]] 
             parameters = {} ## todo: is it possible to load parameters from origin column?
             return x, y, ylabel, parameters, xlabel, ylabel
         elif rowtype == 'csvtwocolumn':
