@@ -148,3 +148,4 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
  * [ ] try porting GtkSourceView to python3 
  * [ ] trace the memleaks and errors in the liborigin code
  * [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
+ * [ ] examine the reason for persistent ValueError("posx and posy should be finite values") when browsing plots
