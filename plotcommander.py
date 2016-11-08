@@ -283,7 +283,7 @@ class Handler:
             filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
             fileFilterString = w('enFileFilter').get_text().strip()
             itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
-            # dirs will be listed first and files below; filter the files 
+            # dirs will be listed first and files below; filter the files  ## FIXME: filter only through the file name, not full path!
             itemFullNames =  [f for f in itemFullNames if     self.is_dir(f)] + \
                     [f for f in itemFullNames if (not self.is_dir(f) and (fileFilterString == '' or fileFilterString in f))]    
             itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
