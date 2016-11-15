@@ -19,7 +19,7 @@ from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as Navi
 #from mpl_toolkits.axes_grid1 import host_subplot ## allows better axes handling than fig.subplot
 from matplotlib.widgets import Cursor
 ## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
-matplotlib.rcParams['font.family'] = 'serif'        
+#matplotlib.rcParams['font.family'] = 'serif'        
 matplotlib.rcParams['font.size'] = 10
 matplotlib.rcParams['axes.linewidth'] = .5
 matplotlib.rcParams['savefig.facecolor'] = "white"
@@ -32,18 +32,26 @@ SIZELIMIT_FOR_HEADER = 10000
 SIZELIMIT_FOR_DATA   = 10000000
 
 line_plot_command = \
-"""for x, y, param, labelkey, labelval, color in \
+"""matplotlib.rc('font', size=12, family='serif')
+for x, y, param, labelkey, labelval, color in \
         zip(xs, ys, params, labelkeys, labelvals, colors):
     ax.plot(x, y, label="%s=%s" % (labelkey, labelval), color=color)
+ax.set_xlabel('')
+ax.set_ylabel('')
+ax.set_title('')
 """
 
 contour_plot_command = \
-"""
+"""matplotlib.rc('font', size=12)
 ys = np.array(ys)
 cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
+param = np.linspace(0, 1, len(ys))
 levels = np.linspace(cmaprange1, cmaprange2, 50) 
-contours = ax.contourf(xs[0], np.linspace(0, 200, len(ys)), ys, \\
-       levels=levels, extend='both')
+ax.contourf(xs[0], param, ys, levels=levels, extend='both')
+ax.contour(xs[0], param, ys, levels=levels)
+ax.set_xlabel('')
+ax.set_ylabel('')
+ax.set_title('')
 """
 
 
