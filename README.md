@@ -132,7 +132,7 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
 
 
 ### PAQ - presumably asked questions
-#### Q:
+#### Q: 
 
 
 ### To-Do 
@@ -149,3 +149,8 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
  * [ ] trace the memleaks and errors in the liborigin code
  * [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
  * [ ] examine the reason for persistent ValueError("posx and posy should be finite values") when browsing plots
+ * [ ] fix statusbar - direct response when loading files
+ * [ ] plotrc autosave before plotting
+ * [ ] avoid following symlinks (or at least catch OSError)
+ * [ ] new feature: automatic guessing of the swept parameter
+ * [ ] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
