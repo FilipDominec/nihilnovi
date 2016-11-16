@@ -154,3 +154,4 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
  * [ ] avoid following symlinks (or at least catch OSError)
  * [ ] new feature: automatic guessing of the swept parameter
  * [ ] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
+ * [ ] robust_csv_parser.py", line 70, nests FileNotFoundError

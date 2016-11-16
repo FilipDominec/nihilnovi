@@ -36,21 +36,22 @@ with warnings.catch_warnings(): warnings.simplefilter("ignore")
 verbose                     = False
 very_verbose                = False
 
-commentCharsLineStart       = ['#', '!', ';', ',', '%'] 
-parameterSeparators         = ['=', ':', '\t+', ',']
-commentCharsLineMiddle      = ['#']
-parameterSplitterOtherwise  = ['=']
-strict_table_layout         = False
+commentCharsLineStart       = ['#', '!', ';', ',', '%']  # if line starts with one of these characters, it will be a comment (or header)
+parameterSeparators         = ['=', ':', '\t+', ',']     # if line is a comment AND contains one of these, it is parsed as a parameter of the file
+commentCharsLineMiddle      = ['#']                      # everything after this character is omitted
+parameterSplitterOtherwise  = ['=']                      # if line contains this character, it is parsed as a parameter of the file
+strict_table_layout         = False                      # when True, doubled column separators will always imply that the field was left empty
 
-maxLineLength               = 10000          ## hardly any numeric table in ASCII will have more than one 10kB per line 
+maxLineLength               = 10000             # hardly any numeric table in ASCII will have more than one 10kB per line 
 
-headerOrdinateAllowOmit     = True             ## e.g. three-column CSV files sometimes have only two names in header
-headerOrdinateSuggestName   = 'x'              ## ... in such a case, the x-axis will be named as such
+headerOrdinateAllowOmit     = True              # e.g. three-column CSV files sometimes have only two names in header
+headerOrdinateSuggestName   = 'x'               # ... in such a case, the first column name will added 
 
-tryColSeparators    = [',', '\t', '\s', '\s+']      ## TODO test avoiding escaped whitespace, e.g. use "[^\\]\s" instead of "\s"
-unevenColumnLengthPenalty = 1       ## may be any positive number
+tryColSeparators    = [',', '\t', '\s', '\s+']           # possible ways of separating columns: comma, tabulator, 1 whitespace character, whitespace
+## TODO test avoiding escaped whitespace, e.g. use "[^\\]\s" instead of "\s"
+unevenColumnLengthPenalty = 1                   # may be any positive number; low value may lead to joining cells, higher value may lead to empty cells detected
 
-guessHeaderSpaces           = True          ## Will try to expand CamelCase and unit names with spaces for better look of plots
+guessHeaderSpaces           = True              # Will try to expand CamelCase and unit names with spaces for better look of plots
 
 def safe_float(string):
     try:                    return float(string)
@@ -106,7 +107,7 @@ def loadtxt(file_name, sizehint=None):
 
 
     ## Find the number of columns 
-    resultingColSeparatorFitness = -np.infty
+    resultingColSeparatorFitness = None
     for tryColSeparator in tryColSeparators: 
 
         ## Split each line according to the tryColSeparator; count the data fields that can be converted to float
@@ -129,7 +130,7 @@ def loadtxt(file_name, sizehint=None):
         ## Choose parser settings that give the highest average and simultaneously the lowest deviation for the number of fields per line
         ## Note that use of < instead of <= is important to prefer less greedy regexp (e.g. "\s" over "\s*") and 
         ## to preserve column order even if the table is "hollow", i.e. cells missing in its middle columns
-        if resultingColSeparatorFitness < tryColSeparatorFitness:
+        if resultingColSeparatorFitness is None or resultingColSeparatorFitness  < tryColSeparatorFitness:
             resultingColSeparator           = tryColSeparator
             resultingColSeparatorFitness    = tryColSeparatorFitness
             resultingColumnsOnLines         = int(columnsOnLinesAvg+0.99)        ## (rounding up favors keeping more data whenever possible)
