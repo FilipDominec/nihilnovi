@@ -589,7 +589,9 @@ class Handler:
         def recursive_select_rows(treeIter):
             while treeIter != None: 
                 if self.tsFiles.get_value(treeIter, 0) in selected_row_names:
+                    self.lockTreeViewEvents = True
                     w('treeview1').get_selection().select_path(self.tsFiles.get_path(treeIter))
+                    self.lockTreeViewEvents = False
                 recursive_select_rows(self.tsFiles.iter_children(treeIter))
                 treeIter=self.tsFiles.iter_next(treeIter)
         recursive_select_rows(self.tsFiles.get_iter_first())
