@@ -130,6 +130,8 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
 
     python3 sort_alpha_numeric.py xx-123.4zz xx-1.233e+002yy xx-123.2yy xx-123.4yy
 
+to obtain a correctly sorted list of `'xx-123.4yy', 'xx-123.4zz', 'xx-1.233e+002yy', 'xx-123.2yy'`
+
 
 ### PAQ - presumably asked questions
 #### Q: 
