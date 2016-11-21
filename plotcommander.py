@@ -238,17 +238,14 @@ class Handler:
             self.opj_file_cache[basepath] = opj
             return opj
         # }}}
-    def decode_origin_label(self, bb, splitrows=False): 
+    def decode_origin_label(self, bb, splitrows=False): # {{{
         bb = bb.decode('utf-8').replace('\r', '').strip()
         bb = bb.replace('\\-', '_')     ## this is the lower index - todo: use latex notation?
         for asc,greek in zip('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 'αβγδεζηθιjκλμνοπρςστυφχξψωΑΒΓΔΕΖΗΘΙJΚΛΜΝΟΠQΡΣΤΥΦΧΞΨΩ'):
             bb = bb.replace('\\g(%s)' % asc, greek)
         if not splitrows:   return bb.replace('\n', ' ')
         else:               return bb.split('\n')
-            ## todo: \g(l)\-(ex) should translate into (greek lambda)_ex
-            ## def togreek(l): return chr(ord(l) + ord('α') - ord('a'))
-            ## string.ascii_letters, "".join([togreek(g) for g in string.ascii_letters])
-            ## 
+    # }}}
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):# {{{
         ## without any parent specified, rows will be added to the very left of the TreeView, 
         ## otherwise they will become childs thereof
@@ -416,7 +413,7 @@ class Handler:
         self.fig.clf()
         self.ax = self.fig.add_subplot(111) 
         ## TODO: this may enable better handling of axes, but needs to make compatible with the object model of figure.Figure 
-        #self.ax = host_subplot(111, figure=self.fig.gcf() ) 
+        #        self.ax = host_subplot(111, figure=self.fig.gcf() ) 
 
         def recursive_clear_icon(treeIter):
             while treeIter != None: 
