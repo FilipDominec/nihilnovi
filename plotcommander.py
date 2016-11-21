@@ -496,7 +496,7 @@ class Handler:
             except (RuntimeError, ValueError):
                 #traceback.print_exc()
                 error_counter += 1
-        w('statusbar1').push(0, "During last file-selection operation, %d errors were encountered" % error_counter)
+        w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
         xs, ys, params, labels, xlabels, ylabels = zip(*row_data)
 
