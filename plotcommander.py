@@ -45,7 +45,7 @@ contour_plot_command = \
 """matplotlib.rc('font', size=12)
 ys = np.array(ys)
 cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
-param = np.linspace(0, 1, len(ys))
+param = np.linspace(1, 2, len(ys))
 levels = np.linspace(cmaprange1, cmaprange2, 50) 
 ax.contourf(xs[0], param, ys, levels=levels, extend='both')
 ax.contour(xs[0], param, ys, levels=levels)
@@ -516,6 +516,7 @@ class Handler:
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
+        print("BEFORE COMMAND")
         if plot_command.strip() != '':
             #np = numpy
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
@@ -523,17 +524,22 @@ class Handler:
             #self.fig.clf() ## clear figure
             try:
                 exec(plot_command, exec_env)
+                print("JUST AFTER COMMAND")
             except SyntaxError:
                 print("SYNTAX ERROR:")
                 traceback.print_exc() ## TODO locate the error
-
+            except:
+                print("SOME ERROR")
+                traceback.print_exc() ## TODO locate the error
+        print("AFTER COMMAND")
             #code = compile(plot_command, "somefile.py", 'exec') TODO
             #exec(code, global_vars, local_vars)
         #else:
             #plot_command = default_plot_command
             #plot_cmd_buffer.set_text(default_plot_command)
 
-        cursor = Cursor(self.ax, color='red', linewidth=.5) # useblit=True, 
+        cursor = Cursor(self.ax, color='red', linewidth=.5)  ## , useblit=True 
+        # Note: blit cannot be used: AttributeError: 'FigureCanvasGTK3Cairo' object has no attribute 'copy_from_bbox'
 
         #self.ax.legend(loc="best")
         self.ax.grid(True)
@@ -544,6 +550,7 @@ class Handler:
             #self.ax.relim()
             #self.ax.autoscale_view()
         self.canvas.draw()
+        print("AFTER DRAW")
         return True
         #self.ax.set_xlabel(xlabel)
         #self.ax.set_ylabel(ylabel)
