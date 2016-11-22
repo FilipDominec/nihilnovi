@@ -645,7 +645,7 @@ class Handler:
     def on_plotcommand_toggled(self, *args):# {{{
         radiobutton = args[0]
         
-
+        w('chk_xlogarithmic').set_active(False)
         if radiobutton is w('rad_plotstyle_rc'):
             if radiobutton.get_active():        ## selecting action
                 self.update_plotcommand_from_rcfile()
