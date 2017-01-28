@@ -516,7 +516,7 @@ class Handler:
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
-        print("BEFORE COMMAND")
+        #print("BEFORE COMMAND")
         if plot_command.strip() != '':
             #np = numpy
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
@@ -524,14 +524,14 @@ class Handler:
             #self.fig.clf() ## clear figure
             try:
                 exec(plot_command, exec_env)
-                print("JUST AFTER COMMAND")
+                #print("JUST AFTER COMMAND")
             except SyntaxError:
-                print("SYNTAX ERROR:")
+                #print("SYNTAX ERROR:")
                 traceback.print_exc() ## TODO locate the error
             except:
-                print("SOME ERROR")
+                #print("SOME ERROR")
                 traceback.print_exc() ## TODO locate the error
-        print("AFTER COMMAND")
+        #print("AFTER COMMAND")
             #code = compile(plot_command, "somefile.py", 'exec') TODO
             #exec(code, global_vars, local_vars)
         #else:
@@ -550,7 +550,7 @@ class Handler:
             #self.ax.relim()
             #self.ax.autoscale_view()
         self.canvas.draw()
-        print("AFTER DRAW")
+        #print("AFTER DRAW")
         return True
         #self.ax.set_xlabel(xlabel)
         #self.ax.set_ylabel(ylabel)
