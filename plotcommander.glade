@@ -22,7 +22,6 @@
             <property name="visible">True</property>
             <property name="can_focus">True</property>
             <property name="position">350</property>
-            <property name="wide_handle">True</property>
             <child>
               <object class="GtkBox" id="box2">
                 <property name="visible">True</property>
@@ -190,7 +189,6 @@
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="orientation">vertical</property>
-                    <property name="wide_handle">True</property>
                     <child>
                       <object class="GtkExpander" id="expander1">
                         <property name="visible">True</property>
@@ -431,7 +429,6 @@
                                         <property name="hscroll_policy">natural</property>
                                         <property name="right_margin">6</property>
                                         <property name="buffer">textbuffer1</property>
-                                        <property name="monospace">True</property>
                                       </object>
                                     </child>
                                   </object>
