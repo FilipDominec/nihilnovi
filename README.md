@@ -138,7 +138,7 @@ to obtain a correctly sorted list of `'xx-123.4yy', 'xx-123.4zz', 'xx-1.233e+002
 
 
 ### To-Do 
-
+ * [ ] resolve TypeError: Can't convert 'bytes' object to str implicitly
  * [ ] add kb shortcuts - e.g. ctrl+w to close app, Matplotlib operations on the plot, ...
  * [ ] allow selecting curves in the plot panel, too
  * [ ] data manipulation operations (shift x/y, zoom x/y, fit linear/gaussian/sine), file saving
