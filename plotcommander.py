@@ -538,7 +538,7 @@ class Handler:
             #plot_command = default_plot_command
             #plot_cmd_buffer.set_text(default_plot_command)
 
-        cursor = Cursor(self.ax, color='red', linewidth=.5)  ## , useblit=True 
+        cursor = Cursor(self.ax, color='red', linewidth=.5)  ## , useblit=True   .. fixme: useblit made the cursor disappear
         # Note: blit cannot be used: AttributeError: 'FigureCanvasGTK3Cairo' object has no attribute 'copy_from_bbox'
 
         #self.ax.legend(loc="best")
