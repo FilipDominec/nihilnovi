@@ -1,6 +1,6 @@
 ![PlotCommander - file-oriented data plotting and manipulation](img/logo.png)
 
-### Short description 
+## Short description 
 A lightweight application allowing to browse data files on your disk, and see their contents immediately plotted in the right panel.
 
 
@@ -12,7 +12,7 @@ Key points:
  * [ ] Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
  * [x] **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
 
-### Motivation 
+## Motivation 
 Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results after 10 or 20 years.
 
 Switching to  alternative **open-source structured formats**, such as [Scidavis](http://scidavis.sourceforge.net/), may present a compatibility barrier, since its interoperability with Origin has been still questionable. In either case, the workflow remains limited to the capabilities of the corresponding program. It is said that holding a hammer, one sees every problem as a nail; likewise, using a graphical application with fairly limited capabilities and almost no means of automatization, a scientist wrongly perceives many interesting problems either as desperately tedious or even untreatable. Aside of this, such applications force the user to accept one given point-and-click workflow which may be far from optimal, and do not allow attaching arbitrary files to the datasets. Also the quality of the plots is not always good.
@@ -23,8 +23,9 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 
 ![a screenshot of the first test of the program](img/screenshot.png)
 
-### Installation 
+## Installation 
 
+#### Installation on Linux
 On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run:
 
     sudo apt-get install python3-matplotlib python3-numpy python3-gi-cairo
@@ -50,6 +51,10 @@ Then get the fresh version by pulling this project, and launch the program direc
     cd plotcommander
     python3 plotcommander.py
 
+#### Installation on Windows
+(Perhaps following http://stackoverflow.com/questions/38475134/making-matplotlib-and-gtk3-work-on-python3-windows needs no be tested)
+
+One day I will try to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package for Windows.
 
 #### Future dependencies
 
@@ -61,9 +66,7 @@ In the future, browsing of other types files will probably bring also following 
 	## .XLS - Excel files (and what about .ODS?)
     sudo apt-get install python3-xlrd
 
-On Windows, the proposed distribution approach will be to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package.
-
-### Supported file formats
+## Supported file formats
 Examples of accessible file formats are in `test_files/`.
 
 #### ASCII files (\*.csv, \*.dat and \*.txt)
@@ -104,7 +107,7 @@ Using the Excel and Calc conversion libraries, PlotCommander will also enable br
 Since many vendors of scientific software and hardware seem to enjoy inventing their own syntax of data files, it might be useful to add a simple interface for additional user-supplied parsers.
 
 
-### Reusable parts of the code (which may be useful for other projects)
+## Reusable parts of the code (which may be useful for other projects)
 #### Robust CSV parser
 The python module `robust_csv_parser.py` is maybe the most flexible ASCII data parser available, attempting to use as much heuristics for data file interpretation as a human would do. Its main function `loadtxt()` can be used as a replacement for `numpy.loadtxt()`, `numpy.genfromtxt()`, `csv.read()` or `pandas.loadtable()` whenever the formatting of the input files is not a priori known.
 
@@ -133,11 +136,27 @@ To test the intelligent alpha-numeric sorting, try to call it add arguments as s
 to obtain a correctly sorted list of `'xx-123.4yy', 'xx-123.4zz', 'xx-1.233e+002yy', 'xx-123.2yy'`
 
 
-### PAQ - presumably asked questions
-#### Q: 
+## PAQ - presumably asked questions
+#### Q: Will this work on Windows?
+A: The choice of Python3+Matplotlib+GTK3 dependencies was made with Windows compatibility in mind, but we will have to test it out.
+
+#### Q: The application freezes when opening an OPJ file saved by Origin 9 or newer
+A: Yes, this is a known issue of the `liborigin2` library; it is going to be replaced either by [importOPJ](https://svn.code.sf.net/p/scidavis/svn/branches/origin_import/importOPJ/README) or by [kaitai](https://github.com/kaitai-io/kaitai_struct) parser.
+
+#### Q: Can I plot other styles of graphs than just lines and contours? -- or -- Can I change the plot labels and title?
+A: Yes, you can switch to the _Plot command_ tab and write a custom Python3+Matplotlib code for plotting. 
+
+#### Q: Can I export the plot for publication?
+A: Sure, there is a diskette icon above the plot window; you can choose between PDF, PNG, JPG, SVG and other formats to export.
+
+#### Q: I have several folders, and wish to compare one file from 
+A: First type a part of the file name in the _File filter_ entry, so that this file is the only one that is shown when the folders are unpacked. Then, holding the _shift_ key, click the _last_ folder, and click the _first_ folder. All folders between them should unpack, comparing the desired files. Note you can also use the _Column filter_, likewise.
+
+#### Q: I have found an ASCII/CSV format that can not be opened by the built-in parser
+A: Then I am interested in getting a minimum non-working example, and will try to adapt the parser to work with it!
 
 
-### To-Do 
+## To-Do 
  * [ ] resolve TypeError: Can't convert 'bytes' object to str implicitly
  * [ ] add kb shortcuts - e.g. ctrl+w to close app, Matplotlib operations on the plot, ...
  * [ ] allow selecting curves in the plot panel, too
