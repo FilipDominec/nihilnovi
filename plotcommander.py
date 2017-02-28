@@ -301,6 +301,9 @@ class Handler:
             data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
             columnFilterString = w('enColFilter').get_text().strip()        
             columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
+            #FIXME File "/home/dominecf/p/plotcommander/plotcommander.py", line 303, in populateTreeStore
+                #columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
+            #ValueError: not enough values to unpack (expected 2, got 0)
             itemFullNames = [basepath] * len(header)    # all columns are from one file
             itemShowNames = header                      # column numbers are either in file header, or auto-generated
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
