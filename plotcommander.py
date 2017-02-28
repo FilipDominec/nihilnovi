@@ -291,7 +291,7 @@ class Handler:
             itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
             # dirs will be listed first and files below; filter the files  ## FIXME: filter only through the file name, not full path!
             itemFullNames =  [f for f in itemFullNames if     self.is_dir(f)] + \
-                    [f for f in itemFullNames if (not self.is_dir(f) and (fileFilterString == '' or fileFilterString in f))]    
+                    [f for f in itemFullNames if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
             itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
             spreadNumbers = [None] * len(itemFullNames)    # nor they are assigned any spreadsheet number
@@ -299,8 +299,8 @@ class Handler:
         elif parentrowtype == 'csvmulticolumn':
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
-            columnFilterString = w('enColFilter').get_text().strip()
-            columnNumbers, header = zip(*[n for n in enumerate(header) if (columnFilterString in n[1])]) ## filter the columns
+            columnFilterString = w('enColFilter').get_text().strip()        
+            columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
             itemFullNames = [basepath] * len(header)    # all columns are from one file
             itemShowNames = header                      # column numbers are either in file header, or auto-generated
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
