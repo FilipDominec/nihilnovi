@@ -35,7 +35,7 @@ line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')
 for x, y, param, labelkey, labelval, color in \
         zip(xs, ys, params, labelkeys, labelvals, colors):
-    ax.plot(x, y, label="%s=%s" % (labelkey, labelval), color=color)
+    ax.plot(x, y, label="%s" % (labelval), color=color)
 ax.set_xlabel('')
 ax.set_ylabel('')
 ax.set_title('')
@@ -488,6 +488,7 @@ class Handler:
         if len(pathlist) == 0: return
         error_counter = 0
         row_data = []
+        row_labels = []
         plotted_paths = []
         for path in pathlist:
             try:
@@ -498,7 +499,11 @@ class Handler:
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
-        xs, ys, params, labels, xlabels, ylabels = zip(*row_data)
+        xs, ys, labels, params, xlabels, ylabels = zip(*row_data)       
+        ## TODO: check if there is exactly one column in the 'params' table that differs among files:       label="%s=%s" % (labelkey, labelval)
+        ## If it is, append its name and value to the respective 'labels' field, so that all plotted lines are distinguishable by this value!
+        ## If there is none, or too many, the curves will be labeled just by their column label found in the header. 
+        ## TODO allow also to name the curves by the file name, if the column names do not exist or are all the same!
 
         ## Generate the color palette for curves
         color_pre_map = np.linspace(0.05, .95, len(plotted_paths)+1)[:-1]
@@ -520,10 +525,11 @@ class Handler:
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
         #print("BEFORE COMMAND")
+        print(row_data)
         if plot_command.strip() != '':
             #np = numpy
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                    'xs':xs, 'ys':ys, 'params':params, 'labelkeys':['TODO']*len(xs), 'labelvals':['TODO']*len(xs), 'colors':colors}
+                    'xs':xs, 'ys':ys, 'params':params, 'labelkeys':ylabels, 'labelvals':labels, 'colors':colors}
             #self.fig.clf() ## clear figure
             try:
                 exec(plot_command, exec_env)
