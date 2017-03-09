@@ -525,7 +525,7 @@ class Handler:
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
         #print("BEFORE COMMAND")
-        print(row_data)
+        #print(row_data)
         if plot_command.strip() != '':
             #np = numpy
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
