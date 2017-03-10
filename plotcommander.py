@@ -572,10 +572,8 @@ class Handler:
 
         #self.ax.legend(loc="best")
         self.ax.grid(True)
-        #self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear') ##XXX
-        #self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear') ##XXX
-        #if w('chk_legend').get_active(): self.ax.legend(True)
-
+        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear') ##XXX
+        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear') ##XXX
 
         self.ax.relim()
         self.ax.autoscale_view() # 	Autoscale the view limits using the data limits.
