@@ -39,7 +39,7 @@ for x, y, param, label, xlabel, ylabel, color in \
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
 ax.set_title('')
-ax.legend('')
+ax.legend()
 """
 
 contour_plot_command = \
@@ -471,10 +471,11 @@ class Handler:
         elif rowtype == 'csvtwocolumn':
             ycolumn = 1
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
-            return  data_array.T[0], data_array.T[1], header[1], parameters, header[0], header[1]
+            return  data_array.T[0], data_array.T[1], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, header[0], header[1]
+            ## TODO replace os.path.split(rowfile)[-2] with a parameter reasonably recovered from the file name
         elif rowtype == 'csvcolumn':
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
-            return data_array.T[rowxcolumn], data_array.T[rowycolumn], header[rowycolumn], parameters, \
+            return data_array.T[rowxcolumn], data_array.T[rowycolumn], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, \
                     header[rowxcolumn], header[rowycolumn]
         #elif rowtype == 'xls':
             # TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
