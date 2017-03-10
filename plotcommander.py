@@ -33,12 +33,13 @@ SIZELIMIT_FOR_DATA   = 10000000
 
 line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')
-for x, y, param, labelkey, labelval, color in \
-        zip(xs, ys, params, labelkeys, labelvals, colors):
-    ax.plot(x, y, label="%s" % (labelval), color=color)
-ax.set_xlabel('')
-ax.set_ylabel('')
+for x, y, param, label, xlabel, ylabel, color in \
+        zip(xs, ys, params, labels, xlabels, ylabels, colors):
+    ax.plot(x, y, label="%s" % (label), color=color)
+ax.set_xlabel(xlabelsdedup)
+ax.set_ylabel(ylabelsdedup)
 ax.set_title('')
+ax.legend('')
 """
 
 contour_plot_command = \
@@ -500,6 +501,8 @@ class Handler:
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
         xs, ys, labels, params, xlabels, ylabels = zip(*row_data)       
+        for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
+            print(n,v)
         ## TODO: check if there is exactly one column in the 'params' table that differs among files:       label="%s=%s" % (labelkey, labelval)
         ## If it is, append its name and value to the respective 'labels' field, so that all plotted lines are distinguishable by this value!
         ## If there is none, or too many, the curves will be labeled just by their column label found in the header. 
@@ -528,8 +531,11 @@ class Handler:
         #print(row_data)
         if plot_command.strip() != '':
             #np = numpy
+            def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                    'xs':xs, 'ys':ys, 'params':params, 'labelkeys':ylabels, 'labelvals':labels, 'colors':colors}
+                    'xs':xs, 'ys':ys, 'labels':labels, 'params':params, 'xlabels':xlabels,  'ylabels':ylabels,  
+                    'xlabelsdedup':', '.join(dedup(xlabels)),  'ylabelsdedup':', '.join(dedup(ylabels)), 
+                    'colors':colors}
             #self.fig.clf() ## clear figure
             try:
                 exec(plot_command, exec_env)
