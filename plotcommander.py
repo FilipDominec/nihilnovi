@@ -98,6 +98,8 @@ class Handler:
         self.canvas = FigureCanvas(self.fig)
         self.canvas.set_size_request(300,300)
         self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas, w('box4').get_parent_window())
+
+        self.xlim, self.ylim = None, None
         self.sw = Gtk.ScrolledWindow()
         self.sw.add_with_viewport(self.canvas)
         w('box4').pack_start(self.toolbar, False, True, 0)
@@ -146,6 +148,7 @@ class Handler:
         ## Initialize the default plotting commands 
         w('txt_rc').get_buffer().set_text(line_plot_command)
         w('txt_rc').modify_font(Pango.FontDescription("monospace 10"))
+
 
         ## Add the data cursor by default  # TODO - make this work
         #cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
@@ -416,6 +419,9 @@ class Handler:
         #self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
         self.fig.clf()
         self.ax = self.fig.add_subplot(111) 
+        self.ax.callbacks.connect('xlim_changed', self.on_xlims_change)
+        self.ax.callbacks.connect('ylim_changed', self.on_ylims_change)
+
         ## TODO: this may enable better handling of axes, but needs to make compatible with the object model of figure.Figure 
         #        self.ax = host_subplot(111, figure=self.fig.gcf() ) 
 
@@ -484,11 +490,14 @@ class Handler:
 
 # }}}
     def plot_all_sel_records(self):# {{{
-        ## Load all row data
-        xlim_orig = self.ax.get_xlim()
-        ylim_orig = self.ax.get_ylim()
-        print(xlim_orig, ylim_orig)
 
+        ## Setting persistent view is somewhat kafkaesque with matplotlib. 
+        ## self.xlim        remembers the correct view from the last GUI resize , but
+        ## ax.get_xlim      from the start of this method returns the wrong (autoscaled) limits, why?
+        if not w('chk_autoscale_x').get_active() and self.xlim: self.ax.set_xlim(self.xlim)
+        if not w('chk_autoscale_y').get_active() and self.ylim: self.ax.set_ylim(self.ylim)
+
+        ## Load all row data
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
         error_counter = 0
@@ -505,8 +514,8 @@ class Handler:
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
         xs, ys, labels, params, xlabels, ylabels = zip(*row_data)       
-        for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
-            print(n,v)
+        #for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
+            #print(n,v)
         ## TODO: check if there is exactly one column in the 'params' table that differs among files:       label="%s=%s" % (labelkey, labelval)
         ## If it is, append its name and value to the respective 'labels' field, so that all plotted lines are distinguishable by this value!
         ## If there is none, or too many, the curves will be labeled just by their column label found in the header. 
@@ -527,6 +536,7 @@ class Handler:
         # 3) it may be in the params dict, or in the filename (for csvtwocolumn), or in the header of csvcolumn, opjcolumn etc.
 
 
+        #print("self.ax.axis", self.ax.axis())
         ## Plot all curves sequentially
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
@@ -538,7 +548,7 @@ class Handler:
             def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                     'xs':xs, 'ys':ys, 'labels':labels, 'params':params, 'xlabels':xlabels,  'ylabels':ylabels,  
-                    'xlabelsdedup':', '.join(dedup(xlabels)),  'ylabelsdedup':', '.join(dedup(ylabels)), 
+                    'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                     'colors':colors}
             #self.fig.clf() ## clear figure
             try:
@@ -562,21 +572,20 @@ class Handler:
 
         #self.ax.legend(loc="best")
         self.ax.grid(True)
-        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
-        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
+        #self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear') ##XXX
+        #self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear') ##XXX
         #if w('chk_legend').get_active(): self.ax.legend(True)
-        if not w('chk_autoscale').get_active():
-            #self.ax.relim()
-            #self.ax.autoscale_view()
-            print(xlim_orig, ylim_orig)
-            self.ax.set_xlim(xlim_orig)
-            self.ax.set_ylim(ylim_orig)
+
+
+        self.ax.relim()
+        self.ax.autoscale_view() # 	Autoscale the view limits using the data limits.
         self.canvas.draw()
-        #print("AFTER DRAW")
         return True
-        #self.ax.set_xlabel(xlabel)
-        #self.ax.set_ylabel(ylabel)
+
         # }}}
+    def on_xlims_change(self, axes): self.xlim = axes.get_xlim() ## dirty hack: Needs fixing in the future
+    def on_ylims_change(self, axes): self.ylim = axes.get_ylim() ## dtto
+
     ## == FILE AND DATA UTILITIES ==
     def row_prop(self, row, prop):# {{{
         return self.tsFiles.get_value(row, self.treeStoreColumns[prop])
