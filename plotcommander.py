@@ -485,6 +485,10 @@ class Handler:
 # }}}
     def plot_all_sel_records(self):# {{{
         ## Load all row data
+        xlim_orig = self.ax.get_xlim()
+        ylim_orig = self.ax.get_ylim()
+        print(xlim_orig, ylim_orig)
+
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
         error_counter = 0
@@ -561,9 +565,12 @@ class Handler:
         self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
         self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
         #if w('chk_legend').get_active(): self.ax.legend(True)
-        #if w('chk_autoscale').get_active():
+        if not w('chk_autoscale').get_active():
             #self.ax.relim()
             #self.ax.autoscale_view()
+            print(xlim_orig, ylim_orig)
+            self.ax.set_xlim(xlim_orig)
+            self.ax.set_ylim(ylim_orig)
         self.canvas.draw()
         #print("AFTER DRAW")
         return True
