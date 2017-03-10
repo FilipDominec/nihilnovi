@@ -39,7 +39,7 @@ for x, y, param, label, xlabel, ylabel, color in \
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
 ax.set_title('')
-ax.legend()
+ax.legend(loc='best', prop={'size':6})
 """
 
 contour_plot_command = \
