@@ -34,7 +34,8 @@ The support for origin files is optional, since it requires compilation:
 
 	## .OPJ - Origin files
 	sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
-	git clone https://github.com/Saluev/python-liborigin2.git
+	#git clone https://github.com/Saluev/python-liborigin2.git ## did not support recent Origin9 files
+	git clone https://github.com/gbm19/python-liborigin2
 	cd python-liborigin2/
 	mkdir build
 	cd build
@@ -176,3 +177,4 @@ A: Then I am interested in getting a minimum non-working example, and will try t
  * [ ] new feature: automatic guessing of the swept parameter
  * [x] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
  * [ ] robust_csv_parser.py", line 70, nests FileNotFoundError
+ * [ ] check the possibilities of graph digitizer/OCR: http://eumenidae.blogspot.cz/2012/12/quick-n-dirty-wxpython-plot-digitiser.html
