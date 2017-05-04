@@ -1,0 +1,3 @@
+[submodule "kaitai_struct_formats"]
+	path = kaitai_struct_formats
+	url = https://github.com/FilipDominec/kaitai_struct_formats
