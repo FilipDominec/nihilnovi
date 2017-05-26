@@ -39,7 +39,7 @@ for x, y, param, label, xlabel, ylabel, color in \
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
 ax.set_title('')
-ax.legend(loc='best', prop={'size':6})
+ax.legend(loc='best', prop={'size':10})
 """
 
 contour_plot_command = \
@@ -471,12 +471,17 @@ class Handler:
         elif rowtype == 'csvtwocolumn':
             ycolumn = 1
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
-            return  data_array.T[0], data_array.T[1], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, header[0], header[1]
+            return data_array.T[0], data_array.T[1], os.path.split(rowfilepath)[1], parameters, \
+                    header[0], header[1] ## LINES NAMED BY THEIR FILE NAME ##TODO make it automatic
+            #return  data_array.T[0], data_array.T[1], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, header[0], header[1] ## TODO
             ## TODO replace os.path.split(rowfile)[-2] with a parameter reasonably recovered from the file name
         elif rowtype == 'csvcolumn':
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
-            return data_array.T[rowxcolumn], data_array.T[rowycolumn], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, \
-                    header[rowxcolumn], header[rowycolumn]
+            return data_array.T[rowxcolumn], data_array.T[rowycolumn], rowfilepath, parameters, \
+                    header[rowxcolumn], header[rowycolumn] ## LINES NAMED BY THEIR FILE NAME ##TODO make it automatic
+            #return data_array.T[rowxcolumn], data_array.T[rowycolumn], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, \
+                    #header[rowxcolumn], header[rowycolumn] ## LINES NAMED BY THEIR FILE DIRECTORY
+
         #elif rowtype == 'xls':
             # TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
             #return 
