@@ -34,7 +34,7 @@ with warnings.catch_warnings(): warnings.simplefilter("ignore")
 
 
 verbose                     = True
-very_verbose                = True
+very_verbose                = False
 
 commentCharsLineStart       = ['#', '!', ';', ',', '%']  # if line starts with one of these characters, it will be a comment (or header)
 parameterSeparators         = ['=', '\t', ':', ',']     # if line is a comment AND contains one of these, it is parsed as a parameter of the file
