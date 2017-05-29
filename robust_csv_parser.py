@@ -33,11 +33,11 @@ with warnings.catch_warnings(): warnings.simplefilter("ignore")
 
 
 
-verbose                     = False
-very_verbose                = False
+verbose                     = True
+very_verbose                = True
 
 commentCharsLineStart       = ['#', '!', ';', ',', '%']  # if line starts with one of these characters, it will be a comment (or header)
-parameterSeparators         = ['=', ':', '\t+', ',']     # if line is a comment AND contains one of these, it is parsed as a parameter of the file
+parameterSeparators         = ['=', '\t', ':', ',']     # if line is a comment AND contains one of these, it is parsed as a parameter of the file
 commentCharsLineMiddle      = ['#']                      # everything after this character is omitted
 parameterSplitterOtherwise  = ['=']                      # if line contains this character, it is parsed as a parameter of the file
 strict_table_layout         = False                      # when True, doubled column separators will always imply that the field was left empty
@@ -89,7 +89,7 @@ def loadtxt(file_name, sizehint=None):
                 if parameterSeparator in line[1:-1]:
                     paramKey, paramValue = regExpPar.split(line[1:-1], 1)
 
-                    parameters[paramKey] = float(paramValue) if (safe_float(paramValue) is not np.NaN) else paramValue
+                    parameters[paramKey.strip()] = float(paramValue) if (safe_float(paramValue) is not np.NaN) else paramValue.strip()
                     break
         else:
             if firstNonSkippedLine is None: firstNonSkippedLine = lineNumber
