@@ -163,7 +163,9 @@ def loadtxt(file_name, sizehint=None):
         if verbose: 
            warnings.warn(("Warning: found %d labels in header for total %d columns; truncating or adding next by the " +
                 "rule 'x, column1, column2...'") % (len(columnsInHeader), resultingColumnsOnLines), RuntimeWarning)
-    if columnsInHeader == [] and resultingColumnsOnLines>0: columnsInHeader = ['x']
+    if len(columnsInHeader)==0 and resultingColumnsOnLines==1: columnsInHeader = ['values']
+    if len(columnsInHeader) == resultingColumnsOnLines-1: columnsInHeader = ['x'] + columnsInHeader
+
     while len(columnsInHeader) < resultingColumnsOnLines:           ## extend it if shorter
         columnsInHeader.append("column%d"%len(columnsInHeader))
     columnsInHeader = columnsInHeader[:resultingColumnsOnLines]     ## truncate it if longer

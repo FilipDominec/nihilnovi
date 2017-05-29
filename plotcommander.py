@@ -187,18 +187,21 @@ class Handler:
 
         if self.is_dir(fullpath):
             return 'dir'
-        elif fullpath.lower().endswith('.csv') or fullpath.lower().endswith('.dat') or fullpath.lower().endswith('.txt'):
-            try:
-                ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
-                data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER)
-                return 'csvtwocolumn' if len(header)==2 else 'csvmulticolumn'
-            except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
-                return 'unknown'
         elif fullpath.lower().endswith('.xls'):
             ## TODO XLS support : determine if single spreadsheet, and/or if spreadsheet(s) contain single column
             return 'xlsfile'
         elif fullpath.lower().endswith('.opj'):
             return 'opjfile'
+        elif fullpath.lower().endswith('.csv') or fullpath.lower().endswith('.dat') or fullpath.lower().endswith('.txt'):
+            try:
+                ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
+                data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER)
+                print ("LENHEADER", header)
+                
+                if len(header)<=2: return 'csvtwocolumn' 
+                else: return 'csvmulticolumn'
+            except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
+                return 'unknown'
         else:
             return 'unknown'
 
@@ -471,6 +474,17 @@ class Handler:
         elif rowtype == 'csvtwocolumn':
             ycolumn = 1
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
+            print()
+            print()
+            print()
+            print(data_array, len(header) , header  )
+            if len(header) == 1: 
+                data_array = np.vstack([np.arange(len(data_array)), data_array.T]).T
+                header     = ['point number'] + header
+            print(data_array ,len(header), header  )
+            print()
+            print()
+            print()
             return data_array.T[0], data_array.T[1], os.path.split(rowfilepath)[1][:-4], parameters, \
                     header[0], header[1] ## LINES NAMED BY THEIR FILE NAME ##TODO make it automatic
             #return  data_array.T[0], data_array.T[1], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, header[0], header[1] ## TODO
@@ -515,7 +529,7 @@ class Handler:
                 row_data.append(self.load_row_data(self.tsFiles.get_iter(path)))
                 plotted_paths.append(path)
             except (RuntimeError, ValueError):
-                #traceback.print_exc()
+                traceback.print_exc()
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
