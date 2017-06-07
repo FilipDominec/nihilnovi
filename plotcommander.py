@@ -567,7 +567,7 @@ class Handler:
             #np = numpy
             def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                    'xs':xs, 'ys':ys, 'labels':labels, 'params':params, 'xlabels':xlabels,  'ylabels':ylabels,  
+                    'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                     'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                     'colors':colors}
             #self.fig.clf() ## clear figure
