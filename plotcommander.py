@@ -114,6 +114,7 @@ class Handler:
         #TODO http://dalelane.co.uk/blog/?p=778
 
         self.opj_file_cache = {}
+        self.dat_file_cache = {}
 
         ## TreeStore and ListStore initialization
         self.tsFiles = Gtk.TreeStore(str,          Pixbuf,   str,      Pixbuf,            int,        int,             str)
@@ -195,9 +196,7 @@ class Handler:
         elif fullpath.lower().endswith('.csv') or fullpath.lower().endswith('.dat') or fullpath.lower().endswith('.txt'):
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
-                data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER)
-                print ("LENHEADER", header)
-                
+                data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER) 
                 if len(header)<=2: return 'csvtwocolumn' 
                 else: return 'csvmulticolumn'
             except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
@@ -238,12 +237,17 @@ class Handler:
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
     def origin_parse_or_cache(self, basepath):# {{{
-        if basepath in self.opj_file_cache.keys():      
+        if basepath in self.opj_file_cache.keys():      ## TODO write it  on 3 lines
             return self.opj_file_cache[basepath]
         else: 
             opj = liborigin.parseOriginFile(basepath)
             self.opj_file_cache[basepath] = opj
             return opj
+        # }}}
+    def dat_parse_or_cache(self, basepath):# {{{
+        if not basepath in self.dat_file_cache.keys():      ## TODO write it  on 3 lines (and join with the above fn)
+            self.dat_file_cache[basepath] = robust_csv_parser.loadtxt(basepath, sizehint=SIZELIMIT_FOR_DATA)
+        return self.dat_file_cache[basepath]
         # }}}
     def decode_origin_label(self, bb, splitrows=False): # {{{
         bb = bb.decode('utf-8', errors='ignore').replace('\r', '').strip()
@@ -305,7 +309,8 @@ class Handler:
             rowTypes      = [self.row_type_from_fullpath(f) for f in itemFullNames]
         elif parentrowtype == 'csvmulticolumn':
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
-            data_array, header, parameters = robust_csv_parser.loadtxt(basepath, sizehint=10000)
+            txt = self.dat_parse_or_cache(basepath)
+            data_array, header, parameters = txt 
             columnFilterString = w('enColFilter').get_text().strip()        
             columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
             #FIXME File "/home/dominecf/p/plotcommander/plotcommander.py", line 303, in populateTreeStore
@@ -316,7 +321,6 @@ class Handler:
             spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
             rowTypes      = ['csvcolumn'] * len(header)
         elif parentrowtype == 'opjfile':
-            print ("parentrowtype == 'opjfile':", basepath)
             opj = self.origin_parse_or_cache(basepath)
             ## Add "graphs" - which show the selected columns in presentation-ready format
             ## Fixme support for multiple opjlayers also here
@@ -335,8 +339,8 @@ class Handler:
             rowTypes      = ['opjgraph'] * len(itemShowNames)
 
             ## Add "columns" - which enable to access all data in the file, including those not used in "graphs"
-            for spread in opj['spreads']:
-                print(spread.label, self.decode_origin_label(spread.label))
+            #for spread in opj['spreads']:
+                #print(spread.label, self.decode_origin_label(spread.label))
             itemShowNames = itemShowNames + ['%s "%s"' % (self.decode_origin_label(spread.name), self.decode_origin_label(spread.label)) 
                     for spread in opj['spreads']]
             itemFullNames = itemFullNames + [basepath] * len(itemShowNames)    # all columns are from one file
@@ -474,23 +478,15 @@ class Handler:
         elif rowtype == 'csvtwocolumn':
             ycolumn = 1
             data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
-            print()
-            print()
-            print()
-            print(data_array, len(header) , header  )
             if len(header) == 1: 
                 data_array = np.vstack([np.arange(len(data_array)), data_array.T]).T
                 header     = ['point number'] + header
-            print(data_array ,len(header), header  )
-            print()
-            print()
-            print()
             return data_array.T[0], data_array.T[1], os.path.split(rowfilepath)[1][:-4], parameters, \
                     header[0], header[1] ## LINES NAMED BY THEIR FILE NAME ##TODO make it automatic
             #return  data_array.T[0], data_array.T[1], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, header[0], header[1] ## TODO
             ## TODO replace os.path.split(rowfile)[-2] with a parameter reasonably recovered from the file name
         elif rowtype == 'csvcolumn':
-            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
+            data_array, header, parameters = self.dat_parse_or_cache(rowfilepath)
             return data_array.T[rowxcolumn], data_array.T[rowycolumn], rowfilepath, parameters, \
                     header[rowxcolumn], header[rowycolumn] ## LINES NAMED BY THEIR FILE NAME ##TODO make it automatic
             #return data_array.T[rowxcolumn], data_array.T[rowycolumn], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, \
