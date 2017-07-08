@@ -95,7 +95,6 @@ def loadtxt(file_name, sizehint=None):
             if firstNonSkippedLine is None: firstNonSkippedLine = lineNumber
             filteredLines.append(line)
             skippedLinesN += 1
-    if firstNonSkippedLine is None: raise RuntimeError("Error: file empty or all lines in the file identified as comments")
     if very_verbose: print("firstNonSkippedLine", firstNonSkippedLine)
 
     ## Cut line end after a comment character is found
@@ -103,6 +102,7 @@ def loadtxt(file_name, sizehint=None):
         filteredLines = [line.split(commentCharLineMiddle,1)[0] for line in filteredLines]
     ## Remove empty lines (which could otherwise confuse the column number estimator)
     filteredLines = [line for line in filteredLines if line.strip()!=""]
+    if filteredLines == []: raise RuntimeError("Error: all lines in the file are empty or identified as comments")
     if very_verbose: print("filteredLines:", filteredLines)
 
 
