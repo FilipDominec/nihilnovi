@@ -176,20 +176,20 @@ def loadtxt(file_name, sizehint=None):
     expandedColumnsInHeader = []
     def camel_case_split(identifier): # from http://stackoverflow.com/a/29920015/1615108
         matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
-        return [m.group(0).lower() for m in matches]
+        return [m.group(0) for m in matches] ## can force .lower()?
     if guessHeaderSpaces:
         for column in columnsInHeader:
             if   "(" in column[:-2]  and  ")" in column[-1:]: 
                 lcol, rcol = column.rsplit('(',1)
-                column = " (".join([" ".join(camel_case_split(lcol)), rcol]) 
+                column = " (".join([" ".join(camel_case_split(lcol.replace('_', ' '))), rcol]) 
             elif "[" in column[:-2]  and  "]" in column[-1:]: 
                 lcol, rcol = column.rsplit('[',1)
-                column = " [".join([" ".join(camel_case_split(lcol)), rcol]) 
+                column = " [".join([" ".join(camel_case_split(lcol.replace('_', ' '))), rcol]) 
             else:
                 column = " ".join(camel_case_split(column))
             #if "[" in column[:-2]  and  "]" in column[-1:]: column = " [".join(column.rsplit('[',1)) 
             expandedColumnsInHeader.append(column)
-    if very_verbose: print("expandedColumnsInHeader", expandedColumnsInHeader)
+    if True or very_verbose: print("expandedColumnsInHeader", expandedColumnsInHeader)
     #columnsInHeaderFloatableN   = [1-floatable(splitLine) for splitLine in [regExpSep.split(line.strip()) for line in filteredLines])
     if very_verbose: print('firstNonSkippedLine is #%d and contains: "%s "' % (firstNonSkippedLine, maybeHeaderLine.strip()))
 

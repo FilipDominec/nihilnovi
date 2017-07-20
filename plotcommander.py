@@ -298,7 +298,8 @@ class Handler:
             ## Get the directory contents and sort it alphabetically
             filenames = os.listdir(basepath) 
             filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
-            fileFilterString = w('enFileFilter').get_text().strip()
+            fileFilterString = w('enFileFilter').get_text().strip() #XXX XXX
+            #fileFilterString = 'bande'
             itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
             # dirs will be listed first and files below; filter the files  ## FIXME: filter only through the file name, not full path!
             itemFullNames =  [f for f in itemFullNames if     self.is_dir(f)] + \
@@ -311,7 +312,8 @@ class Handler:
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             txt = self.dat_parse_or_cache(basepath)
             data_array, header, parameters = txt 
-            columnFilterString = w('enColFilter').get_text().strip()        
+            columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
+            #columnFilterString = 'gamma|fermi'
             columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
             #FIXME File "/home/dominecf/p/plotcommander/plotcommander.py", line 303, in populateTreeStore
                 #columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
