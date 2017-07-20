@@ -176,7 +176,8 @@ def loadtxt(file_name, sizehint=None):
     expandedColumnsInHeader = []
     def camel_case_split(identifier): # from http://stackoverflow.com/a/29920015/1615108
         matches = re.finditer('.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', identifier)
-        return [m.group(0) for m in matches] ## can force .lower()?
+        #return [(m.group(0).lower() if not m.group(0).isupper() else m.group(0)) for m in matches] ## keep acronyms upper, convert other Camels to lower
+        return [m.group(0) for m in matches] 
     if guessHeaderSpaces:
         for column in columnsInHeader:
             if   "(" in column[:-2]  and  ")" in column[-1:]: 
