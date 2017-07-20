@@ -190,7 +190,7 @@ def loadtxt(file_name, sizehint=None):
                 column = " ".join(camel_case_split(column))
             #if "[" in column[:-2]  and  "]" in column[-1:]: column = " [".join(column.rsplit('[',1)) 
             expandedColumnsInHeader.append(column)
-    if True or very_verbose: print("expandedColumnsInHeader", expandedColumnsInHeader)
+    if very_verbose: print("expandedColumnsInHeader", expandedColumnsInHeader)
     #columnsInHeaderFloatableN   = [1-floatable(splitLine) for splitLine in [regExpSep.split(line.strip()) for line in filteredLines])
     if very_verbose: print('firstNonSkippedLine is #%d and contains: "%s "' % (firstNonSkippedLine, maybeHeaderLine.strip()))
 
