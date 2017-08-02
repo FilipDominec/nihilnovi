@@ -504,6 +504,35 @@ class Handler:
             raise RuntimeError         ## for all remaining filetypes, abort plotting quietly
 
 # }}}
+    def dedup_keys_values(self, keyvalue_strings, output_strings=True):
+        """ Seeks for key=value pairs that are shared with among all strings in the list, and removes them if found """
+        def try_float_value(tup): 
+            """ Whenever possible, safely convert second tuple items (i.e. values) to float """
+            if len(tup)==1:             return tup
+            elif len(tup)==2:
+                try:                    return (tup[0], float(tup[1]))
+                except:                 return tup
+        ## Split names into "key=value" chunks and  then into ("key"="value") tuples
+        keyvaluelists = []
+        for keyvalue_string in keyvalue_strings: 
+            #print("keyvalue_strings", keyvalue_strings) ## TODO clean up debugging leftovers
+            chunklist = re.split('[_ /]', keyvalue_string) 
+            #print("    chunklist", chunklist)
+            keyvaluelist = [try_float_value(re.split('=', chunk)) for chunk in chunklist] 
+            #print("   -> keyvaluelist", keyvaluelist)
+            keyvaluelists.append(keyvaluelist)
+        ## If identical ("key"="value") tuple found everywhere, remove it 
+        for keyvaluelist in keyvaluelists.copy(): 
+            for keyvalue in keyvaluelist.copy():
+                if all([(keyvalue in testkeyvaluelist) for testkeyvaluelist in keyvaluelists]):
+                    for keyvaluelist2 in keyvaluelists:
+                        keyvaluelist2.remove(keyvalue)
+        ## By default, return simple flat list of strings, otherwise a nested [[(key,value), ...]] structure
+        if output_strings:
+            ## Generate the strings
+                return [' '.join(['='.join([str(v) for v in kvpair]) for kvpair in keyvaluelist]).strip() for keyvaluelist in keyvaluelists]
+        else:   return keyvaluelists
+
     def plot_all_sel_records(self):# {{{
 
         ## Setting persistent view is somewhat kafkaesque with matplotlib. 
@@ -528,7 +557,13 @@ class Handler:
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
-        xs, ys, descriptors, params, xlabels, ylabels = zip(*row_data)       
+        xs, ys, labels, params, xlabels, ylabels = zip(*row_data)       
+        print('labels 1 ', labels)
+        labels = self.dedup_keys_values(labels)
+        print('labels 2 ', labels)
+        for x  in labels: 
+            print('         ', x)
+
         #for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
             #print(n,v)
         ##
