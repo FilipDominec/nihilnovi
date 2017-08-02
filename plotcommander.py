@@ -528,12 +528,14 @@ class Handler:
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
-        xs, ys, labels, params, xlabels, ylabels = zip(*row_data)       
+        xs, ys, descriptors, params, xlabels, ylabels = zip(*row_data)       
         #for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
             #print(n,v)
-        ## TODO: check if there is exactly one column in the 'params' table that differs among files:       label="%s=%s" % (labelkey, labelval)
-        ## If it is, append its name and value to the respective 'labels' field, so that all plotted lines are distinguishable by this value!
-        ## If there is none, or too many, the curves will be labeled just by their column label found in the header. 
+        ##
+        ## TODO: Once files are correctly named:
+        ## additionally check if there is exactly one column in the 'params' table that differs among files:       label="%s=%s" % (labelkey, labelval)
+        ## If it is, set its name and value to:  zs and zlabels   variables for correct plotting contour maps
+        ## ?? If there is none, or too many, the curves will be labeled just by their column label found in the header. 
         ## TODO allow also to name the curves by the file name, if the column names do not exist or are all the same!
 
         ## Generate the color palette for curves
