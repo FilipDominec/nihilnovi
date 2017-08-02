@@ -443,13 +443,28 @@ class Handler:
         recursive_clear_icon(self.tsFiles.get_iter_first())
         w('treeview1').queue_draw()
         # }}}
+    def safe_np_array(self, x,y): ## converts two lists to 2 numpy array; if float() fails when processing any (x,y) row, leave it out 
+        if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## (fixme) the last row from liborigin is sometimes erroneous zero
+        if len(x) < len(y): y = y[0:len(x)]             ## in any case, match the length of x- and y-data
+        if len(y) < len(x): x = x[0:len(y)] 
+        try:                                    ## fast string-to-float conversion
+            x, y = [np.array(arr) for arr in (x,y)] ## TODO dtype=float
+        except ValueError:                      ## failsafe string-to-float conversion
+            x0, y0 = [], []
+            for x1,y1 in zip(x,y):
+                try:
+                    xf, yf = float(x1), float(y1)
+                    x0.append(xf); y0.append(yf)
+                except ValueError:
+                    pass
+            x,y = x0, y0
+        return x, y 
     def load_row_data(self, row):# {{{
         """ loads all relevant data for a given treestore row, and returns: x, y, label, parameters, xlabel, ylabel
 
         Plotting is "on-the-fly", i.e., program does not store any data (except OPJ file cache) and loads them 
         from disk upon every (re)plot.
         """
-       
         ## Load the data
         rowfilepath = self.row_prop(row, 'filepath')
         rowtype     = self.row_prop(row, 'rowtype')
@@ -460,39 +475,21 @@ class Handler:
             opj = self.origin_parse_or_cache(rowfilepath)
             # TODO: what does opj['spreads'][3].multisheet mean?
             x, y = [opj['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
-            if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## the last row from liborigin is sometimes erroneous zero
-            if len(x) < len(y): y = y[0:len(x)]             ## in any case, match the length of x- and y-data
-            if len(y) < len(x): x = x[0:len(y)] 
-            try:                                    ## fast string-to-float conversion
-                x, y = [np.array(arr) for arr in (x,y)] ## TODO dtype=float
-            except ValueError:                      ## failsafe string-to-float conversion
-                x0, y0 = [], []
-                for x1,y1 in zip(x,y):
-                    try:
-                        xf, yf = float(x1), float(y1)
-                        x0.append(xf); y0.append(yf)
-                    except ValueError:
-                        pass
-                x,y = x0, y0
+            x, y = self.safe_np_array(x, y)
             xlabel, ylabel = [self.decode_origin_label(opj['spreads'][rowsheet].columns[c].name) for c in [rowxcolumn, rowycolumn]] 
             parameters = {} ## todo: is it possible to load parameters from origin column?
-            return x, y, ylabel, parameters, xlabel, ylabel
-        elif rowtype == 'csvtwocolumn':
-            ycolumn = 1
-            data_array, header, parameters = robust_csv_parser.loadtxt(rowfilepath, sizehint=SIZELIMIT_FOR_DATA)
-            if len(header) == 1: 
-                data_array = np.vstack([np.arange(len(data_array)), data_array.T]).T
-                header     = ['point number'] + header
-            return data_array.T[0], data_array.T[1], os.path.split(rowfilepath)[1][:-4], parameters, \
-                    header[0], header[1] ## LINES NAMED BY THEIR FILE NAME ##TODO make it automatic
-            #return  data_array.T[0], data_array.T[1], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, header[0], header[1] ## TODO
-            ## TODO replace os.path.split(rowfile)[-2] with a parameter reasonably recovered from the file name
-        elif rowtype == 'csvcolumn':
+            descriptor = rowfilepath+" "+ylabel ## FIXME XXX
+            return x, y, descriptor, parameters, xlabel, ylabel
+        elif rowtype in ('csvtwocolumn', 'csvcolumn'): 
             data_array, header, parameters = self.dat_parse_or_cache(rowfilepath)
-            return data_array.T[rowxcolumn], data_array.T[rowycolumn], rowfilepath, parameters, \
-                    header[rowxcolumn], header[rowycolumn] ## LINES NAMED BY THEIR FILE NAME ##TODO make it automatic
-            #return data_array.T[rowxcolumn], data_array.T[rowycolumn], os.path.split(os.path.split(rowfilepath)[0])[1], parameters, \
-                    #header[rowxcolumn], header[rowycolumn] ## LINES NAMED BY THEIR FILE DIRECTORY
+            if rowtype == 'csvtwocolumn': 
+                rowxcolumn, rowycolumn = 0, 1
+                ## in fact, file denoted as "csvtwocolumn" may have only one column, in such a case generate simple integer x-axis numbering
+                if len(header) == 1: 
+                    data_array = np.vstack([np.arange(len(data_array)), data_array.T]).T # 
+                    header     = ['point number'] + header
+            descriptor = rowfilepath+" "+header[rowycolumn] ## FIXME XXX consider also parameters in the file!
+            return data_array.T[rowxcolumn], data_array.T[rowycolumn], descriptor, parameters, header[rowxcolumn], header[rowycolumn] 
 
         #elif rowtype == 'xls':
             # TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
