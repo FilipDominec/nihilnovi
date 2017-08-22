@@ -385,10 +385,10 @@ class Handler:
                 x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
                 #print(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, curve.yColumnName.self.decode_origin_label('utf-8'), y_column_index)
 
-                itemShowNames.append('%s -> spread %s: column %s (against  %s)' % 
+                itemShowNames.append('%s -> spread %s: column %s (against  %s)' %  
                         (legend, self.decode_origin_label(spread.name), 
                                 self.decode_origin_label(spread.columns[y_column_index].name), 
-                                self.decode_origin_label(spread.columns[x_column_index].name)))
+                                self.decode_origin_label(spread.columns[x_column_index].name))) ### TODO we write "against" but 
                 itemFullNames.append(basepath)          # all columns are from one file
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
