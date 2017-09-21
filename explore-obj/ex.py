@@ -2,9 +2,9 @@
 #-*- coding: utf-8 -*-
 
 import liborigin
-opj = liborigin.parseOriginFile('../test.opj')
+opj = liborigin.parseOriginFile('x.opj')
 
-coloured = True
+coloured = False
 if coloured:
     normal = "\033[1;0m"
     bold   = "\033[1;1m"

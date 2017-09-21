@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
 
+
+
 import gi, sys, os, signal, stat, warnings, re
 import numpy as np
 import scipy.constants as sc
@@ -193,7 +195,7 @@ class Handler:
             return 'xlsfile'
         elif fullpath.lower().endswith('.opj'):
             return 'opjfile'
-        elif fullpath.lower().endswith('.csv') or fullpath.lower().endswith('.dat') or fullpath.lower().endswith('.txt'):
+        elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.csv', '.dat', '.txt', '.asc')):
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
                 data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER) 
@@ -325,7 +327,8 @@ class Handler:
         elif parentrowtype == 'opjfile':
             opj = self.origin_parse_or_cache(basepath)
             ## Add "graphs" - which show the selected columns in presentation-ready format
-            ## Fixme support for multiple opjlayers also here
+            ## todo: support for multiple opjlayers also here
+            ## todo: take into account this field with useful data:   ["spreads"].columns[3].comment = b"PL Intensity^M [arb. units]^M 110A 10%"
             def generate_graph_annotation(graph): 
                 layerNumber = 0  ## Fixme support for multiple opjlayers:    ["graphs"][1].layers[0].curves[3].xColumnName
                 legend_box = self.decode_origin_label(graph.layers[0].legend.text, splitrows=True)
@@ -352,7 +355,7 @@ class Handler:
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
-            itemShowNames = [self.decode_origin_label(column.name) for column in opj['spreads'][parent_spreadsheet].columns]
+            itemShowNames = [self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment) for column in opj['spreads'][parent_spreadsheet].columns]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
@@ -364,6 +367,7 @@ class Handler:
 
             ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
             curves = opj['graphs'][parent_graph].layers[layerNumber].curves
+            print("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
             legend_box = self.decode_origin_label(opj['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
             legends = []
             for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
@@ -385,10 +389,10 @@ class Handler:
                 x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
                 #print(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, curve.yColumnName.self.decode_origin_label('utf-8'), y_column_index)
 
-                itemShowNames.append('%s -> spread %s: column %s (against  %s)' %  
+                itemShowNames.append('%s -> spread %s: column %s (%s)' %  
                         (legend, self.decode_origin_label(spread.name), 
                                 self.decode_origin_label(spread.columns[y_column_index].name), 
-                                self.decode_origin_label(spread.columns[x_column_index].name))) ### TODO we write "against" but 
+                                self.decode_origin_label(spread.columns[y_column_index].comment))) ### TODO we write "against" but 
                 itemFullNames.append(basepath)          # all columns are from one file
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
@@ -462,8 +466,8 @@ class Handler:
     def load_row_data(self, row):# {{{
         """ loads all relevant data for a given treestore row, and returns: x, y, label, parameters, xlabel, ylabel
 
-        Plotting is "on-the-fly", i.e., program does not store any data (except OPJ file cache) and loads them 
-        from disk upon every (re)plot.
+        Plotting is "on-the-fly", i.e., program does not store any data (except DAT/OPJ file cache) and loads them 
+        from disk upon every (re)plot. TODO reload the cache on file change!
         """
         ## Load the data
         rowfilepath = self.row_prop(row, 'filepath')
@@ -478,7 +482,7 @@ class Handler:
             x, y = self.safe_np_array(x, y)
             xlabel, ylabel = [self.decode_origin_label(opj['spreads'][rowsheet].columns[c].name) for c in [rowxcolumn, rowycolumn]] 
             parameters = {} ## todo: is it possible to load parameters from origin column?
-            descriptor = rowfilepath+" "+ylabel ## FIXME XXX
+            descriptor = rowfilepath+" "+ylabel+" "+self.decode_origin_label(opj['spreads'][rowsheet].columns[rowycolumn].comment) ## FIXME XXX
             return x, y, descriptor, parameters, xlabel, ylabel
         elif rowtype in ('csvtwocolumn', 'csvcolumn'): 
             data_array, header, parameters = self.dat_parse_or_cache(rowfilepath)
