@@ -561,12 +561,9 @@ class Handler:
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
-        xs, ys, labels, params, xlabels, ylabels = zip(*row_data)       
-        print('labels 1 ', labels)
-        labels = self.dedup_keys_values(labels)
+        xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data)       
+        labels = self.dedup_keys_values(labels_orig)
         print('labels 2 ', labels)
-        for x  in labels: 
-            print('         ', x)
 
         #for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
             #print(n,v)
@@ -599,13 +596,16 @@ class Handler:
                 include_hidden_chars=True)
         #print("BEFORE COMMAND")
         #print(row_data)
+        tosave=[]
         if plot_command.strip() != '':
             #np = numpy
             def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                     'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                     'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
-                    'colors':colors}
+                    'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
+            print(exec_env)
+
             #self.fig.clf() ## clear figure
             try:
                 exec(plot_command, exec_env)
@@ -616,6 +616,13 @@ class Handler:
             except:
                 #print("SOME ERROR")
                 traceback.print_exc() ## TODO locate the error
+            tosave = list(tosave)
+            print("tosave", tosave)
+            for savefilename in tosave:
+                self.fig.savefig(savefilename)
+                print("saved", savefilename)
+
+
         #print("AFTER COMMAND")
             #code = compile(plot_command, "somefile.py", 'exec') TODO
             #exec(code, global_vars, local_vars)
