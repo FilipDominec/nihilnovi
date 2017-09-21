@@ -627,14 +627,54 @@ class Handler:
         self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear') ##XXX
         self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear') ##XXX
 
-        self.ax.relim()
-        self.ax.autoscale_view() # 	Autoscale the view limits using the data limits.
+        #print(" - relim - ")
+        #self.ax.relim() ## If relim enabled, logarithmic axes scale wrong, i.e. from (6.7370464889520478e-316, 4.0007331215613123e+18)
+        #print(" - autoscale - ")
+        #self.ax.autoscale_view() # 	Autoscale the view limits using the data limits.
+        print(" - draw - ")
         self.canvas.draw()
         return True
 
+        """
+        xlims_changed from  (4.6147009455810979, 3650.4430782521085)
+                      to    (-128.203125, 2829.765625)
+        xlims_changed from  (-128.203125, 2829.765625)
+                      to    (4.6147009455810979, 3650.4430782521085)
+         - relim - 
+         - autoscale - 
+        xlims_changed from  (4.6147009455810979, 3650.4430782521085)
+                      to    (4.6147009455810979, 3650.4430782521085)            <-------- OK, but why?
+         - draw - 
+
+
+
+        xlims_changed from  (8.0705914746898669e-316, 90154482521167872.0)
+                      to    (-128.203125, 2829.765625)
+        xlims_changed from  (-128.203125, 2829.765625)
+                      to    (4.6147009455810979, 3650.4430782521085)
+         - DISABLED relim - 
+         - autoscale - 
+        xlims_changed from  (4.6147009455810979, 3650.4430782521085)
+                      to    (6.7370464889520478e-316, 4.0007331215613123e+18)           <---------- wrong!
+         - draw - 
+
+
+        xlims_changed from  None
+                      to    (-128.203125, 2829.765625)
+        xlims_changed from  (-128.203125, 2829.765625)
+                      to    (4.6147009455810979, 3650.4430782521085)
+         - DISABLED relim - 
+         - DISABLED autoscale - 
+         - draw -                                           <--------------------- and everything is OK
+
+        """
+
         # }}}
     def on_xlims_change(self, axes): self.xlim = axes.get_xlim() ## dirty hack: Needs fixing in the future
-    def on_ylims_change(self, axes): self.ylim = axes.get_ylim() ## dtto
+    def on_ylims_change(self, axes): 
+        print("xlims_changed from ", self.ylim)
+        self.ylim = axes.get_ylim() ## dtto
+        print("              to   ", self.ylim)
 
     ## == FILE AND DATA UTILITIES ==
     def row_prop(self, row, prop):# {{{
