@@ -195,7 +195,7 @@ class Handler:
             return 'xlsfile'
         elif fullpath.lower().endswith('.opj'):
             return 'opjfile'
-        elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.csv', '.dat', '.txt', '.asc')):
+        elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.csv', '.tsv', '.dat', '.txt', '.asc')):
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
                 data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER) 
@@ -526,9 +526,11 @@ class Handler:
             #print("   -> keyvaluelist", keyvaluelist)
             keyvaluelists.append(keyvaluelist)
         ## If identical ("key"="value") tuple found everywhere, remove it 
+        ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should eliminate the common directory name first
         for keyvaluelist in keyvaluelists.copy(): 
             for keyvalue in keyvaluelist.copy():
                 if all([(keyvalue in testkeyvaluelist) for testkeyvaluelist in keyvaluelists]):
+                    #print("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
                     for keyvaluelist2 in keyvaluelists:
                         keyvaluelist2.remove(keyvalue)
         ## By default, return simple flat list of strings, otherwise a nested [[(key,value), ...]] structure
