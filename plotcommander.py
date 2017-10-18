@@ -375,7 +375,7 @@ class Handler:
 
             ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
             curves = opj['graphs'][parent_graph].layers[layerNumber].curves
-            print("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
+            #print("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
             legend_box = self.decode_origin_label(opj['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
             legends = []
             for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
@@ -536,7 +536,7 @@ class Handler:
         ## If identical ("key"="value") tuple found everywhere, remove it 
         ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should eliminate the common directory name first
         for keyvaluelist in keyvaluelists.copy(): 
-            print("KEYVALUELIST ---------- ", keyvaluelist)
+            #print("KEYVALUELIST ---------- ", keyvaluelist)
             for keyvalue in keyvaluelist.copy():
                 if all([(keyvalue in testkeyvaluelist) for testkeyvaluelist in keyvaluelists]):
                     if keyvalue == '70mm': print("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
@@ -574,7 +574,7 @@ class Handler:
         if row_data == []: return False
         xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data)       
         labels = self.dedup_keys_values(labels_orig)
-        print('labels 2 ', labels)
+        #print('labels 2 ', labels)
 
         #for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
             #print(n,v)
@@ -615,7 +615,7 @@ class Handler:
                     'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                     'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                     'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
-            print(exec_env)
+            #print(exec_env)
 
             #self.fig.clf() ## clear figure
             try:
@@ -628,10 +628,10 @@ class Handler:
                 #print("SOME ERROR")
                 traceback.print_exc() ## TODO locate the error
             tosave = list(tosave)
-            print("tosave", tosave)
+            #print("tosave", tosave)
             for savefilename in tosave:
                 self.fig.savefig(savefilename)
-                print("saved", savefilename)
+                print("Plotcommander: saving output to:", savefilename)
 
 
         #print("AFTER COMMAND")
@@ -653,7 +653,7 @@ class Handler:
         #self.ax.relim() ## If relim enabled, logarithmic axes scale wrong, i.e. from (6.7370464889520478e-316, 4.0007331215613123e+18)
         #print(" - autoscale - ")
         #self.ax.autoscale_view() # 	Autoscale the view limits using the data limits.
-        print(" - draw - ")
+        #print(" - draw - ")
         self.canvas.draw()
         return True
 
@@ -694,9 +694,9 @@ class Handler:
         # }}}
     def on_xlims_change(self, axes): self.xlim = axes.get_xlim() ## dirty hack: Needs fixing in the future
     def on_ylims_change(self, axes): 
-        print("xlims_changed from ", self.ylim)
+        #print("xlims_changed from ", self.ylim)
         self.ylim = axes.get_ylim() ## dtto
-        print("              to   ", self.ylim)
+        #print("              to   ", self.ylim)
 
     ## == FILE AND DATA UTILITIES ==
     def row_prop(self, row, prop):# {{{
