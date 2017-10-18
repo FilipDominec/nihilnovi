@@ -50,13 +50,21 @@ ys = np.array(ys)
 cmaprange1, cmaprange2 = np.min(ys), np.max(ys) 
 param = np.linspace(1, 2, len(ys))
 levels = np.linspace(cmaprange1, cmaprange2, 50) 
+
+#   # Grid the data, produce interpolated quantities:
+#   from matplotlib.mlab import griddata
+#   min_xs,       max_xs,    min_params,   max_params = min(xs),       max(xs),    min(params),   max(params)
+#   xi      = np.linspace(min_xs,       max_xs,       args.contourresx)
+#   paramsi = np.linspace(min_params,   max_params,   args.contourresp)
+#   interp_anisotropy = (max_xs-min_xs)/(max_params-min_params) * args.interp_aspect 
+#   yi      = griddata(xs, params*interp_anisotropy, ys, xi, paramsi*interp_anisotropy, interp='linear')
+
 ax.contourf(xs[0], param, ys, levels=levels, extend='both')
 ax.contour(xs[0], param, ys, levels=levels)
 ax.set_xlabel('')
 ax.set_ylabel('')
 ax.set_title('')
 """
-
 
 
 
