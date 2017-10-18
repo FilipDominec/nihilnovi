@@ -150,7 +150,7 @@ A: Yes, you can switch to the _Plot command_ tab and write a custom Python3+Matp
 #### Q: Can I export the plot for publication?
 A: Sure, there is a diskette icon above the plot window; you can choose between PDF, PNG, JPG, SVG and other formats to export.
 
-#### Q: I have several folders, and wish to compare one file from 
+#### Q: I have several folders, and wish to compare one file from each of them
 A: First type a part of the file name in the _File filter_ entry, so that this file is the only one that is shown when the folders are unpacked. Then, holding the _shift_ key, click the _last_ folder, and click the _first_ folder. All folders between them should unpack, comparing the desired files. Note you can also use the _Column filter_, likewise.
 
 #### Q: I have found an ASCII/CSV format that can not be opened by the built-in parser

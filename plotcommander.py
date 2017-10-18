@@ -528,9 +528,10 @@ class Handler:
         ## If identical ("key"="value") tuple found everywhere, remove it 
         ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should eliminate the common directory name first
         for keyvaluelist in keyvaluelists.copy(): 
+            print("KEYVALUELIST ---------- ", keyvaluelist)
             for keyvalue in keyvaluelist.copy():
                 if all([(keyvalue in testkeyvaluelist) for testkeyvaluelist in keyvaluelists]):
-                    #print("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
+                    if keyvalue == '70mm': print("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
                     for keyvaluelist2 in keyvaluelists:
                         keyvaluelist2.remove(keyvalue)
         ## By default, return simple flat list of strings, otherwise a nested [[(key,value), ...]] structure
