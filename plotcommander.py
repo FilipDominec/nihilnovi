@@ -37,7 +37,7 @@ line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')
 for x, y, param, label, xlabel, ylabel, color in \
         zip(xs, ys, params, labels, xlabels, ylabels, colors):
-    # y = np.convolve(y,2**-np.linspace(-2,2,35) ## simple smoothing
+    # y = np.convolve(y,2**-np.linspace(-2,2,35), mode='same') ## simple smoothing
     ax.plot(x, y, label="%s" % (label), color=color)
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
