@@ -40,10 +40,12 @@ for x, y, param, label, xlabel, ylabel, color in \
     # x, y = x[~np.isnan(y)], y[~np.isnan(y)]        ## filter-out NaN points
     # k = 2**-np.linspace(-2,2,25)**2; y = np.convolve(y,k/np.sum(k), mode='same') ## simple smoothing
     ax.plot(x, y, label="%s" % (label), color=color)
+    #ax.plot(x, y, label="%s" % (label.split('.dat')[0]), color=colors[c%10], ls=['-','--'][int(c/10)]) 
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
 ax.set_title('')
 ax.legend(loc='best', prop={'size':10})
+#np.savetxt("/home/dominecf/vz132JO.dat", np.vstack([x,ys[0],ys[1],ys[2]]).T, fmt="%.4f")
 """
 
 contour_plot_command = \
