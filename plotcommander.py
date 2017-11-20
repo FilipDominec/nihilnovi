@@ -43,7 +43,7 @@ for x, y, param, label, xlabel, ylabel, color in \
     #ax.plot(x, y, label="%s" % (label.split('.dat')[0]), color=colors[c%10], ls=['-','--'][int(c/10)]) 
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
-ax.set_title('')
+ax.set_title(' '.join(sharedlabels[-4:])) ## last few labels that are shared among all curves make a perfect title
 ax.legend(loc='best', prop={'size':10})
 #np.savetxt("/home/dominecf/vz132JO.dat", np.vstack([x,ys[0],ys[1],ys[2]]).T, fmt="%.4f")
 """
@@ -520,7 +520,7 @@ class Handler:
             raise RuntimeError         ## for all remaining filetypes, abort plotting quietly
 
 # }}}
-    def dedup_keys_values(self, keyvalue_strings, output_strings=True):
+    def dedup_keys_values(self, keyvalue_strings, output_strings=True, output_removed=False):
         """ Seeks for key=value pairs that are shared with among all strings in the list, and removes them if found """
         def try_float_value(tup): 
             """ Whenever possible, safely convert second tuple items (i.e. values) to float """
@@ -528,6 +528,9 @@ class Handler:
             elif len(tup)==2:
                 try:                    return (tup[0], float(tup[1]))
                 except:                 return tup
+        ## File name may be interesting as curve label, but not its extension -> filter it out
+        keyvalue_strings = [re.sub('\.[a-zA-Z][\w]?[\w]?', '', kvstring) for kvstring in keyvalue_strings]
+
         ## Split names into "key=value" chunks and  then into ("key"="value") tuples
         keyvaluelists = []
         for keyvalue_string in keyvalue_strings: 
@@ -539,6 +542,7 @@ class Handler:
             keyvaluelists.append(keyvaluelist)
         ## If identical ("key"="value") tuple found everywhere, remove it 
         ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should eliminate the common directory name first
+        removedkv = []
         for keyvaluelist in keyvaluelists.copy(): 
             #print("KEYVALUELIST ---------- ", keyvaluelist)
             for keyvalue in keyvaluelist.copy():
@@ -546,11 +550,16 @@ class Handler:
                     if keyvalue == '70mm': print("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
                     for keyvaluelist2 in keyvaluelists:
                         keyvaluelist2.remove(keyvalue)
+                    removedkv.append(keyvalue)
         ## By default, return simple flat list of strings, otherwise a nested [[(key,value), ...]] structure
         if output_strings:
             ## Generate the strings
-                return [' '.join(['='.join([str(v) for v in kvpair]) for kvpair in keyvaluelist]).strip() for keyvaluelist in keyvaluelists]
-        else:   return keyvaluelists
+                keyvaluelists = [' '.join(['='.join([str(v) for v in kvpair]) for kvpair in keyvaluelist]).strip() for keyvaluelist in keyvaluelists]
+                removedkv =  [' '.join([''.join(kvpair) for kvpair in keyvaluelist]).strip() for keyvaluelist in removedkv]
+        if output_removed:
+            return keyvaluelists, removedkv
+        else:
+            return keyvaluelists
 
     def plot_all_sel_records(self):# {{{
 
@@ -577,8 +586,8 @@ class Handler:
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         if row_data == []: return False
         xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data)       
-        labels = self.dedup_keys_values(labels_orig)
-        #print('labels 2 ', labels)
+        labels, sharedlabels = self.dedup_keys_values(labels_orig, output_removed=True)
+        #print('LABELS', labels, 'sharedlabels', sharedlabels)
 
         #for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
             #print(n,v)
@@ -616,7 +625,7 @@ class Handler:
             #np = numpy
             def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
             exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                    'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
+                    'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                     'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                     'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
             #print(exec_env)
