@@ -43,9 +43,16 @@ for x, y, param, label, xlabel, ylabel, color in \
     #ax.plot(x, y, label="%s" % (label.split('.dat')[0]), color=colors[c%10], ls=['-','--'][int(c/10)]) 
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
-ax.set_title(' '.join(sharedlabels[-4:])) ## last few labels that are shared among all curves make a perfect title
+
+plot_title = sharedlabels[-4:] ## last few labels that are shared among all curves make a perfect title
+#plot_title = sharedlabels[sharedlabels.index('LASTUNWANTEDLABEL')+1:] ## optionally, use all labels after this 
+
+ax.set_title(' '.join(plot_title)) 
 ax.legend(loc='best', prop={'size':10})
-#np.savetxt("/home/dominecf/vz132JO.dat", np.vstack([x,ys[0],ys[1],ys[2]]).T, fmt="%.4f")
+
+#np.savetxt('output.dat', np.vstack([x,ys[0],ys[1]]).T, fmt="%.4f")
+#tosave.append('_'.join(plot_title)+'.png') ## whole graph will be saved as PNG
+#tosave.append('_'.join(plot_title)+'.pdf') ## whole graph will be saved as PDF
 """
 
 contour_plot_command = \
@@ -528,6 +535,7 @@ class Handler:
             elif len(tup)==2:
                 try:                    return (tup[0], float(tup[1]))
                 except:                 return tup
+        def all_to_string(tup): return [str(v) for v in tup]
         ## File name may be interesting as curve label, but not its extension -> filter it out
         keyvalue_strings = [re.sub('\.[a-zA-Z][\w]?[\w]?', '', kvstring) for kvstring in keyvalue_strings]
 
@@ -542,7 +550,7 @@ class Handler:
             keyvaluelists.append(keyvaluelist)
         ## If identical ("key"="value") tuple found everywhere, remove it 
         ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should eliminate the common directory name first
-        removedkv = []
+        removedkvlist = []
         for keyvaluelist in keyvaluelists.copy(): 
             #print("KEYVALUELIST ---------- ", keyvaluelist)
             for keyvalue in keyvaluelist.copy():
@@ -550,14 +558,16 @@ class Handler:
                     if keyvalue == '70mm': print("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
                     for keyvaluelist2 in keyvaluelists:
                         keyvaluelist2.remove(keyvalue)
-                    removedkv.append(keyvalue)
+                    removedkvlist.append(keyvalue)
         ## By default, return simple flat list of strings, otherwise a nested [[(key,value), ...]] structure
         if output_strings:
             ## Generate the strings
-                keyvaluelists = [' '.join(['='.join([str(v) for v in kvpair]) for kvpair in keyvaluelist]).strip() for keyvaluelist in keyvaluelists]
-                removedkv =  [' '.join([''.join(kvpair) for kvpair in keyvaluelist]).strip() for keyvaluelist in removedkv]
+                print('keyvaluelists',keyvaluelists)
+                keyvaluelists = [' '.join(['='.join(all_to_string(kvpair)) for kvpair in keyvaluelist]).strip() for keyvaluelist in keyvaluelists]
+                print('removedkv',removedkvlist)
+                removedkvlist = ['='.join(all_to_string(kvpair)).strip() for kvpair in removedkvlist]
         if output_removed:
-            return keyvaluelists, removedkv
+            return keyvaluelists, removedkvlist
         else:
             return keyvaluelists
 
@@ -640,9 +650,9 @@ class Handler:
             except:
                 #print("SOME ERROR")
                 traceback.print_exc() ## TODO locate the error
-            tosave = list(tosave)
-            #print("tosave", tosave)
-            for savefilename in tosave:
+
+            print("tosave", tosave)
+            for savefilename in list(tosave):
                 self.fig.savefig(savefilename)
                 print("Plotcommander: saving output to:", savefilename)
 
