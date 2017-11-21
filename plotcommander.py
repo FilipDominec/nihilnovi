@@ -559,14 +559,13 @@ class Handler:
                     for keyvaluelist2 in keyvaluelists:
                         keyvaluelist2.remove(keyvalue)
                     removedkvlist.append(keyvalue)
+
         ## By default, return simple flat list of strings, otherwise a nested [[(key,value), ...]] structure
         if output_strings:
-            ## Generate the strings
-                print('keyvaluelists',keyvaluelists)
-                keyvaluelists = [' '.join(['='.join(all_to_string(kvpair)) for kvpair in keyvaluelist]).strip() for keyvaluelist in keyvaluelists]
-                print('removedkv',removedkvlist)
-                removedkvlist = ['='.join(all_to_string(kvpair)).strip() for kvpair in removedkvlist]
-        if output_removed:
+            keyvaluelists = [' '.join(['='.join(all_to_string(kvpair)) for kvpair in keyvaluelist]).strip() for keyvaluelist in keyvaluelists]
+            removedkvlist = ['='.join(all_to_string(kvpair)).strip() for kvpair in removedkvlist]
+
+        if output_removed:      ## Optionally, output also the parameters that are shared among all files
             return keyvaluelists, removedkvlist
         else:
             return keyvaluelists
