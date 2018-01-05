@@ -319,11 +319,11 @@ class Handler:
             ## Get the directory contents and sort it alphabetically
             filenames = os.listdir(basepath) 
             filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
-            fileFilterString = w('enFileFilter').get_text().strip() #XXX XXX
-            #fileFilterString = 'bande'
+            fileFilterString = w('enFileFilter').get_text().strip() 
+            dirFilterString = w('enDirFilter').get_text().strip() 
             itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
-            # dirs will be listed first and files below; filter the files  ## FIXME: filter only through the file name, not full path!
-            itemFullNames =  [f for f in itemFullNames if     self.is_dir(f)] + \
+            # dirs will be listed first and files below; filter the dirs and files  ## FIXME: filter only through the file/dir name, not full path!
+            itemFullNames =  [f for f in itemFullNames if (self.is_dir(f) and (dirFilterString == '' or re.findall(dirFilterString, f)))] + \
                     [f for f in itemFullNames if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
             itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
