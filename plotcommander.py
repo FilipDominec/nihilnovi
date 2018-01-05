@@ -35,7 +35,7 @@ SIZELIMIT_FOR_DATA   = 10000000
 
 line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')
-for x, y, n, param, label, xlabel, ylabel, color in\\         zip(xs, ys, range(len(xs)), params, labels, xlabels, ylabels, colors):
+for          x,  y,  n,              param,  label,  xlabel,  ylabel,  color in \\\n         zip(xs, ys, range(len(xs)), params, labels, xlabels, ylabels, colors):
     # x, y = x[~np.isnan(y)], y[~np.isnan(y)]        ## filter-out NaN points
     # convol = 2**-np.linspace(-2,2,25)**2; y = np.convolve(y,convol/np.sum(convol), mode='same') ## simple smoothing
 
