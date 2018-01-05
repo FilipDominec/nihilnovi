@@ -547,7 +547,7 @@ class Handler:
             #print("keyvalue_strings", keyvalue_strings) ## TODO clean up debugging leftovers
             chunklist = re.split('[_ /]', keyvalue_string) 
             #print("    chunklist", chunklist)
-            keyvaluelist = [try_float_value(re.split('=', chunk)) for chunk in chunklist] 
+            keyvaluelist = [try_float_value(re.split('=', chunk.replace('~', ' '))) for chunk in chunklist] 
             #print("   -> keyvaluelist", keyvaluelist)
             keyvaluelists.append(keyvaluelist)
         ## If identical ("key"="value") tuple found everywhere, remove it 
