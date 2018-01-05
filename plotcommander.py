@@ -511,7 +511,9 @@ class Handler:
                 if len(header) == 1: 
                     data_array = np.vstack([np.arange(len(data_array)), data_array.T]).T # 
                     header     = ['point number'] + header
-            descriptor = rowfilepath+" "+header[rowycolumn] ## FIXME XXX consider also parameters in the file!
+
+            ## TODO consider also parameters in the file! 
+            descriptor = rowfilepath ## +" "+header[rowycolumn] 
             return data_array.T[rowxcolumn], data_array.T[rowycolumn], descriptor, parameters, header[rowxcolumn], header[rowycolumn] 
 
         #elif rowtype == 'xls':
