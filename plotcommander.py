@@ -35,10 +35,10 @@ SIZELIMIT_FOR_DATA   = 10000000
 
 line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')
-for x, y, param, label, xlabel, ylabel, color in \
-        zip(xs, ys, params, labels, xlabels, ylabels, colors):
+for x, y, n, param, label, xlabel, ylabel, color in\\         zip(xs, ys, range(len(xs)), params, labels, xlabels, ylabels, colors):
     # x, y = x[~np.isnan(y)], y[~np.isnan(y)]        ## filter-out NaN points
-    # k = 2**-np.linspace(-2,2,25)**2; y = np.convolve(y,k/np.sum(k), mode='same') ## simple smoothing
+    # convol = 2**-np.linspace(-2,2,25)**2; y = np.convolve(y,convol/np.sum(convol), mode='same') ## simple smoothing
+
     ax.plot(x, y, label="%s" % (label), color=color)
     #ax.plot(x, y, label="%s" % (label.split('.dat')[0]), color=colors[c%10], ls=['-','--'][int(c/10)]) 
 ax.set_xlabel(xlabelsdedup)
@@ -829,6 +829,9 @@ class Handler:
             self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
             self.plot_all_sel_records()     ## then show the selected ones
 
+    # }}}
+    def on_btn_plotrc_replot_clicked(self, *args):# {{{
+        self.plot_all_sel_records()
     # }}}
     def on_btn_plotrc_save_clicked(self, *args):# {{{
         rc_filename = self.relevant_rc_filename() or self.possible_rc_filenames()[0]
