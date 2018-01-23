@@ -50,7 +50,7 @@ plot_title = sharedlabels[-4:] ## last few labels that are shared among all curv
 ax.set_title(' '.join(plot_title)) 
 ax.legend(loc='best', prop={'size':10})
 
-#np.savetxt('output.dat', np.vstack([x,ys[0],ys[1]]).T, fmt="%.4f")
+#np.savetxt('output.dat', np.vstack([x,ys[0],ys[1]]).T, fmt="%.8g")
 #tosave.append('_'.join(plot_title)+'.png') ## whole graph will be saved as PNG
 #tosave.append('_'.join(plot_title)+'.pdf') ## whole graph will be saved as PDF
 """
