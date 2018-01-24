@@ -45,7 +45,7 @@ ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
 
 plot_title = sharedlabels[-4:] ## last few labels that are shared among all curves make a perfect title
-#plot_title = sharedlabels[sharedlabels.index('LASTUNWANTEDLABEL')+1:] ## optionally, use all labels after this 
+#plot_title = sharedlabels[sharedlabels.index('LastCroppedLabel')+1:] ## optionally, use all labels after the chosen one 
 
 ax.set_title(' '.join(plot_title)) 
 ax.legend(loc='best', prop={'size':10})
