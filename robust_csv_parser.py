@@ -47,7 +47,7 @@ maxLineLength               = 10000             # hardly any numeric table in AS
 headerOrdinateAllowOmit     = True              # e.g. three-column CSV files sometimes have only two names in header
 headerOrdinateSuggestName   = 'x'               # ... in such a case, the first column name will added 
 
-tryColSeparators    = [',', '\t', '\s', '\s+']           # possible ways of separating columns: comma, tabulator, 1 whitespace character, whitespace
+tryColSeparators    = [',', ';', '\t', '\s', '\s+']           # possible ways of separating columns: comma, tabulator, 1 whitespace character, whitespace
 ## TODO test avoiding escaped whitespace, e.g. use "[^\\]\s" instead of "\s"
 unevenColumnLengthPenalty = 1                   # may be any positive number; low value may lead to joining cells, higher value may lead to empty cells detected
 
