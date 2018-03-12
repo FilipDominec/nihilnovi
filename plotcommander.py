@@ -513,7 +513,7 @@ class Handler:
                     header     = ['point number'] + header
 
             ## TODO consider also parameters in the file! 
-            descriptor = rowfilepath ## +" "+header[rowycolumn] 
+            descriptor = rowfilepath +" "+header[rowycolumn] 
             return data_array.T[rowxcolumn], data_array.T[rowycolumn], descriptor, parameters, header[rowxcolumn], header[rowycolumn] 
 
         #elif rowtype == 'xls':
