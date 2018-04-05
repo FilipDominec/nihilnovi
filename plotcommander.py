@@ -350,7 +350,10 @@ class Handler:
             ## todo: take into account this field with useful data:   ["spreads"].columns[3].comment = b"PL Intensity^M [arb. units]^M 110A 10%"
             def generate_graph_annotation(graph): 
                 layerNumber = 0  ## Fixme support for multiple opjlayers:    ["graphs"][1].layers[0].curves[3].xColumnName
-                legend_box = self.decode_origin_label(graph.layers[0].legend.text, splitrows=True)
+                try:
+                    legend_box = self.decode_origin_label(graph.layers[0].legend.text, splitrows=True)
+                except IndexError:
+                    legend_box = ''
                 comment = ""
                 for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
                     newline = re.sub(r'\\l\(\d\)\s', '', legendline) 
