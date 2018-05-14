@@ -834,6 +834,7 @@ class Handler:
 
     # }}}
     def on_btn_plotrc_replot_clicked(self, *args):# {{{
+        self.plot_reset() ## clear figure
         self.plot_all_sel_records()
     # }}}
     def on_btn_plotrc_save_clicked(self, *args):# {{{
