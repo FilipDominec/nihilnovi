@@ -3,7 +3,7 @@
 
 
 
-import gi, sys, os, signal, stat, warnings, re
+import gi, sys, os, signal, stat, warnings, re, time
 import numpy as np
 import scipy.constants as sc
 import traceback, faulthandler ## Debugging library crashes
@@ -634,31 +634,33 @@ class Handler:
                 include_hidden_chars=True)
         #print("BEFORE COMMAND")
         #print(row_data)
+        if plot_command.strip() == '': return
         tosave=[]
-        if plot_command.strip() != '':
-            #np = numpy
-            def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
-            exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                    'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
-                    'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
-                    'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
-            #print(exec_env)
+        init_time = time.time()
+        #np = numpy
+        def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
+        exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
+                'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
+                'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
+                'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
+        #print(exec_env)
 
-            #self.fig.clf() ## clear figure
-            try:
-                exec(plot_command, exec_env)
-                #print("JUST AFTER COMMAND")
-            except SyntaxError:
-                #print("SYNTAX ERROR:")
-                traceback.print_exc() ## TODO locate the error
-            except:
-                #print("SOME ERROR")
-                traceback.print_exc() ## TODO locate the error
+        #self.fig.clf() ## clear figure
+        try:
+            exec(plot_command, exec_env)
+            #print("JUST AFTER COMMAND")
+        except SyntaxError:
+            #print("SYNTAX ERROR:")
+            traceback.print_exc() ## TODO locate the error
+        except:
+            #print("SOME ERROR")
+            traceback.print_exc() ## TODO locate the error
 
-            print("tosave", tosave)
-            for savefilename in list(tosave):
-                self.fig.savefig(savefilename)
-                print("Plotcommander: saving output to:", savefilename)
+        print('Replot finished in {:.3f} s'.format(time.time()-init_time))
+        if tosave != []: print('Exported image files in the `tosave` list:', tosave)
+        for savefilename in list(tosave):
+            self.fig.savefig(savefilename)
+            print("Plotcommander: saving output to:", savefilename)
 
 
         #print("AFTER COMMAND")
