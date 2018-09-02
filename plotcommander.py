@@ -26,7 +26,6 @@ matplotlib.rcParams['font.size'] = 10
 matplotlib.rcParams['axes.linewidth'] = .5
 matplotlib.rcParams['savefig.facecolor'] = "white"
 
-import liborigin
 import robust_csv_parser
 import sort_alpha_numeric
 
@@ -261,6 +260,7 @@ class Handler:
         if basepath in self.opj_file_cache.keys():      ## TODO write it  on 3 lines
             return self.opj_file_cache[basepath]
         else: 
+            import liborigin
             opj = liborigin.parseOriginFile(basepath)
             self.opj_file_cache[basepath] = opj
             return opj
