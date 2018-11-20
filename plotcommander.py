@@ -542,7 +542,7 @@ class Handler:
                 except:                 return tup
         def all_to_string(tup): return [str(v) for v in tup]
         ## File name may be interesting as curve label, but not its extension -> filter it out
-        keyvalue_strings = [re.sub('\.[a-zA-Z][\w]?[\w]?', '', kvstring) for kvstring in keyvalue_strings]
+        keyvalue_strings = [re.sub('\.[a-zA-Z][\w]?[\w]?$', '', kvstring) for kvstring in keyvalue_strings]
 
         ## Split names into "key=value" chunks and  then into ("key"="value") tuples
         keyvaluelists = []
