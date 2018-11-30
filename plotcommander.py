@@ -848,7 +848,6 @@ class Handler:
         with open(rc_filename, 'w') as rcfile:
             rcfile.write(self.plotcommand_get_text())
     # }}}
-
     """
     if radio changes to some defaultcommand
                     ---> change to selected command
@@ -872,6 +871,15 @@ class Handler:
     ---> then always REPLOT
         
     """
+    def btn_exteditor_clicked_cb(self, sender):
+        print('stub',sender)
+    def on_chk_ylogarithmic_toggled(self, sender):
+        print('stub',sender)
+    def on_chk_xlogarithmic_toggled(self, sender):
+        print('stub',sender)
+
+
+
     def on_treeview1_row_expanded(self, treeView, treeIter, treePath):# {{{
 
         ## Add the children 
