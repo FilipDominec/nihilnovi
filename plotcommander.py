@@ -283,7 +283,7 @@ class Handler:
         else:               return bb.split('\n')
     # }}}
     def populateTreeStore(self, treeStore, parent_row=None, reset_path=None):# {{{
-        ## without any parent specified, rows will be added to the very left of the TreeView, 
+        ## without any parent specified, rows will be added to the root (i.e. very left) of the TreeView, 
         ## otherwise they will become childs thereof
         if parent_row is None:
             if reset_path is not None:
@@ -297,7 +297,7 @@ class Handler:
 
             ## On startup, or when the 'updir' node is selected, we update the whole tree. 
             ## Initially, it has to be cleared of all rows. 
-            ## During this operation, its selection will change, but the plots should not be updated so that it is fast.
+            ## During this operation, its selection will change, so we lock the plotting from being updated so that it is fast.
             self.lockTreeViewEvents = True
             self.tsFiles.clear()            ## TODO: remember the unpacked rows, and also the selected ones
             self.clearAllPlotIcons(self.tsFiles.get_iter_first())  ## TODO: obsolete, rm!
@@ -319,9 +319,36 @@ class Handler:
         ## Prepare the lists of paths, column numbers and spreadsheet numbers to be added
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
         assert not self.rowtype_is_leaf(parentrowtype)
+
+        ## TODO flattening
+        #def crawl_leaves_and_branches(basepath):
+            #initnames = os.listdir(basepath) 
+            #outnames  = []
+            #for name in initnames:
+                #if os.isdir(name):
+                    #outnames += crawl_leaves_and_branches(name):
+                #else:
+                    #outnames.append(name)
+            #return outnames
+                ## def recursive_flattening_check(mypath)
+                ##   if a branch, 
+                ##      children = path.children()
+                ##      if len(children)==0: return None        # is empty, show not
+                ##      if len(children)==1:                    # so far appears to be flattenable...
+                ##          return os.path.join(mypath, recursive_flattening_check(childpath))
+                ##      if len(children) >1: readable child     # has more children, show but don't flatten
+                ##      for childpath in children = path.children()
+                ##      return leaf name 
+                ##   if a leaf, 
+                ##      return leaf name 
+                ## 
+                ## for each item in filenames, 
+
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents and sort it alphabetically
             filenames = os.listdir(basepath) 
+            #for x in filenames: print('{:40}:'.format(x), os.isdir(x)) ## TODO flattening
+            #crawl_leaves_and_leaved_branches(basepath):
             filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
             fileFilterString = w('enFileFilter').get_text().strip() 
             dirFilterString = w('enDirFilter').get_text().strip() 
@@ -329,6 +356,7 @@ class Handler:
             # dirs will be listed first and files below; filter the dirs and files  ## FIXME: filter only through the file/dir name, not full path!
             itemFullNames =  [f for f in itemFullNames if (self.is_dir(f) and (dirFilterString == '' or re.findall(dirFilterString, f)))] + \
                     [f for f in itemFullNames if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+            ## File list flattening: preliminary notes
             itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
             spreadNumbers = [None] * len(itemFullNames)    # nor they are assigned any spreadsheet number
@@ -363,7 +391,8 @@ class Handler:
                     newline = re.sub(r'\\l\(\d\)\s', '', legendline) 
                     if newline == legendline: comment += newline + ' '
                 return comment
-            itemShowNames = ['%s; name: %s; label: %s' % (self.decode_origin_label(graph.name), self.decode_origin_label(graph.label), generate_graph_annotation(graph)) for graph in opj['graphs']]
+            itemShowNames = ['%s; name: %s; label: %s' % (self.decode_origin_label(graph.name), self.decode_origin_label(graph.label), 
+                    generate_graph_annotation(graph)) for graph in opj['graphs']]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = [None] * len(itemShowNames)
             spreadNumbers = list(range(len(itemShowNames)))  
@@ -381,7 +410,8 @@ class Handler:
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
-            itemShowNames = [self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment) for column in opj['spreads'][parent_spreadsheet].columns]
+            itemShowNames = [self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment) for column in 
+                    opj['spreads'][parent_spreadsheet].columns]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
@@ -413,7 +443,8 @@ class Handler:
                 spread = opj['spreads'][spreadsheet_index]
                 y_column_index = [column.name for column in spread.columns].index(curve.yColumnName)
                 x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
-                #print(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, curve.yColumnName.self.decode_origin_label('utf-8'), y_column_index)
+                #print(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, 
+                        #curve.yColumnName.self.decode_origin_label('utf-8'), y_column_index)
 
                 itemShowNames.append('%s -> spread %s: column %s (%s)' %  
                         (legend, self.decode_origin_label(spread.name), 
@@ -674,20 +705,21 @@ class Handler:
             #plot_command = default_plot_command
             #plot_cmd_buffer.set_text(default_plot_command)
 
-        cursor = Cursor(self.ax, color='red', linewidth=.5)  ## , useblit=True   .. fixme: useblit made the cursor disappear
-        # Note: blit cannot be used: AttributeError: 'FigureCanvasGTK3Cairo' object has no attribute 'copy_from_bbox'
 
         #self.ax.legend(loc="best")
         self.ax.grid(True)
-        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear') ##XXX
-        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear') ##XXX
+        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear') 
+        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
 
         #print(" - relim - ")
         #self.ax.relim() ## If relim enabled, logarithmic axes scale wrong, i.e. from (6.7370464889520478e-316, 4.0007331215613123e+18)
         #print(" - autoscale - ")
         #self.ax.autoscale_view() # 	Autoscale the view limits using the data limits.
         #print(" - draw - ")
+
         self.canvas.draw()
+        cursor = Cursor(self.ax, color='red', linewidth=.5)  ## FIXME http://blog.yjl.im/2009/10/blit-cursor-in-matplotlib.html
+
         return True
 
         """
@@ -781,7 +813,40 @@ class Handler:
         # }}}
 
     ## == USER INTERFACE HANDLERS ==
-    def possible_rc_filenames(self):
+    ## == Python plotting script ==
+    def on_btn_plotrc_save_clicked(self, *args):# {{{
+        rc_filename = self.relevant_rc_filename() or self.possible_rc_filenames()[0]
+        with open(rc_filename, 'w') as rcfile:
+            rcfile.write(self.plotcommand_get_text())
+    """
+    if radio changes to some defaultcommand
+                    ---> change to selected command
+    if radio changes to rcfile
+        if relevant rcfile exists
+                    ---> change to selected command ( LOAD rcfile command)
+                    ---> then REPLOT
+        if rcfile does not exist
+                    ---> EMPTy txtbox 
+        if nothing selected
+                    ---> EMPTy txtbox 
+    if selection changes 
+        if relevant rcfile exists   
+                    ---> CHANGE radio TO RCFILE
+                    ---> change to selected command ( LOAD rcfile command) (automatic event handler?)
+        if rcfile does not exist
+                    ---> CHANGE radio TO DEFAULT
+        if nothing selected
+                    --->
+
+    ---> then always REPLOT
+        
+    """
+    # }}}
+    def btn_exteditor_clicked_cb(self, sender):# {{{
+        ## TODO launch selected editor, ask for the program if undefined
+        print('stub',sender)
+    # }}}
+    def possible_rc_filenames(self):# {{{
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if pathlist:
             firstselfilenamepath = self.row_prop(self.tsFiles.get_iter(pathlist[0]), 'filepath')
@@ -818,7 +883,7 @@ class Handler:
         return buf.get_text(buf.get_start_iter(), buf.get_end_iter(), include_hidden_chars=True)
     def plotcommand_set_text(self, text):
         buf = w('txt_rc').get_buffer()
-        buf.set_text(text)
+        buf.set_text(text)# }}}
     def on_plotcommand_toggled(self, *args):# {{{
         radiobutton = args[0]
         
@@ -844,45 +909,53 @@ class Handler:
         self.plot_reset() ## clear figure
         self.plot_all_sel_records()
     # }}}
-    def on_chk_xlogarithmic_toggled(self, sender):
+    def on_chk_xlogarithmic_toggled(self, sender):# {{{
         self.fig.gca().set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
+        self.canvas.draw()
     def on_chk_ylogarithmic_toggled(self, sender):
         self.fig.gca().set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
-        
-
-    def on_btn_plotrc_save_clicked(self, *args):# {{{
-        rc_filename = self.relevant_rc_filename() or self.possible_rc_filenames()[0]
-        with open(rc_filename, 'w') as rcfile:
-            rcfile.write(self.plotcommand_get_text())
+        self.canvas.draw()
     # }}}
-    """
-    if radio changes to some defaultcommand
-                    ---> change to selected command
-    if radio changes to rcfile
-        if relevant rcfile exists
-                    ---> change to selected command ( LOAD rcfile command)
-                    ---> then REPLOT
-        if rcfile does not exist
-                    ---> EMPTy txtbox 
-        if nothing selected
-                    ---> EMPTy txtbox 
-    if selection changes 
-        if relevant rcfile exists   
-                    ---> CHANGE radio TO RCFILE
-                    ---> change to selected command ( LOAD rcfile command) (automatic event handler?)
-        if rcfile does not exist
-                    ---> CHANGE radio TO DEFAULT
-        if nothing selected
-                    --->
+    def possible_rc_filenames(self):# {{{
+        (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
+        if pathlist:
+            firstselfilenamepath = self.row_prop(self.tsFiles.get_iter(pathlist[0]), 'filepath')
+            firstselfilepath, firstselfilename = os.path.dirname(firstselfilenamepath), os.path.basename(firstselfilenamepath) 
+            testrcfilenamepath1 = os.path.join(firstselfilepath, 'plotrc_%s.py' % firstselfilename)
+            testrcfilenamepath2 = os.path.join(firstselfilepath, 'plotrc.py') 
+            return (testrcfilenamepath1, testrcfilenamepath2)
+        else:
+            return None
+# }}}
+    def relevant_rc_filename(self):# {{{
+        prf = self.possible_rc_filenames()
+        if prf: 
+            rc_filename = prf[0] if os.path.isfile(prf[0]) else prf[1] if os.path.isfile(prf[1]) else None
+            return rc_filename
+        else:
+            return None
+# }}}
+    def load_plotcommand_from_rcfile(self):# {{{
+        rc_filename = self.relevant_rc_filename()
+        if rc_filename:
+            with open(rc_filename) as rcfile:
+                return rcfile.read()
+        else:
+            return ''
 
-    ---> then always REPLOT
-        
-    """
-    def btn_exteditor_clicked_cb(self, sender):
-        ## TODO launch selected editor, ask for the program if undefined
-        print('stub',sender)
+    def update_plotcommand_from_rcfile(self, allow_overwrite_by_empty=True):
+        plotcommand =  self.load_plotcommand_from_rcfile()
+        if plotcommand or allow_overwrite_by_empty:
+            w('txt_rc').get_buffer().set_text(plotcommand)
 
+    def plotcommand_get_text(self):
+        buf = w('txt_rc').get_buffer()
+        return buf.get_text(buf.get_start_iter(), buf.get_end_iter(), include_hidden_chars=True)
+    def plotcommand_set_text(self, text):
+        buf = w('txt_rc').get_buffer()
+        buf.set_text(text)# }}}
 
+    ## == File tree browser ==
     def on_treeview1_row_expanded(self, treeView, treeIter, treePath):# {{{
 
         ## Add the children 
