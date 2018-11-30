@@ -455,7 +455,6 @@ class Handler:
                 int(alpha*255  -.5)
         # }}}
     def plot_reset(self):# {{{
-        #self.ax.cla() ## TODO clearing matplotlib plot - this is inefficient, rewrite
         self.fig.clf()
         self.ax = self.fig.add_subplot(111) 
         self.ax.callbacks.connect('xlim_changed', self.on_xlims_change)
@@ -473,7 +472,7 @@ class Handler:
         recursive_clear_icon(self.tsFiles.get_iter_first())
         w('treeview1').queue_draw()
         # }}}
-    def safe_np_array(self, x,y): ## converts two lists to 2 numpy array; if float() fails when processing any (x,y) row, leave it out 
+    def safe_np_array(self, x,y): ## converts two lists to 2 numpy array; if float() fails when processing any (x,y) row, leave it out {{{
         if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## (fixme) the last row from liborigin is sometimes erroneous zero
         if len(x) < len(y): y = y[0:len(x)]             ## in any case, match the length of x- and y-data
         if len(y) < len(x): x = x[0:len(y)] 
@@ -489,6 +488,7 @@ class Handler:
                     pass
             x,y = x0, y0
         return x, y 
+    # }}}
     def load_row_data(self, row):# {{{
         """ loads all relevant data for a given treestore row, and returns: x, y, label, parameters, xlabel, ylabel
 
@@ -725,10 +725,11 @@ class Handler:
         """
 
         # }}}
-    def on_xlims_change(self, axes): self.xlim = axes.get_xlim() ## dirty hack: Needs fixing in the future
+    def on_xlims_change(self, axes): 
+        self.xlim = axes.get_xlim() ## dirty hack: Needs fixing in the future
     def on_ylims_change(self, axes): 
-        #print("xlims_changed from ", self.ylim)
         self.ylim = axes.get_ylim() ## dtto
+        #print("xlims_changed from ", self.ylim)
         #print("              to   ", self.ylim)
 
     ## == FILE AND DATA UTILITIES ==
@@ -776,7 +777,7 @@ class Handler:
                 recursive_select_rows(self.tsFiles.iter_children(treeIter))
                 treeIter=self.tsFiles.iter_next(treeIter)
         recursive_select_rows(self.tsFiles.get_iter_first())
-        self.plot_all_sel_records()
+        self.plot_all_sel_records() # TODO needed here?
         # }}}
 
     ## == USER INTERFACE HANDLERS ==
@@ -843,6 +844,12 @@ class Handler:
         self.plot_reset() ## clear figure
         self.plot_all_sel_records()
     # }}}
+    def on_chk_xlogarithmic_toggled(self, sender):
+        self.fig.gca().set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')
+    def on_chk_ylogarithmic_toggled(self, sender):
+        self.fig.gca().set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
+        
+
     def on_btn_plotrc_save_clicked(self, *args):# {{{
         rc_filename = self.relevant_rc_filename() or self.possible_rc_filenames()[0]
         with open(rc_filename, 'w') as rcfile:
@@ -872,12 +879,8 @@ class Handler:
         
     """
     def btn_exteditor_clicked_cb(self, sender):
+        ## TODO launch selected editor, ask for the program if undefined
         print('stub',sender)
-    def on_chk_ylogarithmic_toggled(self, sender):
-        print('stub',sender)
-    def on_chk_xlogarithmic_toggled(self, sender):
-        print('stub',sender)
-
 
 
     def on_treeview1_row_expanded(self, treeView, treeIter, treePath):# {{{
