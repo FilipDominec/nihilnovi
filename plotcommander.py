@@ -346,18 +346,77 @@ class Handler:
 
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents and sort it alphabetically
-            filenames = os.listdir(basepath) 
-            #for x in filenames: print('{:40}:'.format(x), os.isdir(x)) ## TODO flattening
-            #crawl_leaves_and_leaved_branches(basepath):
-            filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
+            
+
+            # Note: We use the concept of "branches" and "leaves", which is similar to "folders" and "files".
+            # However, it is not the same, since a file may contain more data columns, thus being a branch. 
+            # Flattening is a user-friendly way of viewing the treei. If a branch 
+            # contains exactly one leaf, it will be treated as a leaf itself. Aimed to reduce clicking.
             fileFilterString = w('enFileFilter').get_text().strip() 
             dirFilterString = w('enDirFilter').get_text().strip() 
-            itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
+            flattening = 1
+
+
+            def semirecursive_flattening_file_search(trypath, indent):
+                print(indent, trypath)
+                leaves   = [f for f in os.listdir(trypath)  if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+                # todo filter leaves for readability
+                branches = [f for f in os.listdir(trypath)  if (self.is_dir(f)     and (dirFilterString == '' or re.findall(dirFilterString, f)))]
+                if len(leaves) >= 2:
+                    print(indent, trypath, ' has more objects (files)')
+                    return 2
+
+                recbs = []
+                print(indent, 'BRANCHES', branches)
+                for b in branches:
+                    print(indent, 'RECURSING TO', b)
+                    recb = semirecursive_flattening_file_search(os.path.join(trypath,b), indent+'·   ')
+                    if recb!=0:
+                        recbs.append(recb)
+                        if recb == 2  or  len(recbs)>=2:
+                            print(indent, trypath, ' has more objects (directories)')
+                            return 2
+                        if (len(leaves)==1 and type(recb)==str): 
+                            print(indent, trypath, ' -------------should not happen------------')
+                            return 2
+
+                if len(recbs) == 0:
+                    if len(leaves) == 0:
+                        print(indent, trypath, ' is empty')
+                        return 0
+                    if len(leaves) == 1:
+                        print(indent, trypath, ' has one file', )
+                        return os.path.join(trypath, leaves[0])
+                if len(recbs) == 1:
+                    if len(leaves) == 0:
+                        print(indent, trypath, ' has one simple branch')
+                        return os.path.join(trypath, recbs[0])
+                    if len(leaves) == 1:
+                        print(indent, trypath, ' has more objects')
+                        return 2
+
+
+            if not flattening:
+                filenames = os.listdir(basepath) 
+            else:
+                leaves   = [f for f in os.listdir(basepath) if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+                branches = [f for f in os.listdir(basepath) if (self.is_dir(f)     and (dirFilterString == '' or re.findall(dirFilterString, f)))]
+                filenames = leaves
+                for b in branches:
+                    recb = semirecursive_flattening_file_search(b, '')
+                    if recb == 2:
+                        filenames.append(b)
+                    elif recb != 0:
+                        filenames.append(recb)
+
+            for x in filenames: print('{:40}:'.format(x), self.is_dir(x)) 
+
+            filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
             # dirs will be listed first and files below; filter the dirs and files  ## FIXME: filter only through the file/dir name, not full path!
-            itemFullNames =  [f for f in itemFullNames if (self.is_dir(f) and (dirFilterString == '' or re.findall(dirFilterString, f)))] + \
-                    [f for f in itemFullNames if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
-            ## File list flattening: preliminary notes
-            itemShowNames = [os.path.split(f)[1] for f in itemFullNames]                # only file name without path will be shown
+            filenames =  [f for f in filenames if (self.is_dir(f) and (dirFilterString == '' or re.findall(dirFilterString, f)))] + \
+                    [f for f in filenames if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+            itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
+            itemShowNames = filenames                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
             spreadNumbers = [None] * len(itemFullNames)    # nor they are assigned any spreadsheet number
             rowTypes      = [self.row_type_from_fullpath(f) for f in itemFullNames]
