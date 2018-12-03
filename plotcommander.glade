@@ -87,7 +87,9 @@
                                       <object class="GtkLabel" id="label5">
                                         <property name="visible">True</property>
                                         <property name="can_focus">False</property>
-                                        <property name="label" translatable="yes">File filter</property>
+                                        <property name="label" translatable="yes">_File filter</property>
+                                        <property name="use_underline">True</property>
+                                        <property name="mnemonic_widget">enFileFilter</property>
                                       </object>
                                       <packing>
                                         <property name="left_attach">0</property>
@@ -130,15 +132,6 @@
                                         <property name="left_attach">1</property>
                                         <property name="top_attach">0</property>
                                       </packing>
-                                    </child>
-                                    <child>
-                                      <placeholder/>
-                                    </child>
-                                    <child>
-                                      <placeholder/>
-                                    </child>
-                                    <child>
-                                      <placeholder/>
                                     </child>
                                   </object>
                                   <packing>
@@ -190,7 +183,7 @@
                               <object class="GtkLabel" id="label2">
                                 <property name="visible">True</property>
                                 <property name="can_focus">False</property>
-                                <property name="label" translatable="yes">_Filter</property>
+                                <property name="label" translatable="yes">Fi_lter</property>
                                 <property name="use_underline">True</property>
                                 <property name="mnemonic_widget">enFileFilter</property>
                               </object>
