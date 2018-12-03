@@ -181,17 +181,18 @@ class Handler:
 
         #}}}
     ## === FILE HANDLING ===
-    def is_dir(self,filename): # {{{
+    def is_branch(self,filename): # {{{
         try:
             return stat.S_ISDIR(os.stat(filename).st_mode)
         except FileNotFoundError: ## this may be e.g. due to a broken symlink
+            print('warning: did not find ', filename)
             return False
         # }}}
     def row_type_from_fullpath(self, fullpath):# {{{
         """
         Known row types:
 
-            #Type                   row_is_leaf row_can_plot    row_icon
+            #Type                   row_is_leaf row_can_plot    row_icon-TODO
             dir                     0           0               ''
             updir                   1           0               'go-up'
             csvtwocolumn            1           1               ''
@@ -210,7 +211,7 @@ class Handler:
         ## The determination of file type from its name is a bit sloppy, but it works and it is fast. 
         assert isinstance(fullpath, str)
 
-        if self.is_dir(fullpath):
+        if self.is_branch(fullpath):
             return 'dir'
         elif fullpath.lower().endswith('.xls'):
             ## TODO XLS support : determine if single spreadsheet, and/or if spreadsheet(s) contain single column
@@ -288,6 +289,8 @@ class Handler:
         if parent_row is None:
             if reset_path is not None:
                 basepath = reset_path
+                os.chdir(basepath)
+                print('=========================== changing updir', basepath)
             else:
                 if self.row_prop(self.tsFiles.get_iter_first(), 'rowtype') == 'updir':
                     basepath = self.row_prop(self.tsFiles.get_iter_first(), 'filepath')
@@ -358,23 +361,25 @@ class Handler:
 
 
             def semirecursive_flattening_file_search(trypath, indent):
-                print(indent, trypath)
-                leaves   = [f for f in os.listdir(trypath)  if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
-                # todo filter leaves for readability
-                branches = [f for f in os.listdir(trypath)  if (self.is_dir(f)     and (dirFilterString == '' or re.findall(dirFilterString, f)))]
+                leaves   = [f for f in os.listdir(trypath) if (not self.is_branch(os.path.join(trypath,f)) 
+                    and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+                branches = [f for f in os.listdir(trypath) if (self.is_branch(os.path.join(trypath,f))     
+                    and (dirFilterString == '' or re.findall(dirFilterString, f)))]
+                ## todo: hide also leaves that could not be processed
+                print(indent, trypath, ': BRANCHES', branches, 'LEAVES', leaves)
+
                 if len(leaves) >= 2:
-                    print(indent, trypath, ' has more objects (files)')
+                    print(indent, trypath, ' has 2 or more leaves, cannot be flattened')
                     return 2
 
                 recbs = []
-                print(indent, 'BRANCHES', branches)
                 for b in branches:
                     print(indent, 'RECURSING TO', b)
                     recb = semirecursive_flattening_file_search(os.path.join(trypath,b), indent+'·   ')
                     if recb!=0:
                         recbs.append(recb)
                         if recb == 2  or  len(recbs)>=2:
-                            print(indent, trypath, ' has more objects (directories)')
+                            print(indent, trypath, ' has 2 or more branches (cannot flatten)')
                             return 2
                         if (len(leaves)==1 and type(recb)==str): 
                             print(indent, trypath, ' -------------should not happen------------')
@@ -385,22 +390,25 @@ class Handler:
                         print(indent, trypath, ' is empty')
                         return 0
                     if len(leaves) == 1:
-                        print(indent, trypath, ' has one file', )
-                        return os.path.join(trypath, leaves[0])
+                        out  = os.path.join(trypath, leaves[0])
+                        print(indent, trypath, ' has one file, returning', out)
+                        return out
                 if len(recbs) == 1:
                     if len(leaves) == 0:
-                        print(indent, trypath, ' has one simple branch')
-                        return os.path.join(trypath, recbs[0])
+                        print(indent, trypath, ' has one simple branch -  returning:', recbs[0])
+                        return os.path.join(recbs[0]) # note that recbs already contains the path
                     if len(leaves) == 1:
-                        print(indent, trypath, ' has more objects')
+                        print(indent, trypath, ' has more objects, so cannot be flattened')
                         return 2
 
 
             if not flattening:
                 filenames = os.listdir(basepath) 
             else:
-                leaves   = [f for f in os.listdir(basepath) if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
-                branches = [f for f in os.listdir(basepath) if (self.is_dir(f)     and (dirFilterString == '' or re.findall(dirFilterString, f)))]
+                leaves   = sorted([f for f in os.listdir(basepath)  if (not self.is_branch(f) 
+                    and (fileFilterString == '' or re.findall(fileFilterString, f)))], key=sort_alpha_numeric.split_alpha_numeric)    
+                branches = sorted([f for f in os.listdir(basepath)  if (self.is_branch(f)     
+                    and (dirFilterString == '' or re.findall(dirFilterString, f)))], key=sort_alpha_numeric.split_alpha_numeric)
                 filenames = leaves
                 for b in branches:
                     recb = semirecursive_flattening_file_search(b, '')
@@ -409,12 +417,16 @@ class Handler:
                     elif recb != 0:
                         filenames.append(recb)
 
-            for x in filenames: print('{:40}:'.format(x), self.is_dir(x)) 
+            print('------------------ tree loaded, sorting --------------------------', basepath)
+            #for x in filenames: print('{:40}:'.format(x), self.is_branch(x)) 
 
-            filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
+            #filenames = sorted(filenames, key=sort_alpha_numeric.split_alpha_numeric)   # intelligent alpha/numerical sorting
             # dirs will be listed first and files below; filter the dirs and files  ## FIXME: filter only through the file/dir name, not full path!
-            filenames =  [f for f in filenames if (self.is_dir(f) and (dirFilterString == '' or re.findall(dirFilterString, f)))] + \
-                    [f for f in filenames if (not self.is_dir(f) and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+            #filenames =  [f for f in filenames if (self.is_branch(os.path.join(basepath,f)) 
+                    #and (dirFilterString == '' or re.findall(dirFilterString, f)))] + \
+                #[f for f in filenames if (not self.is_branch(os.path.join(basepath,f)) 
+                    #and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+            print('------------------ tree sorted --------------------------')
             itemFullNames = [os.path.join(basepath, filename) for filename in filenames]    # add the full path
             itemShowNames = filenames                # only file name without path will be shown
             columnNumbers = [None] * len(itemFullNames)    # obviously files/subdirs are assigned no column number
