@@ -75,8 +75,8 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="placeholder_text" translatable="yes">.* (show all)</property>
-                                        <signal name="activate" handler="on_enColFilter_activate" swapped="no"/>
-                                        <signal name="focus-out-event" handler="on_enColFilter_focus_out_event" swapped="no"/>
+                                        <signal name="activate" handler="on_enFileFilter_activate" swapped="no"/>
+                                        <signal name="focus-out-event" handler="on_enFileFilter_focus_out_event" swapped="no"/>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -127,6 +127,8 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="placeholder_text" translatable="yes">.* (show all)</property>
+                                        <signal name="activate" handler="on_enFileFilter_activate" swapped="no"/>
+                                        <signal name="focus-out-event" handler="on_enFileFilter_focus_out_event" swapped="no"/>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
