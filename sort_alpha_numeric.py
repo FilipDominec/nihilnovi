@@ -25,6 +25,8 @@ def generate_numeric_pairs(instring):
         yield instring[span2:], 0                  ## do not forget the last non-numeric part, pad with zero
 def split_alpha_numeric(instring):
     return list(generate_numeric_pairs(instring))
+def split_alpha_numeric_lowercase(instring):
+    return [(s[0].lower(), s[1]) for s in list(generate_numeric_pairs(instring))]
 
 if __name__ == "__main__":
     import sys
