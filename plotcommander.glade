@@ -178,7 +178,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkButton" id="btn_EditSelFiles">
-                                    <property name="label" translatable="yes">_Edit selected files in external editor</property>
+                                    <property name="label" translatable="yes">E_dit selected files in external editor</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">True</property>
