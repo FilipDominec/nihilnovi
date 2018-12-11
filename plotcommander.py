@@ -270,13 +270,12 @@ class Handler:
     # }}}
     def origin_parse_or_cache(self, filepath):# {{{
         ## FIXME update cache on file change!
-        if filepath in self.opj_file_cache.keys():      
-            return self.opj_file_cache[filepath]
-        else: 
+        if not filepath in self.opj_file_cache.keys()  or  os.stat(filepath).st_mtime > self.opj_file_cache[filepath]['LastLoadTime']:
             import liborigin
-            opj = liborigin.parseOriginFile(filepath)
-            self.opj_file_cache[filepath] = opj
-            return opj
+            FileContent = liborigin.parseOriginFile(filepath)
+            LastLoadTime = os.stat(filepath).st_mtime
+            self.opj_file_cache[filepath] =  {'LastLoadTime':LastLoadTime, 'FileContent':FileContent}
+        return self.opj_file_cache[filepath]
         # }}}
     def dat_parse_or_cache(self, filepath):# {{{
         if not filepath in self.dat_file_cache.keys()  or  os.stat(filepath).st_mtime > self.dat_file_cache[filepath]['LastLoadTime']:
