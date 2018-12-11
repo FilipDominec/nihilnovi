@@ -268,19 +268,22 @@ class Handler:
                 }
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
     # }}}
-    def origin_parse_or_cache(self, basepath):# {{{
-        if basepath in self.opj_file_cache.keys():      ## TODO write it  on 3 lines
-            return self.opj_file_cache[basepath]
+    def origin_parse_or_cache(self, filepath):# {{{
+        ## FIXME update cache on file change!
+        if filepath in self.opj_file_cache.keys():      
+            return self.opj_file_cache[filepath]
         else: 
             import liborigin
-            opj = liborigin.parseOriginFile(basepath)
-            self.opj_file_cache[basepath] = opj
+            opj = liborigin.parseOriginFile(filepath)
+            self.opj_file_cache[filepath] = opj
             return opj
         # }}}
-    def dat_parse_or_cache(self, basepath):# {{{
-        if not basepath in self.dat_file_cache.keys():      ## TODO write it  on 3 lines (and join with the above fn)
-            self.dat_file_cache[basepath] = robust_csv_parser.loadtxt(basepath, sizehint=SIZELIMIT_FOR_DATA)
-        return self.dat_file_cache[basepath]
+    def dat_parse_or_cache(self, filepath):# {{{
+        if not filepath in self.dat_file_cache.keys()  or  os.stat(filepath).st_mtime > self.dat_file_cache[filepath]['LastLoadTime']:
+            FileContent  = robust_csv_parser.loadtxt(filepath, sizehint=SIZELIMIT_FOR_DATA)
+            LastLoadTime = os.stat(filepath).st_mtime
+            self.dat_file_cache[filepath] = {'LastLoadTime':LastLoadTime, 'FileContent':FileContent}
+        return self.dat_file_cache[filepath]['FileContent']
         # }}}
     def decode_origin_label(self, bb, splitrows=False): # {{{
         bb = bb.decode('utf-8', errors='ignore').replace('\r', '').strip()
