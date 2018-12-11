@@ -20,17 +20,21 @@ from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as Figu
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar # if not specified, Python3 freezes
 #from mpl_toolkits.axes_grid1 import host_subplot ## allows better axes handling than fig.subplot
 from matplotlib.widgets import Cursor
+
+import robust_csv_parser
+import sort_alpha_numeric
+
+## User settings       TODO -> external config file
 ## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
 #matplotlib.rcParams['font.family'] = 'serif'        
 matplotlib.rcParams['font.size'] = 10
 matplotlib.rcParams['axes.linewidth'] = .5
 matplotlib.rcParams['savefig.facecolor'] = "white"
 
-import robust_csv_parser
-import sort_alpha_numeric
-
 SIZELIMIT_FOR_HEADER = 10000
 SIZELIMIT_FOR_DATA   = 10000000
+
+external_editor_command = ('/usr/bin/vim.gtk3', '-gp')
 
 line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')
@@ -140,7 +144,7 @@ class Handler:
         self.opj_file_cache = {}
         self.dat_file_cache = {}
 
-        ## TreeStore and ListStore initialization
+        ## TreeStore and ListStore initialization #TODO into separate routine?
         self.tsFiles = Gtk.TreeStore(str,          Pixbuf,   str,      Pixbuf,            int,        int,             str)
         self.treeStoreColumns =     {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
         self.dummy_treestore_row = [None for x in self.treeStoreColumns.keys()]
@@ -682,7 +686,7 @@ class Handler:
             ## If no exception occured during loading, colour the icon according to the line colour
             icon = self.row_prop(self.tsFiles.get_iter(path), 'plotstyleicon')
             if icon: icon.fill(self.array2rgbhex(color_from_palette))
-            plotted_paths.append(path)
+            plotted_paths.append(path) ## TODO: this is really confusing, since we have been iterating over plotted_paths!
 
         ## TODO: decide what is the distinguishing parameter for the given set of rows ---> <str> labelkey, <labelvals
         # 1) (almost) all curves should have it defined
@@ -786,14 +790,14 @@ class Handler:
 
         # }}}
     def on_xlims_change(self, axes): 
-        self.xlim = axes.get_xlim() ## dirty hack: Needs fixing in the future
+        self.xlim = axes.get_xlim() ## FIXME dirty hack: Needs some elegant solution in the future
     def on_ylims_change(self, axes): 
         self.ylim = axes.get_ylim() ## dtto
         #print("xlims_changed from ", self.ylim)
         #print("              to   ", self.ylim)
 
     ## == FILE AND DATA UTILITIES ==
-    def row_prop(self, row, prop):# {{{
+    def row_prop(self, row, prop):# {{{ ## get rid of this
         return self.tsFiles.get_value(row, self.treeStoreColumns[prop])
         # }}}
     def remember_treeView_expanded_rows(self, treeStore, treeView):    # {{{
@@ -839,6 +843,17 @@ class Handler:
         recursive_select_rows(self.tsFiles.get_iter_first())
         self.plot_all_sel_records() # TODO needed here?
         # }}}
+    def on_btn_EditSelFiles_clicked(self, dummy):
+        ## Load all row data NOTE: just a draft, taken from self.plot_all_sel_records()
+        (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
+        if len(pathlist) == 0: return
+        try:
+            import subprocess
+            print(external_editor_command, [self.row_prop(self.tsFiles.get_iter(path), 'filepath') for path in pathlist])
+            subprocess.Popen(list(external_editor_command) + [self.row_prop(self.tsFiles.get_iter(path), 'filepath') for path in pathlist])
+        except Exception as e:
+            print(e)
+         
 
     ## == USER INTERFACE HANDLERS ==
     ## == Python plotting script ==
