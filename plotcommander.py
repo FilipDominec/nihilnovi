@@ -1087,21 +1087,8 @@ class Handler:
             elif not w('treeview1').row_expanded(treePath) :
                 w('treeview1').expand_row(treePath, open_all=False)
             return False
-
-# }}}
-    def on_enFileFilter_activate(self, *args):# {{{ TODO just point the handlers to the func in Glade 6x
-        self.populateTreeStore_keep_exp_and_sel()
-    def on_enFileFilter_focus_out_event(self, *args):
-        self.populateTreeStore_keep_exp_and_sel()
-    def on_enColFilter_activate(self, *args):
-        self.populateTreeStore_keep_exp_and_sel()
-    def on_enColFilter_focus_out_event(self, *args):
-        self.populateTreeStore_keep_exp_and_sel()
-    def on_chk_ShowAllFiles_toggled(self, dummy): 
-        self.populateTreeStore_keep_exp_and_sel()
-    def on_chk_FlattenFolders_toggled(self, dummy):
-        self.populateTreeStore_keep_exp_and_sel()
-    def populateTreeStore_keep_exp_and_sel(self):
+    # }}}
+    def populateTreeStore_keep_exp_and_sel(self, dummy):
         """ Wrapper around populateTreeStore that maintains the selected and expanded rows """
         expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))

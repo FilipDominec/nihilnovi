@@ -75,8 +75,8 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="placeholder_text" translatable="yes">.* (show all)</property>
-                                        <signal name="activate" handler="on_enFileFilter_activate" swapped="no"/>
-                                        <signal name="focus-out-event" handler="on_enFileFilter_focus_out_event" swapped="no"/>
+                                        <signal name="activate" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
+                                        <signal name="focus-out-event" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -101,8 +101,8 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="placeholder_text" translatable="yes">.* (show all)</property>
-                                        <signal name="activate" handler="on_enFileFilter_activate" swapped="no"/>
-                                        <signal name="focus-out-event" handler="on_enFileFilter_focus_out_event" swapped="no"/>
+                                        <signal name="activate" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
+                                        <signal name="focus-out-event" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -127,8 +127,8 @@
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="placeholder_text" translatable="yes">.* (show all)</property>
-                                        <signal name="activate" handler="on_enFileFilter_activate" swapped="no"/>
-                                        <signal name="focus-out-event" handler="on_enFileFilter_focus_out_event" swapped="no"/>
+                                        <signal name="activate" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
+                                        <signal name="focus-out-event" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
                                       </object>
                                       <packing>
                                         <property name="left_attach">1</property>
@@ -519,7 +519,7 @@ if checked, allows finding files with less clicking; if unchecked, the directory
                         <property name="use_underline">True</property>
                         <property name="active">True</property>
                         <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="on_chk_FlattenFolders_toggled" swapped="no"/>
+                        <signal name="toggled" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
@@ -536,7 +536,7 @@ if checked, allows finding files with less clicking; if unchecked, the directory
                         <property name="tooltip_text" translatable="yes">if disabled, will only consider files that contain readable data</property>
                         <property name="use_underline">True</property>
                         <property name="draw_indicator">True</property>
-                        <signal name="toggled" handler="on_chk_ShowAllFiles_toggled" swapped="no"/>
+                        <signal name="toggled" handler="populateTreeStore_keep_exp_and_sel" swapped="no"/>
                       </object>
                       <packing>
                         <property name="expand">False</property>
