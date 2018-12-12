@@ -142,55 +142,6 @@
                                     <property name="position">0</property>
                                   </packing>
                                 </child>
-                                <child>
-                                  <object class="GtkCheckButton" id="chk_hidefilesnodata">
-                                    <property name="label" translatable="yes">_hide files with no data</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="tooltip_text" translatable="yes">automatic filter only to show files that contain readable data</property>
-                                    <property name="use_underline">True</property>
-                                    <property name="draw_indicator">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">1</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkCheckButton" id="chk_flattenfolders">
-                                    <property name="label" translatable="yes">flatten single-child folders, hide _empty</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="has_default">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="tooltip_text" translatable="yes">if checked, allows finding files with less clicking; if unchecked, the directory tree behaves more like a usual file browser</property>
-                                    <property name="use_underline">True</property>
-                                    <property name="active">True</property>
-                                    <property name="draw_indicator">True</property>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">2</property>
-                                  </packing>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="btn_EditSelFiles">
-                                    <property name="label" translatable="yes">E_dit selected files in external editor</property>
-                                    <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="use_underline">True</property>
-                                    <signal name="clicked" handler="on_btn_EditSelFiles_clicked" swapped="no"/>
-                                  </object>
-                                  <packing>
-                                    <property name="expand">False</property>
-                                    <property name="fill">True</property>
-                                    <property name="position">3</property>
-                                  </packing>
-                                </child>
                               </object>
                               <packing>
                                 <property name="tab_expand">True</property>
@@ -426,13 +377,13 @@
                                       </packing>
                                     </child>
                                     <child>
-                                      <object class="GtkButton" id="btn_exteditor">
-                                        <property name="label" translatable="yes">_Ext editor</property>
+                                      <object class="GtkButton" id="btn_ExtScriptEditor">
+                                        <property name="label" translatable="yes">_Edit script</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">True</property>
                                         <property name="use_underline">True</property>
-                                        <signal name="clicked" handler="btn_exteditor_clicked_cb" swapped="no"/>
+                                        <signal name="clicked" handler="on_btn_ExtScriptEditor_clicked" swapped="no"/>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -520,6 +471,87 @@
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkBox">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="homogeneous">True</property>
+                    <child>
+                      <object class="GtkButton" id="btn_EditSelFiles">
+                        <property name="label" translatable="yes">E_dit</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="tooltip_text" translatable="yes">Edit selected files in text editor</property>
+                        <property name="use_underline">True</property>
+                        <signal name="clicked" handler="on_btn_EditSelFiles_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkButton" id="btn_EditSelFiles1">
+                        <property name="label" translatable="yes">_Trash</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">True</property>
+                        <property name="tooltip_text" translatable="yes">Creates a "trash" folder in the same directory as selected files are, and moves them. They can be still accessed there. </property>
+                        <property name="use_underline">True</property>
+                        <signal name="clicked" handler="on_btn_TrashSelFiles_clicked" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="chk_FlattenFolders">
+                        <property name="label" translatable="yes">flatte_n</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="has_default">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">Flatten single-child folders, hide _empty;
+if checked, allows finding files with less clicking; if unchecked, the directory tree behaves more like a usual file browser</property>
+                        <property name="use_underline">True</property>
+                        <property name="active">True</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_chk_FlattenFolders_toggled" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">2</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkCheckButton" id="chk_ShowAllFiles">
+                        <property name="label" translatable="yes">show _all</property>
+                        <property name="visible">True</property>
+                        <property name="can_focus">True</property>
+                        <property name="receives_default">False</property>
+                        <property name="tooltip_text" translatable="yes">if disabled, will only consider files that contain readable data</property>
+                        <property name="use_underline">True</property>
+                        <property name="draw_indicator">True</property>
+                        <signal name="toggled" handler="on_chk_ShowAllFiles_toggled" swapped="no"/>
+                      </object>
+                      <packing>
+                        <property name="expand">False</property>
+                        <property name="fill">True</property>
+                        <property name="position">3</property>
+                      </packing>
+                    </child>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="fill">True</property>
+                    <property name="position">2</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkStatusbar" id="statusbar1">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
@@ -531,7 +563,7 @@
                   <packing>
                     <property name="expand">False</property>
                     <property name="fill">True</property>
-                    <property name="position">2</property>
+                    <property name="position">3</property>
                   </packing>
                 </child>
               </object>

@@ -302,6 +302,7 @@ class Handler:
         # contains exactly one leaf, it will be treated as a leaf itself. 
         def semirecursive_flattening_file_search(trypath, indent):
             ## Note: Returning 0 means the branch is empty, returning 2 means it contains two or more objects
+            ## Todo: use the same procedure also for e.g. columns within files
 
             ## Read what is found under trypath: (TODO generalize to more than just filesystem!)
             leaves   = [f for f in os.listdir(trypath) if (not self.is_branch(os.path.join(trypath,f)) 
@@ -372,10 +373,14 @@ class Handler:
 
             fileFilterString = w('enFileFilter').get_text().strip() 
             dirFilterString = w('enDirFilter').get_text().strip() 
-            flattening = 1
 
-            if not flattening:
-                filenames = os.listdir(basepath) 
+            if not w('chk_FlattenFolders').get_active():
+                leaves   = sorted([os.path.join(basepath,f) for f in os.listdir(basepath)  if (not self.is_branch(os.path.join(basepath,f)) 
+                    and (fileFilterString == '' or re.findall(fileFilterString, f)))], key=sort_alpha_numeric.split_alpha_numeric_lowercase)    
+                branches = sorted([os.path.join(basepath,f) for f in os.listdir(basepath)  if (self.is_branch(os.path.join(basepath,f))     
+                    and (dirFilterString == '' or re.findall(dirFilterString, os.path.basename(f))))], key=sort_alpha_numeric.split_alpha_numeric_lowercase)
+                filenames = branches + leaves
+                print(filenames)
             else:
                 filenames = []
                 leaves   = sorted([os.path.join(basepath,f) for f in os.listdir(basepath)  if (not self.is_branch(os.path.join(basepath,f)) 
@@ -389,6 +394,8 @@ class Handler:
                     elif recb != 0:
                         filenames.append(recb)
                 filenames += leaves
+
+                print(filenames)
 
             itemFullNames = filenames #[os.path.join(basepath, filename) for filename in filenames]    # add the full path
             itemShowNames = [fn[len(basepath)+1:] for fn in filenames]                 # only file name without path will be shown
@@ -601,7 +608,7 @@ class Handler:
             raise RuntimeError         ## for all remaining filetypes, abort plotting quietly
 
 # }}}
-    def dedup_keys_values(self, keyvalue_strings, output_strings=True, output_removed=False):
+    def dedup_keys_values(self, keyvalue_strings, output_strings=True, output_removed=False):# {{{
         """ Seeks for key=value pairs that are shared with among all strings in the list, and removes them if found """
         def try_float_value(tup): 
             """ Whenever possible, safely convert second tuple items (i.e. values) to float """
@@ -623,7 +630,8 @@ class Handler:
             #print("   -> keyvaluelist", keyvaluelist)
             keyvaluelists.append(keyvaluelist)
         ## If identical ("key"="value") tuple found everywhere, remove it 
-        ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should eliminate the common directory name first
+        ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should 
+        ## eliminate the common directory name first
         removedkvlist = []
         for keyvaluelist in keyvaluelists.copy(): 
             #print("KEYVALUELIST ---------- ", keyvaluelist)
@@ -643,7 +651,7 @@ class Handler:
             return keyvaluelists, removedkvlist
         else:
             return keyvaluelists
-
+# }}}
     def plot_all_sel_records(self):# {{{
 
         ## Setting persistent view is somewhat kafkaesque with matplotlib. 
@@ -791,12 +799,13 @@ class Handler:
         """
 
         # }}}
-    def on_xlims_change(self, axes): 
+    def on_xlims_change(self, axes): # {{{
         self.xlim = axes.get_xlim() ## FIXME dirty hack: Needs some elegant solution in the future
     def on_ylims_change(self, axes): 
         self.ylim = axes.get_ylim() ## dtto
         #print("xlims_changed from ", self.ylim)
         #print("              to   ", self.ylim)
+    # }}}
 
     ## == FILE AND DATA UTILITIES ==
     def row_prop(self, row, prop):# {{{ ## get rid of this
@@ -845,8 +854,7 @@ class Handler:
         recursive_select_rows(self.tsFiles.get_iter_first())
         self.plot_all_sel_records() # TODO needed here?
         # }}}
-    def on_btn_EditSelFiles_clicked(self, dummy):
-        ## Load all row data NOTE: just a draft, taken from self.plot_all_sel_records()
+    def on_btn_EditSelFiles_clicked(self, dummy):    ## code taken from self.plot_all_sel_records(){{{
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
         try:
@@ -855,6 +863,25 @@ class Handler:
             subprocess.Popen(list(external_editor_command) + [self.row_prop(self.tsFiles.get_iter(path), 'filepath') for path in pathlist])
         except Exception as e:
             print(e)
+    # }}}
+    def on_btn_TrashSelFiles_clicked(self, dummy): # {{{
+        (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
+        if len(pathlist) == 0: return
+        try:
+            print('TODO on_btn_TrashSelFiles_clicked: stub')
+            ## TODO 
+            #p = pathlib.Path("temp/")
+            #p.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            print(e)
+    # }}}
+    def on_chk_ShowAllFiles_toggled(self, dummy): 
+        pass
+    def on_chk_FlattenFolders_toggled(self, dummy):
+        self.populateTreeStore(self.tsFiles)
+    def on_btn_ExtScriptEditor_clicked(self, dummy): 
+        pass
+
          
 
     ## == USER INTERFACE HANDLERS ==
