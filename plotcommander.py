@@ -380,7 +380,6 @@ class Handler:
                 branches = sorted([os.path.join(basepath,f) for f in os.listdir(basepath)  if (self.is_branch(os.path.join(basepath,f))     
                     and (dirFilterString == '' or re.findall(dirFilterString, os.path.basename(f))))], key=sort_alpha_numeric.split_alpha_numeric_lowercase)
                 filenames = branches + leaves
-                print(filenames)
             else:
                 filenames = []
                 leaves   = sorted([os.path.join(basepath,f) for f in os.listdir(basepath)  if (not self.is_branch(os.path.join(basepath,f)) 
@@ -394,8 +393,6 @@ class Handler:
                     elif recb != 0:
                         filenames.append(recb)
                 filenames += leaves
-
-                print(filenames)
 
             itemFullNames = filenames #[os.path.join(basepath, filename) for filename in filenames]    # add the full path
             itemShowNames = [fn[len(basepath)+1:] for fn in filenames]                 # only file name without path will be shown
@@ -814,14 +811,15 @@ class Handler:
         # }}}
     def remember_treeView_expanded_rows(self, treeStore, treeView):    # {{{
         ## returns a list of paths of expanded files/directories
-        expanded_row_names = []
-        def remember_treeview_states(treeIter):
+        def recurse_treestore(treeIter):
             while treeIter != None: 
                 if w('treeview1').row_expanded(treeStore.get_path(treeIter)):
                     expanded_row_names.append(treeStore.get_value(treeIter, 0))      # get the full path of the position
-                remember_treeview_states(treeStore.iter_children(treeIter))
+                recurse_treestore(treeStore.iter_children(treeIter))
                 treeIter=treeStore.iter_next(treeIter)
-        remember_treeview_states(treeStore.get_iter_first())
+        treeIter = treeStore.get_iter_first()
+        expanded_row_names = [treeStore.get_value(treeIter, 0)] ## remember that also the "root" directory of the view is unpacked
+        recurse_treestore(treeIter)
         return expanded_row_names
         # }}}
     def remember_treeView_selected_rows(self, treeStore, treeView):# {{{
@@ -835,7 +833,7 @@ class Handler:
     def restore_treeView_expanded_rows(self, expanded_row_names):# {{{
         def recursive_expand_rows(treeIter, ):
             while treeIter != None: 
-                if self.tsFiles.get_value(treeIter, 0) in expanded_row_names:
+                if self.tsFiles.get_value(treeIter, 0) in expanded_row_names[::-1]:
                     self.lockTreeViewEvents = True
                     w('treeview1').expand_row(self.tsFiles.get_path(treeIter), open_all=False)
                     self.lockTreeViewEvents = False
@@ -1079,23 +1077,25 @@ class Handler:
         else:
             if rowtype == "updir":  
                 ## If the expanded row was "..", do not expand it, instead change to up-dir and refresh whole tree
-                expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
-                selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
-                self.populateTreeStore(self.tsFiles, reset_path=os.path.dirname(self.row_prop(treeIter, 'filepath')))       
+                #expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))     TEST
+                #selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+                #self.populateTreeStore(self.tsFiles, reset_path=os.path.dirname(self.row_prop(treeIter, 'filepath')))       
+                self.populateTreeStore_keep_exp_and_sel(reset_path=os.path.dirname(self.row_prop(treeIter, 'filepath')))
             elif w('treeview1').row_expanded(treePath):
                 w('treeview1').collapse_row(treePath)
             elif not w('treeview1').row_expanded(treePath) :
                 w('treeview1').expand_row(treePath, open_all=False)
             return False
     # }}}
-    def populateTreeStore_keep_exp_and_sel(self, dummy):
+    def populateTreeStore_keep_exp_and_sel(self, *args, reset_path=None):
         """ Wrapper around populateTreeStore that maintains the selected and expanded rows """
         expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         # Passing parent=None will populate the whole tree again
         #self.lockTreeViewEvents = True
-        self.populateTreeStore(self.tsFiles, reset_path=None)       
+        self.populateTreeStore(self.tsFiles, reset_path=reset_path)       
         #self.lockTreeViewEvents = False
+        print(expanded_row_names)
         self.restore_treeView_expanded_rows(expanded_row_names)
         self.restore_treeView_selected_rows(selected_row_names)
 
