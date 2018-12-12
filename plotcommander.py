@@ -505,8 +505,9 @@ class Handler:
                 zip(itemFullNames, itemShowNames, columnNumbers, spreadNumbers, rowTypes):
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
-            currentIter = treeStore.append(parent_row, 
-                    [itemFullName, self.rowtype_icon(rowtype), itemShowName, plotstyleIcon, columnNumber, spreadNumber, rowtype])
+            if rowtype != 'unknown' or w('chk_ShowAllFiles').get_active():
+                currentIter = treeStore.append(parent_row, 
+                        [itemFullName, self.rowtype_icon(rowtype), itemShowName, plotstyleIcon, columnNumber, spreadNumber, rowtype])
             if not self.rowtype_is_leaf(rowtype): ## TODO row---> parentrowtype
                 treeStore.append(currentIter, self.dummy_treestore_row)     # shows the "unpacking arrow" left of the item
         # }}}
@@ -875,11 +876,8 @@ class Handler:
         except Exception as e:
             print(e)
     # }}}
-    def on_chk_ShowAllFiles_toggled(self, dummy): 
-        pass
-    def on_chk_FlattenFolders_toggled(self, dummy):
-        self.populateTreeStore(self.tsFiles)
     def on_btn_ExtScriptEditor_clicked(self, dummy): 
+        # TODO
         pass
 
          
@@ -1091,7 +1089,20 @@ class Handler:
             return False
 
 # }}}
-    def on_enFileFilter_activate(self, *args):# {{{
+    def on_enFileFilter_activate(self, *args):# {{{ TODO just point the handlers to the func in Glade 6x
+        self.populateTreeStore_keep_exp_and_sel()
+    def on_enFileFilter_focus_out_event(self, *args):
+        self.populateTreeStore_keep_exp_and_sel()
+    def on_enColFilter_activate(self, *args):
+        self.populateTreeStore_keep_exp_and_sel()
+    def on_enColFilter_focus_out_event(self, *args):
+        self.populateTreeStore_keep_exp_and_sel()
+    def on_chk_ShowAllFiles_toggled(self, dummy): 
+        self.populateTreeStore_keep_exp_and_sel()
+    def on_chk_FlattenFolders_toggled(self, dummy):
+        self.populateTreeStore_keep_exp_and_sel()
+    def populateTreeStore_keep_exp_and_sel(self):
+        """ Wrapper around populateTreeStore that maintains the selected and expanded rows """
         expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
         selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         # Passing parent=None will populate the whole tree again
@@ -1100,15 +1111,7 @@ class Handler:
         #self.lockTreeViewEvents = False
         self.restore_treeView_expanded_rows(expanded_row_names)
         self.restore_treeView_selected_rows(selected_row_names)
-        # }}}
-    def on_enFileFilter_focus_out_event(self, *args):# {{{
-        self.on_enFileFilter_activate(self)
-    # }}}
-    def on_enColFilter_activate(self, *args):# {{{ TODO
-        pass
-    def on_enColFilter_focus_out_event(self, *args):
-        pass
-# }}}
+
     def on_window1_delete_event(self, *args):# {{{
         Gtk.main_quit(*args)# }}}
 
