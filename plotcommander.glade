@@ -477,7 +477,7 @@
                     <property name="homogeneous">True</property>
                     <child>
                       <object class="GtkButton" id="btn_EditSelFiles">
-                        <property name="label" translatable="yes">E_dit</property>
+                        <property name="label" translatable="yes">E_dit data</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -493,8 +493,9 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="btn_EditSelFiles1">
-                        <property name="label" translatable="yes">_Trash</property>
+                        <property name="label" translatable="yes">_Move data</property>
                         <property name="visible">True</property>
+                        <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip_text" translatable="yes">Creates a "trash" folder in the same directory as selected files are, and moves them. They can be still accessed there. </property>

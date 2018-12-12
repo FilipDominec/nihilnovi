@@ -149,7 +149,7 @@ class Handler:
         self.treeStoreColumns =     {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
         self.dummy_treestore_row = [None for x in self.treeStoreColumns.keys()]
 
-        treeViewCol0 = Gtk.TreeViewColumn("Plot")        # Create a TreeViewColumn
+        treeViewCol0 = Gtk.TreeViewColumn(' ')        # Create a TreeViewColumn
         colCellPlot = Gtk.CellRendererPixbuf()        # Create a column cell to display text
         treeViewCol0.pack_start(colCellPlot, expand=True)
         treeViewCol0.add_attribute(colCellPlot, "pixbuf", 3)    # set params for icon
@@ -874,9 +874,6 @@ class Handler:
         except Exception as e:
             print(e)
     # }}}
-    def on_btn_ExtScriptEditor_clicked(self, dummy): 
-        # TODO
-        pass
 
          
 
@@ -907,9 +904,18 @@ class Handler:
                     --->
 
     ---> then always REPLOT
-        
     """
     # }}}
+
+    def on_btn_ExtScriptEditor_clicked(self, dummy): # {{{
+        try:
+            import subprocess
+            rc_filename = self.relevant_rc_filename() or self.possible_rc_filenames()[0]
+            print("Opening external editor:", external_editor_command, [rc_filename])
+            subprocess.Popen(list(external_editor_command) + [rc_filename])
+        except Exception as e:
+            print(e)# }}}
+
     def btn_exteditor_clicked_cb(self, sender):# {{{
         ## TODO launch selected editor, ask for the program if undefined
         print('stub',sender)
@@ -958,7 +964,7 @@ class Handler:
         w('chk_xlogarithmic').set_active(False)
         if radiobutton is w('rad_plotstyle_rc'):
             if radiobutton.get_active():        ## selecting action
-                self.update_plotcommand_from_rcfile()
+                self.update_plotcommand_from_rcfile(allow_overwrite_by_empty=True)
             else:
                 pass ## todo - ask whether to save the command file, if changed
         else:
@@ -975,6 +981,7 @@ class Handler:
     # }}}
     def on_btn_plotrc_replot_clicked(self, *args):# {{{
         self.plot_reset() ## clear figure
+        self.update_plotcommand_from_rcfile(allow_overwrite_by_empty=False)
         self.plot_all_sel_records()
     # }}}
     def on_chk_xlogarithmic_toggled(self, sender):# {{{
