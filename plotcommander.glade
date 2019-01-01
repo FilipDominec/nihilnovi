@@ -477,7 +477,7 @@
                     <property name="homogeneous">True</property>
                     <child>
                       <object class="GtkButton" id="btn_EditSelFiles">
-                        <property name="label" translatable="yes">E_dit data</property>
+                        <property name="label" translatable="yes">Ed_it data</property>
                         <property name="visible">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
@@ -493,7 +493,7 @@
                     </child>
                     <child>
                       <object class="GtkButton" id="btn_EditSelFiles1">
-                        <property name="label" translatable="yes">_Move data</property>
+                        <property name="label" translatable="yes">Mo_ve data</property>
                         <property name="visible">True</property>
                         <property name="sensitive">False</property>
                         <property name="can_focus">True</property>
