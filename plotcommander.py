@@ -731,11 +731,14 @@ class Handler:
             #print("SOME ERROR")
             traceback.print_exc() ## TODO locate the error
 
-        print('Replot finished in {:.3f} s'.format(time.time()-init_time))
+        print('Plotting script finished in {:.3f} s'.format(time.time()-init_time)); init_time = time.time()
         if tosave != []: print('Exported image files in the `tosave` list:', tosave)
-        for savefilename in list(tosave):
-            self.fig.savefig(savefilename)
-            print("Plotcommander: saving output to:", savefilename)
+        try: 
+            for savefilename in list(tosave):
+                self.fig.savefig(savefilename)
+                print("Plotcommander: saving output to:", savefilename)
+        except IOError as e:
+            print("Plotcommander: saving output failed with", e)
 
 
         #print("AFTER COMMAND")
@@ -757,9 +760,10 @@ class Handler:
         #self.ax.autoscale_view() # 	Autoscale the view limits using the data limits.
         #print(" - draw - ")
 
+        #cursor = Cursor(self.ax, color='red', linewidth=.5)  ## FIXME http://blog.yjl.im/2009/10/blit-cursor-in-matplotlib.html
         self.canvas.draw()
-        cursor = Cursor(self.ax, color='red', linewidth=.5)  ## FIXME http://blog.yjl.im/2009/10/blit-cursor-in-matplotlib.html
 
+        print('Drawing finished in {:.3f} s'.format(time.time()-init_time))
         return True
 
         """
@@ -982,6 +986,7 @@ class Handler:
     def on_btn_plotrc_replot_clicked(self, *args):# {{{
         self.plot_reset() ## clear figure
         self.update_plotcommand_from_rcfile(allow_overwrite_by_empty=False)
+        # check if textbox differs from the existing file (i.e. had been edited...); if so, auto-save it
         self.plot_all_sel_records()
     # }}}
     def on_chk_xlogarithmic_toggled(self, sender):# {{{
