@@ -44,6 +44,8 @@ strict_table_layout         = False                      # when True, doubled co
 
 maxLineLength               = 10000             # hardly any numeric table in ASCII will have more than one 10kB per line 
 
+allowCommaDecimalSep        = True
+
 headerOrdinateAllowOmit     = True              # e.g. three-column CSV files sometimes have only two names in header
 headerOrdinateSuggestName   = 'x'               # ... in such a case, the first column name will added 
 
@@ -105,6 +107,15 @@ def loadtxt(file_name, sizehint=None):
     if filteredLines == []: raise RuntimeError("Error: all lines in the file are empty or identified as comments")
     if very_verbose: print("filteredLines:", filteredLines)
 
+    ## Handle files that use ',' instead of '.' as a decimal separator 
+    if allowCommaDecimalSep:
+        allChars = ''.join(filteredLines)
+        countComma, countDot = len(re.findall(r',[\d\s]', allChars)), len(re.findall(r'\.[\d\s]', allChars))
+        print('countComma, countDot',countComma, countDot)
+        if countComma > countDot:
+            print('detected that comma is used more often of dot, trying to accept it as a decimal separator',countComma, countDot)
+            filteredLines = [re.sub(r',([\d\s])',   r'.\1',  fl) for fl in filteredLines]
+            tryColSeparators.copy().remove(',')
 
     ## Find the number of columns 
     resultingColSeparatorFitness = None
