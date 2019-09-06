@@ -1143,3 +1143,7 @@ Gtk.main()
 
             # TODO - on window resize, adjust borders? 
             # http://stackoverflow.com/questions/6066091/python-matplotlib-figure-borders-in-wxpython
+
+
+    # # Don't mess with the limits!
+    # plt.autoscale(False)
