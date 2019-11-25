@@ -1131,6 +1131,7 @@ Gtk.main()
 
 
     # future todos:
+    #  * each replot should cleanly re-load all variables (now, e.g. setting x[:]=0 persists over replots!)
     #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
     #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
     #  * 'keramika 06062016.opj' and 'srovnani27a28.opj'  makes liborigin eat up all memory
