@@ -10,7 +10,6 @@ for (x,y) in zip(xs,ys):
     weight = np.exp(-((wxs-centerx)*1.3/extx)**4)
     weight[np.logical_or(wxs<np.min(x),wxs>np.max(x))] = 0
     if XLOG: weight *= np.exp(((wxs-centerx)*1/extx)) # optional: more weight on right side of function
-    ax.plot(10**wxs, weight)
     wys += np.interp(wxs,x,y) * weight
     wws += weight
 if XLOG: xs = [10**(x) for x in xs]
