@@ -16,11 +16,10 @@ from gi.repository.GdkPixbuf import Pixbuf, Colorspace
 
 import matplotlib
 import matplotlib.cm as cm
-#from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas # "..Agg" backend is broken currently
-#from matplotlib.backends.backend_gtk3cairo import NavigationToolbar2GTK3 as NavigationToolbar# "..Agg" backend is broken currently
-from matplotlib.backends.backend_gtk3      import FigureCanvasGTK3 as FigureCanvas  # if not specified, Python3 freezes
+from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas 
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar # if not specified, Python3 freezes
 #from matplotlib.backends.backend_tkagg import FigureCanvasTk as FigureCanvas
+    # ... this fails (in gtk3 application) with  AttributeError: 'FigureCanvasTk' object has no attribute 'set_size_request'
 #from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk as NavigationToolbar
 #from mpl_toolkits.axes_grid1 import host_subplot ## allows better axes handling than fig.subplot
 from matplotlib.widgets import Cursor
@@ -729,10 +728,10 @@ class Handler:
             exec(plot_command, exec_env)
             #print("JUST AFTER COMMAND")
         except SyntaxError:
-            #print("SYNTAX ERROR:")
+            print("SYNTAX ERROR:")
             traceback.print_exc() ## TODO locate the error
         except:
-            #print("SOME ERROR")
+            print("OTHER ERROR")
             traceback.print_exc() ## TODO locate the error
 
         print('Plotting script finished in {:.3f} s'.format(time.time()-init_time)); init_time = time.time()

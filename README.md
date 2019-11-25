@@ -28,7 +28,7 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 #### Installation on Linux
 On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run:
 
-    sudo apt-get install python3-matplotlib python3-numpy python3-gi-cairo
+    sudo apt-get install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
 
 The support for origin files is optional, since it requires compilation:
 
