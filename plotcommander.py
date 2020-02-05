@@ -433,17 +433,17 @@ class Handler:
                     if newline == legendline: comment += newline + ' '
                 return comment
             itemShowNames = ['%s; name: %s; label: %s' % (self.decode_origin_label(graph.name), self.decode_origin_label(graph.label), 
-                    generate_graph_annotation(graph)) for graph in opj['graphs']]
+                    generate_graph_annotation(graph)) for graph in opj['FileContent']['graphs']]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = [None] * len(itemShowNames)
             spreadNumbers = list(range(len(itemShowNames)))  
             rowTypes      = ['opjgraph'] * len(itemShowNames)
 
             ## Add "columns" - which enable to access all data in the file, including those not used in "graphs"
-            #for spread in opj['spreads']:
+            #for spread in opj['FileContent']['spreads']:
                 #print(spread.label, self.decode_origin_label(spread.label))
             itemShowNames = itemShowNames + ['%s "%s"' % (self.decode_origin_label(spread.name), self.decode_origin_label(spread.label)) 
-                    for spread in opj['spreads']]
+                    for spread in opj['FileContent']['spreads']]
             itemFullNames = itemFullNames + [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = columnNumbers + [None] * len(itemShowNames)
             spreadNumbers = spreadNumbers + list(range(len(itemShowNames)))  
@@ -452,7 +452,7 @@ class Handler:
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
             itemShowNames = [self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment) for column in 
-                    opj['spreads'][parent_spreadsheet].columns]
+                    opj['FileContent']['spreads'][parent_spreadsheet].columns]
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
@@ -463,9 +463,9 @@ class Handler:
             layerNumber = 0 ## Fixme support for multiple opjlayers:    ["graphs"][1].layers[0].curves[3].xColumnName
 
             ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
-            curves = opj['graphs'][parent_graph].layers[layerNumber].curves
+            curves = opj['FileContent']['graphs'][parent_graph].layers[layerNumber].curves
             #print("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
-            legend_box = self.decode_origin_label(opj['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
+            legend_box = self.decode_origin_label(opj['FileContent']['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
             legends = []
             for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
                 newline = re.sub(r'\\l\(\d\)\s', '', legendline) 
@@ -480,8 +480,8 @@ class Handler:
                 #print([spread.name for spread in opj['spreads']], (curve.dataName[2:]))
 
                 ## Seek the corresponding spreadsheet and column by their name
-                spreadsheet_index = [spread.name for spread in opj['spreads']].index(curve.dataName[2:])
-                spread = opj['spreads'][spreadsheet_index]
+                spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName[2:])
+                spread = opj['FileContent']['spreads'][spreadsheet_index]
                 y_column_index = [column.name for column in spread.columns].index(curve.yColumnName)
                 x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
                 #print(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, 
@@ -576,12 +576,12 @@ class Handler:
         rowsheet    = self.row_prop(row, 'spreadsheet')
         if  rowtype == 'opjcolumn':
             opj = self.origin_parse_or_cache(rowfilepath)
-            # TODO: what does opj['spreads'][3].multisheet mean?
-            x, y = [opj['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
+            # TODO: what does opj['FileContent']['spreads'][3].multisheet mean?
+            x, y = [opj['FileContent']['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
             x, y = self.safe_np_array(x, y)
-            xlabel, ylabel = [self.decode_origin_label(opj['spreads'][rowsheet].columns[c].name) for c in [rowxcolumn, rowycolumn]] 
+            xlabel, ylabel = [self.decode_origin_label(opj['FileContent']['spreads'][rowsheet].columns[c].name) for c in [rowxcolumn, rowycolumn]] 
             parameters = {} ## todo: is it possible to load parameters from origin column?
-            descriptor = rowfilepath+" "+ylabel+" "+self.decode_origin_label(opj['spreads'][rowsheet].columns[rowycolumn].comment) ## FIXME XXX
+            descriptor = rowfilepath+" "+ylabel+" "+self.decode_origin_label(opj['FileContent']['spreads'][rowsheet].columns[rowycolumn].comment) ## FIXME XXX
             return x, y, descriptor, parameters, xlabel, ylabel
         elif rowtype in ('csvtwocolumn', 'csvcolumn'): 
             data_array, header, parameters = self.dat_parse_or_cache(rowfilepath)
