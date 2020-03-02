@@ -617,6 +617,13 @@ class Handler:
             elif len(tup)==2:
                 try:                    return (tup[0], float(tup[1]))
                 except:                 return tup
+        def rm_ext(s):
+            try:
+                base, ext = s.rsplit('.',1)
+                if ext and len(ext)<=3 and re.sub('\d', '', ext): return base
+            except ValueError:
+                pass
+            return s
         def all_to_string(tup): return [str(v) for v in tup]
         ## File name may be interesting as curve label, but not its extension -> filter it out
         keyvalue_strings = [re.sub('\.[a-zA-Z][\w]?[\w]?$', '', kvstring) for kvstring in keyvalue_strings]
@@ -627,7 +634,7 @@ class Handler:
             #print("keyvalue_strings", keyvalue_strings) ## TODO clean up debugging leftovers
             chunklist = re.split('[_ /]', keyvalue_string) 
             #print("    chunklist", chunklist)
-            keyvaluelist = [try_float_value(re.split('=', chunk.replace('~', ' '))) for chunk in chunklist] 
+            keyvaluelist = [try_float_value(re.split('=', rm_ext(chunk.replace('~', ' ')))) for chunk in chunklist] 
             #print("   -> keyvaluelist", keyvaluelist)
             keyvaluelists.append(keyvaluelist)
         ## If identical ("key"="value") tuple found everywhere, remove it 
