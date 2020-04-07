@@ -80,6 +80,11 @@ levels = np.linspace(cmaprange1, cmaprange2, 50)
 #   interp_anisotropy = (max_xs-min_xs)/(max_params-min_params) * args.interp_aspect 
 #   yi      = griddata(xs, params*interp_anisotropy, ys, xi, paramsi*interp_anisotropy, interp='linear')
 
+#   # Logarithmic contour plot (10 contours per decade) 
+#   lev_exp = np.arange(np.floor(np.log10(ys.min())-1), np.floor(np.log10(ys.max()))+1, 1./10)
+#   levs = np.power(10, lev_exp)
+#   cf = ax.contourf(xs[0], param, ys, levs, norm=ncl.LogNorm())
+
 ax.contourf(xs[0], param, ys, levels=levels, extend='both')
 ax.contour(xs[0], param, ys, levels=levels)
 ax.set_xlabel('')
