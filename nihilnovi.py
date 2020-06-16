@@ -1131,7 +1131,7 @@ class Handler:
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 builder = Gtk.Builder()
-builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "plotcommander.glade"))
+builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "nihilnovi.glade"))
 def w(widgetname): return builder.get_object(widgetname)   # shortcut to access widgets 
 builder.connect_signals(Handler())
 
