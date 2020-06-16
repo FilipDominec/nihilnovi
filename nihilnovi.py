@@ -28,7 +28,7 @@ import robust_csv_parser
 import sort_alpha_numeric
 
 ## User settings       TODO -> external config file
-## TODO These settings should be loaded dynamically from ./plotcommanderrc.py, ../plotcommanderrc.py, ../../plotcommanderrc.py, ...
+## TODO These settings should be loaded dynamically from ./plotrc*.py, ../plotrc*.py, ../../plotrc*.py, ...
 #matplotlib.rcParams['font.family'] = 'serif'        
 matplotlib.rcParams['font.size'] = 10
 matplotlib.rcParams['axes.linewidth'] = .5
@@ -349,7 +349,7 @@ class Handler:
                     basepath = self.row_prop(self.tsFiles.get_iter_first(), 'filepath')
                 else:
                     raise AttributeError('Specify either parent_row, reset_path, or ensure the first row is of "updir" type')
-            w('window1').set_title('PlotCommander: %s' % basepath)
+            w('window1').set_title('NihilNovi: %s' % basepath)
 
             ## On startup, or when the 'updir' node is selected, we update the whole tree. 
             ## Initially, it has to be cleared of all rows. 
@@ -414,7 +414,7 @@ class Handler:
             columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
             #columnFilterString = 'gamma|fermi'
             columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
-            #FIXME File "/home/dominecf/p/plotcommander/plotcommander.py", line 303, in populateTreeStore
+            #FIXME File "/home/dominecf/p/nihilnovi/nihilnovi.py", line 303, in populateTreeStore
                 #columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
             #ValueError: not enough values to unpack (expected 2, got 0)
             itemFullNames = [basepath] * len(header)    # all columns are from one file
@@ -751,9 +751,9 @@ class Handler:
         try: 
             for savefilename in list(tosave):
                 self.fig.savefig(savefilename)
-                print("Plotcommander: saving output to:", savefilename)
+                print("nihilnovi: saving output to:", savefilename)
         except IOError as e:
-            print("Plotcommander: saving output failed with", e)
+            print("nihilnovi: saving output failed with", e)
 
 
         #print("AFTER COMMAND")
