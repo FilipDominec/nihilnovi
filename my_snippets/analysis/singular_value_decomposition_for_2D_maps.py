@@ -15,7 +15,9 @@ U, V = U * np.sign(np.sum(V,axis=1)), (V.T * np.sign(np.sum(V,axis=1))).T # fix 
 res = (np.dot(U,np.diag(s)).T)
 dim = int(len(res)**.5)   ## assuming the original curves were acquired in a square NxN pattern!
 fig.delaxes(ax)
-axs = fig.subplots(ncomponents, 2) #axs = [ax for axx in axs for ax in axx] ## flatten
+axs = fig.subplots(ncomponents, 2) 
+#ax = axs[0] # anytime, you may switch to other subplots in a similar way 
+#axs = [ax for axx in axs for ax in axx]  ## optionally flatten
 
 for x, y, label, ax in         zip(xs[:ncomponents], V[:ncomponents], range(ncomponents), axs[:,0]):
     ax.plot(x, y, label="SVD component %d" % (label+1), c='k', lw=.6)
