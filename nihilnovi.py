@@ -37,7 +37,7 @@ matplotlib.rcParams['savefig.facecolor'] = "white"
 SIZELIMIT_FOR_HEADER = 10000
 SIZELIMIT_FOR_DATA   = 10000000
 
-external_editor_command = ('/usr/bin/vim.gtk', '-gp')
+external_editor_command = ('/usr/bin/vim.gtk3', '-gp')
 
 line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')

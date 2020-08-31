@@ -25,11 +25,20 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 ## Installation 
 
 #### Installation on Linux
-On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run:
+1. On Linux, you may need to get its dependencies; e.g. for Ubuntu, run:
 
-    sudo apt-get install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
+    sudo apt install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
 
-The support for origin files is optional, since it requires compilation:
+2. Then get the fresh version by pulling this project
+
+    git clone http://github.com/filipdominec/nihilnovi.git
+
+3. And you can launch the program:
+
+    cd nihilnovi
+    python3 nihilnovi.py
+
+4. The support for origin files is optional, and it requires compilation:
 
 	## .OPJ - Origin files
 	sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
@@ -45,33 +54,32 @@ The support for origin files is optional, since it requires compilation:
 	sudo python3 setup.py install
 	cd ..
 
-Then get the fresh version by pulling this project, and launch the program directly:
 
-    git clone http://github.com/filipdominec/plotcommander.git
-    cd plotcommander
-    python3 plotcommander.py
+#### Installation on Windows using Anaconda
 
-#### Installation on Windows
-(Perhaps following http://stackoverflow.com/questions/38475134/making-matplotlib-and-gtk3-work-on-python3-windows needs no be tested)
+1. Get anaconda and install it following the [official guide](https://docs.anaconda.com/anaconda/install/windows/). Default settings are OK. 
 
-One day I will try to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package for Windows.
+2. Meanwhile, you can download the project as a ZIP file, unpack the files e.g. into ```nihilnovi-master\``` in your directory. Alternately, you may clone the repository using git if you prefer.
 
-#### Future dependencies
+3. Once anaconda is installed, run in *anaconda shell* from system menu:
 
-In the future, browsing of other types files will probably bring also following dependencies:
+	conda create myenv conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
 
-    ## .HDF5 - Hierarchical data format
-    sudo apt-get install python3-h5py
-    
-	## .XLS - Excel files (and what about .ODS?)
-    sudo apt-get install python3-xlrd
+4. It will download many useful as well as rather useless dependencies. Then you should be able to run nihilnovi from the folder you unpacked it in:
+
+	python nihilnovi-master\nihilnovi.py
+
+(Note that this command actually runs python3, not 2.x. Nihilnovi is python3-based.)
+	
+[comment]: # read also: http://stackoverflow.com/questions/38475134/making-matplotlib-and-gtk3-work-on-python3-windows needs no be tested)
+[comment]: # One day I will try to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package for Windows.
 
 ## Supported file formats
 Examples of accessible file formats are in `test_files/`.
 
 #### ASCII files (\*.csv, \*.dat and \*.txt)
 
-PlotCommander will try to understand all common formatting of files with comma- or whitespace-separated human-readable values.  A minimal example (in `test_files/doublecolumn_names.dat`) shows a single-line plot with correctly named axes:
+Nihilnovi will try to understand all common formatting of files with comma- or whitespace-separated human-readable values.  A minimal example (in `test_files/doublecolumn_names.dat`) shows a single-line plot with correctly named axes:
 
 	temperature(K)		conductivity(uS)
 	1					40
@@ -84,9 +92,20 @@ Parsing of all such files is provided by the `robust_csv_parser.py` module, whic
 
 #### Origin files (\*.opj)
 
-Origin files are containers for multiple data files. In PlotCommander, such a file is represented in the same way as a directory: Its row can be expanded to show all contained spreadsheets, which can be further expanded to enable plotting all respective data columns. It was, however, observed that with some files, the external origin parser causes a memory leak or crashes.
+Origin files are containers for multiple data files. In Nihilnovi, such a file is represented in the same way as a directory: Its row can be expanded to show all contained spreadsheets, which can be further expanded to enable plotting all respective data columns. It was, however, observed that with some files, the external origin parser causes a memory leak or crashes.
 
 Additionally, Origin saves presentation-ready graphs that refer to one or more data columns. 
+
+#### Future dependencies
+
+In the future, browsing of other types files will probably bring also following dependencies:
+
+    ## .HDF5 - Hierarchical data format
+    sudo apt-get install python3-h5py
+    
+	## .XLS - Excel files (and what about .ODS?)
+    sudo apt-get install python3-xlrd
+
 
 #### HDF - Hierarchical data format (\*.h5)
 
@@ -98,7 +117,7 @@ Also HDF files are containers that should be seamlessly accessible like a direct
 
 *not implemented yet*
 
-Using the Excel and Calc conversion libraries, PlotCommander will also enable browsing the spreadsheets of such files. Each spreadsheet will be treated like a tab-separated ASCII text file, so the rules for this kind of files apply. 
+Using the Excel and Calc conversion libraries, NihilNovi will also enable browsing the spreadsheets of such files. Each spreadsheet will be treated like a tab-separated ASCII text file, so the rules for this kind of files apply. 
 
 #### Other formats
 
@@ -165,7 +184,7 @@ A: Then I am interested in getting a minimum non-working example, and will try t
  * [ ] multiple columns in files --> subfigures
  * [ ] merge functions from python-meep-utils:multiplot.py
  * [ ] enable browsing HDF5 files if libhdf available (dtto)
- * [ ] plotcommander.py RC files should be searched for in the directory (and all updirs, too)
+ * [ ] nihilnovi.py RC files should be searched for in the directory (and all updirs, too)
  * [ ] try porting GtkSourceView to python3 
  * [ ] trace the memleaks and errors in the liborigin code
  * [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
