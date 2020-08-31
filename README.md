@@ -28,61 +28,61 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 1. On Linux, you may need to get its dependencies; e.g. for Ubuntu, run:
 
 ```	
-    sudo apt install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
+sudo apt install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
 ```	
 
 2. Then get the fresh version by pulling this project
 
 ```	
-    git clone http://github.com/filipdominec/nihilnovi.git
+git clone http://github.com/filipdominec/nihilnovi.git
 ```	
 
 3. And you can launch the program:
 
 ```	
-    cd nihilnovi
-    python3 nihilnovi.py
+cd nihilnovi
+python3 nihilnovi.py
 ```
 
 4. The support for origin files is optional, and it requires compilation:
 
 ```
-	# .OPJ - Origin files
-	sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
-	#git clone https://github.com/Saluev/python-liborigin2.git ## did not support recent Origin9 files
-	git clone https://github.com/gbm19/python-liborigin2
-	cd python-liborigin2/
-	mkdir build
-	cd build
-	cmake ../
-	make
-	doxygen Doxyfile
-	cd ..
-	sudo python3 setup.py install
-	cd ..
+# .OPJ - Origin files
+sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
+#git clone https://github.com/Saluev/python-liborigin2.git ## did not support recent Origin9 files
+git clone https://github.com/gbm19/python-liborigin2
+cd python-liborigin2/
+mkdir build
+cd build
+cmake ../
+make
+doxygen Doxyfile
+cd ..
+sudo python3 setup.py install
+cd ..
 ```
 
-#### Installation on Windows using Anaconda
+#### Installation on Windows 10 using Anaconda
 
 1. Get anaconda and install it following the [official guide](https://docs.anaconda.com/anaconda/install/windows/). Default settings are OK. 
 
 2. Meanwhile, you can download the project as a ZIP file, unpack the files e.g. into ```nihilnovi-master\``` in your directory. Alternately, you may clone the repository using git if you prefer.
 
-3. Once anaconda is installed, run in *anaconda shell* from system menu:
+3. Once anaconda is installed, launch the *anaconda shell* from the system menu the following lines. You can use copy & paste.
 
 ```	
-	conda create nihilnovi
-    conda activate nihilnovi
-    conda install -c conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
+conda create nihilnovi
+conda activate nihilnovi
+conda install -c conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
 ```	
 
-4. It will download many useful as well as rather useless dependencies. Then you should be able to run nihilnovi from the folder you unpacked it in:
+4. It will download ca. 160 MB of mostly useful (and some rather useless) dependencies. Then you should be able to run nihilnovi from the folder you unpacked it in:
 
 ```	
-	python nihilnovi-master\nihilnovi.py
+python nihilnovi-master\nihilnovi.py
 ```	
 
-(Note that this command actually runs python3, not 2.x. Nihilnovi is python3-based.)
+(Nihilnovi is python3-based. Note that this command actually runs python3, confusingly.)
 	
 [comment]: # read also: http://stackoverflow.com/questions/38475134/making-matplotlib-and-gtk3-work-on-python3-windows needs no be tested)
 [comment]: # One day I will try to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package for Windows.
