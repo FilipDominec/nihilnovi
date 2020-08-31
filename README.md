@@ -27,20 +27,27 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 #### Installation on Linux
 1. On Linux, you may need to get its dependencies; e.g. for Ubuntu, run:
 
+```	
     sudo apt install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
+```	
 
 2. Then get the fresh version by pulling this project
 
+```	
     git clone http://github.com/filipdominec/nihilnovi.git
+```	
 
 3. And you can launch the program:
 
+```	
     cd nihilnovi
     python3 nihilnovi.py
+```
 
 4. The support for origin files is optional, and it requires compilation:
 
-	## .OPJ - Origin files
+```
+	# .OPJ - Origin files
 	sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
 	#git clone https://github.com/Saluev/python-liborigin2.git ## did not support recent Origin9 files
 	git clone https://github.com/gbm19/python-liborigin2
@@ -53,7 +60,7 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 	cd ..
 	sudo python3 setup.py install
 	cd ..
-
+```
 
 #### Installation on Windows using Anaconda
 
@@ -63,13 +70,17 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 
 3. Once anaconda is installed, run in *anaconda shell* from system menu:
 
+```	
 	conda create nihilnovi
     conda activate nihilnovi
     conda install -c conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
+```	
 
 4. It will download many useful as well as rather useless dependencies. Then you should be able to run nihilnovi from the folder you unpacked it in:
 
+```	
 	python nihilnovi-master\nihilnovi.py
+```	
 
 (Note that this command actually runs python3, not 2.x. Nihilnovi is python3-based.)
 	
