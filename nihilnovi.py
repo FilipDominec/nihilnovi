@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
 
-
-
 import gi, sys, os, signal, stat, warnings, re, time
 import numpy as np
 import scipy.constants as sc
@@ -207,19 +205,19 @@ class Handler:
         """
         Known row types:
 
-            #Type                   row_is_leaf row_can_plot    row_icon-TODO
-            dir                     0           0               ''
-            updir                   1           0               'go-up'
-            csvtwocolumn            1           1               ''
-            csvmulticolumn          0           0               ''
-            xlsfile                 0           0               ''
-            xlsspread               0           0               ''
-            xlscolumn               1           1               ''
-            opjfile                 0           0               ''
-            opjgraph                0           0               ''
-            opjspread               0           0               ''
-            opjcolumn               1           1               ''
-            unknown                 1           0               ''
+            #Type                   row_is_leaf row_can_plot    
+            dir                     0           0               
+            updir                   1           0               
+            csvtwocolumn            1           1               
+            csvmulticolumn          0           0               
+            xlsfile                 0           0               
+            xlsspread               0           0               
+            xlscolumn               1           1               
+            opjfile                 0           0               
+            opjgraph                0           0               
+            opjspread               0           0               
+            opjcolumn               1           1               
+            unknown                 1           0               
         """
         ## Note: Remaining row types not returned by this function (i.e. xlsspread, xlscolumn, opjgraph etc.) are 
         ## never assigned to files; they are added only when a file or spreadsheet is unpacked and populated.
@@ -262,16 +260,16 @@ class Handler:
         iconname = {
                 'updir':            'go-up',
                 'dir':              'folder',
-                'csvtwocolumn':     'empty',
-                'csvmulticolumn':   'zip', 
-                'csvcolumn':        'empty', 
-                'opjfile':          'zip', 
+                'csvtwocolumn':     'text-x-generic',
+                'csvmulticolumn':   'package-x-generic', 
+                'csvcolumn':        'text-x-generic', 
+                'opjfile':          'package-x-generic', 
                 'opjspread':        'go-next', 
                 'opjgraph':         'go-previous', 
-                'opjcolumn':        'empty', 
-                'xlsfile':          'zip', 
+                'opjcolumn':        'text-x-generic', 
+                'xlsfile':          'package-x-generic', 
                 'xlsspread':        'go-next', 
-                'xlscolumn':        'empty', 
+                'xlscolumn':        'text-x-generic', 
                 'unknown':          'stop'
                 }
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
