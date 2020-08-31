@@ -311,10 +311,21 @@ class Handler:
             ## Todo: use the same procedure also for e.g. columns within files
 
             ## Read what is found under trypath: (TODO generalize to more than just filesystem!)
-            leaves   = [f for f in os.listdir(trypath) if (not self.is_branch(os.path.join(trypath,f)) 
-                and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
-            branches = [f for f in os.listdir(trypath) if (self.is_branch(os.path.join(trypath,f))     
-                and (dirFilterString == '' or re.findall(dirFilterString, os.path.basename(f))))]
+
+            leaves   = []
+            for f in os.listdir(trypath):
+                try:
+                    if (not self.is_branch(os.path.join(trypath,f)) and (fileFilterString == '' or re.findall(fileFilterString, f))):
+                        leaves.append(f)
+                except:
+                    print(f'Warning {f} is not accessible')
+            branches = []
+            for f in os.listdir(trypath):
+                try:
+                    if (self.is_branch(os.path.join(trypath,f)) and (dirFilterString == '' or re.findall(dirFilterString, os.path.basename(f)))):
+                        branches.append(f)
+                except:
+                    print(f'Warning {f} is not accessible')
             ## todo: hide also leaves that could not be loaded as data
 
             if len(leaves) >= 2: return 2       #  has 2 or more leaves, cannot be collapsed, just quit
