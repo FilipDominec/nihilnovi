@@ -63,7 +63,9 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 
 3. Once anaconda is installed, run in *anaconda shell* from system menu:
 
-	conda create myenv conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
+	conda create nihilnovi
+    conda activate nihilnovi
+    conda install -c conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
 
 4. It will download many useful as well as rather useless dependencies. Then you should be able to run nihilnovi from the folder you unpacked it in:
 
