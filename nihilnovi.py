@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
 
-
-
 import gi, sys, os, signal, stat, warnings, re, time
 import numpy as np
 import scipy.constants as sc
@@ -37,7 +35,7 @@ matplotlib.rcParams['savefig.facecolor'] = "white"
 SIZELIMIT_FOR_HEADER = 10000
 SIZELIMIT_FOR_DATA   = 10000000
 
-external_editor_command = ('/usr/bin/vim.gtk', '-gp')
+external_editor_command = ('/usr/bin/vim.gtk3', '-gp')
 
 line_plot_command = \
 """matplotlib.rc('font', size=12, family='serif')
@@ -207,19 +205,19 @@ class Handler:
         """
         Known row types:
 
-            #Type                   row_is_leaf row_can_plot    row_icon-TODO
-            dir                     0           0               ''
-            updir                   1           0               'go-up'
-            csvtwocolumn            1           1               ''
-            csvmulticolumn          0           0               ''
-            xlsfile                 0           0               ''
-            xlsspread               0           0               ''
-            xlscolumn               1           1               ''
-            opjfile                 0           0               ''
-            opjgraph                0           0               ''
-            opjspread               0           0               ''
-            opjcolumn               1           1               ''
-            unknown                 1           0               ''
+            #Type                   row_is_leaf row_can_plot    
+            dir                     0           0               
+            updir                   1           0               
+            csvtwocolumn            1           1               
+            csvmulticolumn          0           0               
+            xlsfile                 0           0               
+            xlsspread               0           0               
+            xlscolumn               1           1               
+            opjfile                 0           0               
+            opjgraph                0           0               
+            opjspread               0           0               
+            opjcolumn               1           1               
+            unknown                 1           0               
         """
         ## Note: Remaining row types not returned by this function (i.e. xlsspread, xlscolumn, opjgraph etc.) are 
         ## never assigned to files; they are added only when a file or spreadsheet is unpacked and populated.
@@ -262,16 +260,16 @@ class Handler:
         iconname = {
                 'updir':            'go-up',
                 'dir':              'folder',
-                'csvtwocolumn':     'empty',
-                'csvmulticolumn':   'zip', 
-                'csvcolumn':        'empty', 
-                'opjfile':          'zip', 
+                'csvtwocolumn':     'text-x-generic',
+                'csvmulticolumn':   'package-x-generic', 
+                'csvcolumn':        'text-x-generic', 
+                'opjfile':          'package-x-generic', 
                 'opjspread':        'go-next', 
                 'opjgraph':         'go-previous', 
-                'opjcolumn':        'empty', 
-                'xlsfile':          'zip', 
+                'opjcolumn':        'text-x-generic', 
+                'xlsfile':          'package-x-generic', 
                 'xlsspread':        'go-next', 
-                'xlscolumn':        'empty', 
+                'xlscolumn':        'text-x-generic', 
                 'unknown':          'stop'
                 }
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
@@ -313,10 +311,17 @@ class Handler:
             ## Todo: use the same procedure also for e.g. columns within files
 
             ## Read what is found under trypath: (TODO generalize to more than just filesystem!)
-            leaves   = [f for f in os.listdir(trypath) if (not self.is_branch(os.path.join(trypath,f)) 
-                and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
-            branches = [f for f in os.listdir(trypath) if (self.is_branch(os.path.join(trypath,f))     
-                and (dirFilterString == '' or re.findall(dirFilterString, os.path.basename(f))))]
+            try:
+                leaves   = [f for f in os.listdir(trypath) if (not self.is_branch(os.path.join(trypath,f)) 
+                    and (fileFilterString == '' or re.findall(fileFilterString, f)))]    
+            except:
+                leaves   = []
+
+            try:
+                branches = [f for f in os.listdir(trypath) if (self.is_branch(os.path.join(trypath,f))     
+                    and (dirFilterString == '' or re.findall(dirFilterString, os.path.basename(f))))]
+            except:
+                branches   = []
             ## todo: hide also leaves that could not be loaded as data
 
             if len(leaves) >= 2: return 2       #  has 2 or more leaves, cannot be collapsed, just quit

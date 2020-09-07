@@ -25,53 +25,74 @@ A different approach is to store one's data as plain **text files** (**\*.dat** 
 ## Installation 
 
 #### Installation on Linux
-On Linux, you may need to get its dependencies; e.g. for Ubuntu 15.04/16.04, run:
+1. On Linux, you may need to get its dependencies; e.g. for Ubuntu, run:
 
-    sudo apt-get install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
+```	
+sudo apt install python3-matplotlib python3-numpy python3-cairo python3-cairocffi python3-gi-cairo
+```	
 
-The support for origin files is optional, since it requires compilation:
+2. Then get the fresh version by pulling this project
 
-	## .OPJ - Origin files
-	sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
-	#git clone https://github.com/Saluev/python-liborigin2.git ## did not support recent Origin9 files
-	git clone https://github.com/gbm19/python-liborigin2
-	cd python-liborigin2/
-	mkdir build
-	cd build
-	cmake ../
-	make
-	doxygen Doxyfile
-	cd ..
-	sudo python3 setup.py install
-	cd ..
+```	
+git clone http://github.com/filipdominec/nihilnovi.git
+```	
 
-Then get the fresh version by pulling this project, and launch the program directly:
+3. And you can launch the program:
 
-    git clone http://github.com/filipdominec/plotcommander.git
-    cd plotcommander
-    python3 plotcommander.py
+```	
+cd nihilnovi
+python3 nihilnovi.py
+```
 
-#### Installation on Windows
-(Perhaps following http://stackoverflow.com/questions/38475134/making-matplotlib-and-gtk3-work-on-python3-windows needs no be tested)
+4. The support for origin files is optional, and it requires compilation:
 
-One day I will try to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package for Windows.
+```
+# .OPJ - Origin files
+sudo apt-get install -y cython3 doxygen cmake libboost-all-dev
+#git clone https://github.com/Saluev/python-liborigin2.git ## did not support recent Origin9 files
+git clone https://github.com/gbm19/python-liborigin2
+cd python-liborigin2/
+mkdir build
+cd build
+cmake ../
+make
+doxygen Doxyfile
+cd ..
+sudo python3 setup.py install
+cd ..
+```
 
-#### Future dependencies
+#### Installation on Windows 10 using Anaconda
 
-In the future, browsing of other types files will probably bring also following dependencies:
+1. Get anaconda and install it following the [official guide](https://docs.anaconda.com/anaconda/install/windows/). Default settings are OK. 
 
-    ## .HDF5 - Hierarchical data format
-    sudo apt-get install python3-h5py
-    
-	## .XLS - Excel files (and what about .ODS?)
-    sudo apt-get install python3-xlrd
+2. Meanwhile, you can download the project as a ZIP file, unpack the files e.g. into ```nihilnovi-master\``` in your directory. Alternately, you may clone the repository using git if you prefer.
+
+3. Once anaconda is installed, launch the *anaconda shell* from the system menu the following lines. You can use copy & paste.
+
+```	
+conda create nihilnovi
+conda activate nihilnovi
+conda install -c conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
+```	
+
+4. It will download ca. 160 MB of mostly useful (and some rather useless) dependencies. Then you should be able to run nihilnovi from the folder you unpacked it in:
+
+```	
+python nihilnovi-master\nihilnovi.py
+```	
+
+(Nihilnovi is python3-based. Note that this command actually runs python3, confusingly.)
+	
+[comment]: # read also: http://stackoverflow.com/questions/38475134/making-matplotlib-and-gtk3-work-on-python3-windows needs no be tested)
+[comment]: # One day I will try to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package for Windows.
 
 ## Supported file formats
 Examples of accessible file formats are in `test_files/`.
 
 #### ASCII files (\*.csv, \*.dat and \*.txt)
 
-PlotCommander will try to understand all common formatting of files with comma- or whitespace-separated human-readable values.  A minimal example (in `test_files/doublecolumn_names.dat`) shows a single-line plot with correctly named axes:
+Nihilnovi will try to understand all common formatting of files with comma- or whitespace-separated human-readable values.  A minimal example (in `test_files/doublecolumn_names.dat`) shows a single-line plot with correctly named axes:
 
 	temperature(K)		conductivity(uS)
 	1					40
@@ -84,9 +105,20 @@ Parsing of all such files is provided by the `robust_csv_parser.py` module, whic
 
 #### Origin files (\*.opj)
 
-Origin files are containers for multiple data files. In PlotCommander, such a file is represented in the same way as a directory: Its row can be expanded to show all contained spreadsheets, which can be further expanded to enable plotting all respective data columns. It was, however, observed that with some files, the external origin parser causes a memory leak or crashes.
+Origin files are containers for multiple data files. In Nihilnovi, such a file is represented in the same way as a directory: Its row can be expanded to show all contained spreadsheets, which can be further expanded to enable plotting all respective data columns. It was, however, observed that with some files, the external origin parser causes a memory leak or crashes.
 
 Additionally, Origin saves presentation-ready graphs that refer to one or more data columns. 
+
+#### Future dependencies
+
+In the future, browsing of other types files will probably bring also following dependencies:
+
+    ## .HDF5 - Hierarchical data format
+    sudo apt-get install python3-h5py
+    
+	## .XLS - Excel files (and what about .ODS?)
+    sudo apt-get install python3-xlrd
+
 
 #### HDF - Hierarchical data format (\*.h5)
 
@@ -98,7 +130,7 @@ Also HDF files are containers that should be seamlessly accessible like a direct
 
 *not implemented yet*
 
-Using the Excel and Calc conversion libraries, PlotCommander will also enable browsing the spreadsheets of such files. Each spreadsheet will be treated like a tab-separated ASCII text file, so the rules for this kind of files apply. 
+Using the Excel and Calc conversion libraries, NihilNovi will also enable browsing the spreadsheets of such files. Each spreadsheet will be treated like a tab-separated ASCII text file, so the rules for this kind of files apply. 
 
 #### Other formats
 
@@ -165,7 +197,7 @@ A: Then I am interested in getting a minimum non-working example, and will try t
  * [ ] multiple columns in files --> subfigures
  * [ ] merge functions from python-meep-utils:multiplot.py
  * [ ] enable browsing HDF5 files if libhdf available (dtto)
- * [ ] plotcommander.py RC files should be searched for in the directory (and all updirs, too)
+ * [ ] nihilnovi.py RC files should be searched for in the directory (and all updirs, too)
  * [ ] try porting GtkSourceView to python3 
  * [ ] trace the memleaks and errors in the liborigin code
  * [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
