@@ -766,8 +766,8 @@ class Handler:
 
         #self.ax.legend(loc="best")
         self.ax.grid(True)
-        self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear') 
-        self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear')
+        #self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')  ## TODO caused freezes
+        #self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear') ## TODO caused freezes
 
         #print(" - relim - ")
         #self.ax.relim() ## If relim enabled, logarithmic axes scale wrong, i.e. from (6.7370464889520478e-316, 4.0007331215613123e+18)

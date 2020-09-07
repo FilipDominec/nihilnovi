@@ -166,7 +166,7 @@
                                 <child>
                                   <object class="GtkCheckButton" id="chk_xlogarithmic">
                                     <property name="label" translatable="yes">_x logarithmic</property>
-                                    <property name="visible">True</property>
+                                    <property name="visible">False</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
                                     <property name="use_underline">True</property>
@@ -182,7 +182,7 @@
                                 <child>
                                   <object class="GtkCheckButton" id="chk_ylogarithmic">
                                     <property name="label" translatable="yes">_y logarithmic</property>
-                                    <property name="visible">True</property>
+                                    <property name="visible">False</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
                                     <property name="use_underline">True</property>
