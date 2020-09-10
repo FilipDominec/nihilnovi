@@ -2,6 +2,7 @@
 #-*- coding: utf-8 -*-
 
 import gi, sys, os, signal, stat, warnings, re, time
+from pathlib import Path
 import numpy as np
 import scipy.constants as sc
 import traceback, faulthandler ## Debugging library crashes
@@ -118,7 +119,7 @@ ax2.set_ylabel('electron penetration depth (nm)')
 """
 
 
-plot_commands = {'Lines':line_plot_command, 'Contours':contour_plot_command}
+plot_commands = {'Lines':line_plot_command, 'Plot gallery':Path('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
 
 class Handler:
     ## == initialization == 
@@ -1147,16 +1148,55 @@ window.show_all()
 Gtk.main()
 
 
-    # future todos:
-    #  * each replot should cleanly re-load all variables (now, e.g. setting x[:]=0 persists over replots!)
-    #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
-    #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
-    #  * 'keramika 06062016.opj' and 'srovnani27a28.opj'  makes liborigin eat up all memory
+    # Conceptual todos:
+    #  * Plot gallery
+    #           scatter plot                scatter plot with error bars    scatter plot varying color/size     fill area between curves
+    #           horizontal bar plot         pie plot                        radar plot                          bar plot
+    #           2D contour plot             2D contour plot log(z)          waterfall plot                      3D surface
+    #  * Graphical tweaks
+    #           twin axis                   assigning curve to axis         axis gap                            inset graph                         
+    #           manual arrow/text           auto-positioned arrow/text      horiz/vert shaded strip             round shaded area
+    #           black/white print style     fine+coarse grid                radial axes/grid
+    #  * Data tricks
+    #           horizontal clipping         vertical clipping               convolution (moving average)        interpolation to a new axis
+    #           user interpolated function  simple function fit             differential evolution fitting      correlation ellipse
+    #           1D/2D singular value decomp FFT/iFFT spectral filtering     smooth dataset joining
+    #  * Rewrite file browser cleanly
+    #  * robust_csv_parser.py should become genfromtxt_format_analysis and should only generate kwargs for genfromtxt() --> share with numpy project
+    #           https://numpy.org/doc/stable/reference/generated/numpy.genfromtxt.html#numpy.genfromtxt
+    #       * don't forget also non-number columns like strings, dates  ... numpy.array(['apples', 'foobar', 'cowboy'], dtype=object)
+    #       * must not confuse comma as column delimiter and decimal separator
+    #  * Sandboxed python interpreter using Subprocess
+    #       * as a welcome side effect, each replot should cleanly re-load all variables (now, e.g. setting x[:]=0 persists over replots!)
+    #  * Async file loading using Subprocess
+    #  * Use own icons instead of stock icons (no dep on adwaita whatever)
+    #  * Rewrite whole GUI in tkinter,ttk
+    #           * accept drag and drop    https://www.mankier.com/n/tkDND  http://www.bitflipper.ca/Documentation/Tkdnd.html
+
+    # Bugfix todos:
+    #  * keep the xlim and ylim from the previous plot?  using plt.autoscale(False) ?
+    #  * 'keramika 06062016.opj' and 'srovnani27a28.opj'  makes liborigin eat up all memory (check with new version)
+
+    # Feature todos:
     #  * select record by clicking in the graph, right-click menu in the list)
     #        http://scienceoss.com/interactively-select-points-from-a-plot-in-matplotlib/#more-14
     #        http://scienceoss.com/interacting-with-figures-in-python/
+    #   * Accept the files as command-line parameter. Even better, encode every dataset as URI:  
+    #      file://home/filip/example.dat?column=2      or     file://home/filip/ORIGIN.opj?sheet=MYDATA&column=TEMPERATURE
+    #   * Enable getting data online?
+
+    # Rather technical todos:
+    #  * use separate file readers in a ./readers/ directory
+    #      * base them on kaitai if available
+    #      * replace liborigin with a new kaitai OPJ loader?
+    #      * try to auto-extract data from bitmap/vectorized graphs (PDF -> pages -> graphs -> dataset)
+    #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
+    #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
+
     #  * line as actor?   ... self.line, = self.Axes.plot([], [], animated=True)
     #                         self.background=self.canvas1.copy_from_bbox(self.Axes.bbox)
+
+    # Unclear/disused todos
     #  * allow PDF graph export   
             # TODO - use icons?
             #w('treestore1').append(None, ['no', Gtk.IconTheme.get_default().load_icon('edit-cut', 16, 0), infile])
@@ -1166,5 +1206,89 @@ Gtk.main()
             # http://stackoverflow.com/questions/6066091/python-matplotlib-figure-borders-in-wxpython
 
 
-    # # Don't mess with the limits!
-    # plt.autoscale(False)
+## NIHILNOVI
+# * immediate updates on data file changes:
+# 	2) update & replot on file contents change, check https://stackoverflow.com/questions/5738442/detect-file-change-without-polling
+# 	3) directory changes -> remove from plotting files no more available; for 100%-selected directories, auto-add new files
+# * filtrovat 
+# 	* i položky v OPJ souborech
+# 	* nové filtrační kritérium: "graph/tab name"?
+# 	* pokud by "Dir" filtr schoval 'top-dir' adresář, nechat ho tam (nefiltrovat)
+# * command line options: files to select at opening;    --filtercolumn=  --filterfile=  --filterdir
+# * include interactive cheat sheet like https://pythonawesome.com/matplotlib-3-1-cheat-sheet/
+# * better plotting command editor:
+# 	* direct embedding of vim: https://stackoverflow.com/questions/13359699/pyside-embed-vim
+# 	* undo option! https://stackoverflow.com/questions/76096/undo-with-gtk-textview https://bitbucket.org/tiax/gtk-textbuffer-with-undo/
+# 	* custom editor with a subset of vim-like behaviour?
+# 		* syntax highlight 
+# 			* https://stackoverflow.com/questions/2650591/py-gtk-drawing-area-and-rich-text-editor
+# 			* or with "from tkinter import ttk"  https://stackoverflow.com/questions/3781670/how-to-highlight-text-in-a-tkinter-text-widget
+# 			* https://stackoverflow.com/questions/3732605/add-advanced-features-to-a-tkinter-text-widget?noredirect=1&lq=1
+# 	* safer sandboxed command evaluation (whitelist of commands, overwrite protection)
+# 	* plotting area event callback? (e.g. onclick event -> print("you clicked at x,y") and possibly some interactive annotation mode? )
+# 	* above the plot window, enable a roll-down list of "Your script's input" (logx=True/False ...) and below it, "Your script's output" (saving imgs)
+# * auto-labeling still needs fixing:
+# 	* deduplicate SharedLabels to make plot title nicer
+# 	* automatic 'parameters' as a dict:     label = {'auto':'U = 10 kV', 'quantity':'U', 'dir':'mereni', 'file':'katodolum.dat', 'column':'cl10kV'}
+# 		a až to bude, projít třeba složku ~/limba-dynamic/Nitridy mereni/SEM/dominecf/2017/05kveten
+# 		automatická hodnota 'z' a 'zlabel' - jedna položka ve všech labelech, která je nalezena u všech dat
+# 			upravit podle toho snippet na kreslení kontur
+# 	* fixme: odstranit yaxis label z autotitle
+# 	* fixme: yaxis label obsahuje podtržítko, proč?
+# * drobné bugfixy:
+# 	* načítání OPJ grafů podle curve.dataName[2:] vede typicky k "ValueError: b'' is not in list"
+# 	* OPJ: auto ořezávat nuly na konci z datových řad 
+# 	* obnovat obsah souboru, když se změní: překreslit křivky a obnovit cache obsahu souborů
+# 	* tu a tam selže detekce počtu sloupců, jako kdyby neexistoval optimální způsob parsování řádků, jakto? Logovat výstup pro diagnostiku.
+# 		* a také: fix načítání "column, t, phase, column1, column2" ve výstupech python-meepu
+# 		* limba:/Nitridy rusty - zaznamy (z LayTecu?) maji 57 sloupců, hlavicka 56 položek: špatná detekce?
+# * portovat na Windows: 
+# 	* no module named 'gi' -- Bude stačit instalovat Gtk3 do Windows a přepnout Anaconda na Python3.4? https://sourceforge.net/projects/pygobjectwin32/ 
+# 	* pokud si win10 instalované v qemu začnou po 8. 1. 2018 stěžovat an licenci:    slmgr -rearm
+# 	* anebo přejít na Tk? https://stackoverflow.com/questions/36527514/setting-scrollbar-in-tkinter-tree-widget-python
+# 		 SpecTcl Rapyd-TK https://stackoverflow.com/questions/5104330/how-to-create-a-tree-view-with-checkboxes-in-python
+# * Čtení OPJ 
+# 	* chybné načítání OPJ souborů: s popisky jako     %(1)->   což není pěkné, proč se to děje?
+# 	* někdy jsou "Graphs" prázdné (tj. žádné odkazy do "Books", proč?)
+# 	* v originech jsou manuální anotace, které něk dy určují důležité popisy dat - dovede je liborigin vůbec najít? 
+# 		vyhledat je v rekurz výpisu objektu na základě srov s  OrgView.exe
+# 	* použít Kaitai? (a co l6p data od Káji Kuldové, nebo limba-dynamic/AFM+STM+TEM/Oliva 2008?)
+# 		* a implementovat čtení .SPC
+# * optional tips for future
+# 	* code update & refactoring - use pathlib where possible, put all TreeView-related functions to a module
+# 	* Umožnit vybírat i sloupec dat pro osu X, patrně přes kliknutí pravým myšítkem?  A také umožnit vybrat sloupec pro anotaci datových bodů?
+# 		Při tom bych mohl implementovat vlastní logiku pro vybírání souborů a rozbalování složek ve stromu...
+# 	* export do PNG, PDF, PNG+PDF (...) na uživatelské kliknutí (na základě uživatelem definované proměnné "tosave")
+# 		se zohledněním současného rozsahu os a jejich logaritmičnosti atp.
+# 	* drag'n'drop of a file into area -> direct plot
+# 	* try engauge-digitizer on picture data extraction (non-intercative mode in Python?)
+# 	* this is hard: plotrc*.*.py could be a standalone Python script - 
+# 		* so it needs a "header section" loading files 
+# 			* requires robust_csv_import.py to be system-wide accessible, possibly pushing it as a part of numpy project (politics!)
+# 			* it needs also generating the color range & labels for plots etc. 
+# 		* "footer section" basically exports the plots to a png/pdf file
+# 	* pozn. grafy takto kreslené jsou částečně kompatibilní se standardizovaným grafováním pro wiki: https://commons.wikimedia.org/wiki/User:Geek3/mplwp
+# 	* umožňovat oddělené ukládání "plotrc" do složky např. ~/.config/plotcommander/plotrc-snippets, 
+# 		naházet tam https://gist.github.com/FilipDominec/b58ff49e3cd964cc0455
+# 		a taky konvoluci, fitování Gaussem přes více datových řád, F-P filtraci, export tabulky
+# 		SVD mapy dle  atd. atp.
+# 	* Portovat na QT5? - viz projekt Davida R.
+# 		* klávesové zkratky
+# 		* workflow    =    apt install qttools5-dev-tools pyqt5-dev-tools && designer && pyuic5 -x gui.ui -o gui.py
+# 		*	funguje toto i pro kreslení grafů v matplotlib?
+# 		* zvýraznění syntaxe Pythonu pomocí https://github.com/andreikop/qutepart
+# 		*   nebo pomocí tohoto? https://wiki.python.org/moin/PyQt/Python%20syntax%20highlighting
+# 			You can start with: http://doc.qt.io/qt-5/qtwidgets-richtext-syntaxhighlighter-example.html
+# 			read the article below for python: https://wiki.python.org/moin/PyQt/Python syntax highlighting
+# 			http://doc.qt.io/qt-5/qtwidgets-richtext-syntaxhighlighter-example.html
+# 	* tips for the README: 
+# 		* With plotcommander workflow, you usually store the original raw data with the processing procedure, rather than the
+# 			numerical results of processing. This way, your workflow is self-documenting, it scales well with data amount and 
+# 			you can repeat it easily again.
+# 	* přehled sci formátů (do https://wiki.python.org/moin/NumericAndScientific/Formats příp. též do https://docs.scipy.org/doc/scipy/reference/io.html)
+# 		* liborigin: OPJ
+# 		* pandas: CSV, XLS, HDF, SQL, JSON, HTML, Pickle
+# 		* kaitai: numerous formats, needs compilation
+# 		* openpyxl:	Excel2010 (r/w)			https://openpyxl.readthedocs.io/en/stable/
+# 		* pupynere: CDF				https://www.logilab.org/blogentry/18838
+# 

@@ -271,7 +271,7 @@
                                     </child>
                                     <child>
                                       <object class="GtkRadioButton" id="rad_plotstyle_contours">
-                                        <property name="label" translatable="yes">Contours  </property>
+                                        <property name="label" translatable="yes">Plot gallery</property>
                                         <property name="visible">True</property>
                                         <property name="can_focus">True</property>
                                         <property name="receives_default">False</property>
