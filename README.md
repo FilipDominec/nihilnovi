@@ -19,7 +19,7 @@ What nihilnovi does **not** do:
 1. No graphical menu to be clicked on with the mouse. Python programming is fun and learning it pays off. For hard operations, typing code is much more efficient than clicking. Simple operations are fast to type anyway. 
 1. No permanent settings for *nihilnovi*. All its behaviour is defined by the data files, and the Python scripts stored along with them.
 1. No compilation, no platform dependence. You only need Python3 and use its default module manager to get several modules required. (See below.)
-1. No fees or use limitations for the software. I made a tool needed for my work and I only wish to see it serve the scientific community.
+1. No fees or use limitations for the software (see the [MIT license](./LICENSE)).  I made a tool needed for my work and I only wish to see it serve the scientific community.
 
 ## Motivation 
 Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results in 10 or 20 years.
