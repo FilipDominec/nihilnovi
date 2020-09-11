@@ -1291,3 +1291,25 @@ Gtk.main()
 # 		* openpyxl:	Excel2010 (r/w)			https://openpyxl.readthedocs.io/en/stable/
 # 		* pupynere: CDF				https://www.logilab.org/blogentry/18838
 # 
+
+## To-Do 
+#  [ ] resolve TypeError: Can't convert 'bytes' object to str implicitly
+#  [ ] add kb shortcuts - e.g. ctrl+w to close app, Matplotlib operations on the plot, ...
+#  [ ] allow selecting curves in the plot panel, too
+#  [ ] data manipulation operations (shift x/y, zoom x/y, fit linear/gaussian/sine), file saving
+#  [ ] when parameters encoded in file name: intelligent extraction of the changing parameter
+#  [ ] multiple columns in files --> subfigures
+#  [ ] merge functions from python-meep-utils:multiplot.py
+#  [ ] enable browsing HDF5 files if libhdf available (dtto)
+#  [ ] nihilnovi.py RC files should be searched for in the directory (and all updirs, too)
+#  [ ] try porting GtkSourceView to python3 
+#  [ ] trace the memleaks and errors in the liborigin code
+#  [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
+#  [ ] examine the reason for persistent ValueError("posx and posy should be finite values") when browsing plots
+#  [ ] fix statusbar - direct response when loading files
+#  [ ] plotrc autosave before plotting
+#  [ ] avoid following symlinks (or at least catch OSError)
+#  [ ] new feature: automatic guessing of the swept parameter
+#  [x] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
+#  [ ] robust_csv_parser.py", line 70, nests FileNotFoundError
+#  [ ] check the possibilities of graph digitizer/OCR: http://eumenidae.blogspot.cz/2012/12/quick-n-dirty-wxpython-plot-digitiser.html

@@ -11,11 +11,14 @@ An efficient workflow for viewing and processing of scientific data. Tested on h
 1. Clicking the diskette icon above the plot, one can **export a publication-ready PNG or [PDF](./img/plot_gallery.pdf)**.
 
 ![animation of selecting files and viewing the plot style gallery](img/screencast1.gif)
+<!-- used recordmydesktop, and then 
+ffmpeg -ss 2 -i out.ogv -vf "fps=20,scale=400:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" -filter:v "setpts=0.2*PTS" -loop 0 output.gifI
+  -->
 
 What nihilnovi does **not** do:
 1. No new language, no new plotting library, no custom data format. Wonderful and well-documented software for this already exists.
-1. No graphical or mathematical options to be clicked with the mouse. Python programming is fun and learning it pays off. For hard operations, typing code is much more efficient than clicking. Simple operations are fast to type anyway. 
-1. No fees for the software. I made a tool needed for my work and I only wish to see it serve the scientific community.
+1. No graphical or mathematical options to be clicked on with the mouse. Python programming is fun and learning it pays off. For hard operations, typing code is much more efficient than clicking. Simple operations are fast to type anyway. 
+1. No fees or use limitations for the software. I made a tool needed for my work and I only wish to see it serve the scientific community.
 
 ## Motivation 
 Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results in 10 or 20 years.
