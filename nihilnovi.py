@@ -4,7 +4,6 @@
 import gi, sys, os, signal, stat, warnings, re, time
 from pathlib import Path
 import numpy as np
-import scipy.constants as sc
 import traceback, faulthandler ## Debugging library crashes
 faulthandler.enable()
 # https://docs.python.org/3/library/sys.html#sys.settrace
@@ -735,7 +734,7 @@ class Handler:
         init_time = time.time()
         #np = numpy
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
-        exec_env = {'np':np, 'sc':sc, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
+        exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                 'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                 'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                 'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}

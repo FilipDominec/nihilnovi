@@ -73,7 +73,7 @@ cd ..
 ```	
 conda create nihilnovi
 conda activate nihilnovi
-conda install -c conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme
+conda install -c conda-forge pygobject numpy matplotlib gtk3 adwaita-icon-theme
 ```	
 
 4. It will download ca. 160 MB of mostly useful (and some rather useless) dependencies. Then you should be able to run nihilnovi from the folder you unpacked it in:
@@ -86,6 +86,20 @@ python nihilnovi-master\nihilnovi.py
 	
 [comment]: # read also: http://stackoverflow.com/questions/38475134/making-matplotlib-and-gtk3-work-on-python3-windows needs no be tested)
 [comment]: # One day I will try to use [py2exe](http://py2exe.org/) to bundle all required dependencies into one package for Windows.
+
+#### Installation on Windows 10 using Miniconda (preferred, but untested)
+ 
+TODO: this will probably be analogous to Anaconda:
+
+https://docs.conda.io/projects/conda/en/latest/user-guide/install/windows.html
+
+```	
+conda create nihilnovi
+conda activate nihilnovi
+conda install -c conda-forge pygobject numpy matplotlib scipy  gtk3 adwaita-icon-theme ## + other required packages
+```	
+
+Definitely a shortcut should be made https://pbpython.com/windows-shortcut.html
 
 ## Supported file formats
 Examples of accessible file formats are in `test_files/`.
