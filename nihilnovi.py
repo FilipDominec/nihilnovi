@@ -1186,8 +1186,10 @@ Gtk.main()
 
     # Rather technical todos:
     #  * use separate file readers in a ./readers/ directory
-    #      * base them on kaitai if available
+    #      * base them on kaitai (if installed)
+    #      * (if liborigin installed) try OPJ 
     #      * replace liborigin with a new kaitai OPJ loader?
+    #      * (if zipfile installed) treat *.ZIP as a directory:   with zipfile.ZipFile('.vimrc.zip') as zf: d=zf.read(d[0].filename)    
     #      * try to auto-extract data from bitmap/vectorized graphs (PDF -> pages -> graphs -> dataset)
     #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
     #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
