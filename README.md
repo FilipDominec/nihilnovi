@@ -1,14 +1,18 @@
-# NihilNovi - scientific data plotting program that tries to do nothing new
+# nihilnovi - scientific data plotting program that tries to do nothing new
 
 ## Short description 
-A lightweight application for fast viewing of data files. For further processing, one can employ all numerical and graphical tricks offered by Python/Numpy/Matplotlib etc.
+An efficient workflow for fast viewing and processing of scientific data. employ all numerical and graphical tricks offered by Python/Numpy/Matplotlib etc.
+
+1. Browsing data is as easy as browsing a photo gallery. **Select files** in the left panel (hold ```Ctrl``` or ```Shift``` to select multiple files).
+1. If you wish to change the plot style, look at the **plot gallery** and copy the relevant code into your own script in the upper left panel.
+ Graphical options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply.
+1. Data preprocessing capabilities are infinite with [Python](https://www.python.org/)+[NumPy](http://www.numpy.org/) *et al.*. 
+1. No matter how elaborate the processing & plotting routine is, new data can be added by few tricks. Saving the script, one can review it any time later. 
+1. Using the diskette icon above the plot, you can export a publication-ready PNG or [PDF](./img/plot_gallery.pdf) -- literally in few seconds.
 
 ![animation of selecting files and viewing the plot style gallery](img/screencast1.gif)
 
 Key points:
- * Data file viewing are **as easy as browsing one's photo gallery** - select the files in the left panel, see them plotted in the right panel.
- * Data preprocessing **allows the flexibility of writing standalone scripts** in [Python](https://www.python.org/)+[NumPy](http://www.numpy.org/)
- * Graphical options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
  * **Don't reinvent wheel** - there are free and mature components for mathematical plotting. Nihilnovi only connects them in a smooth workflow.
  * Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
  * **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
