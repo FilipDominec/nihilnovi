@@ -1,21 +1,21 @@
 # nihilnovi - scientific data plotting program that tries to do nothing new
 
 ## Short description 
-An efficient workflow for fast viewing and processing of scientific data. Tested in my daily work.
+An efficient workflow for viewing and processing of scientific data. Tested on humans - in my daily work.
 
-1. Browsing data is as easy as browsing a photo gallery. **Select files** in the left panel (hold ```Ctrl``` or ```Shift``` to select multiple files).
-1. If you wish to change the plot style, look at the **plot gallery** and copy the relevant code into your own script in the upper left panel.
- Graphical options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply.
-1. Data preprocessing capabilities are infinite with [Python](https://www.python.org/)+[NumPy](http://www.numpy.org/) *et al.*. 
-1. No matter how elaborate the processing & plotting routine is, new data can be added by few tricks. Saving the script, one can review it any time later. 
-1. Using the diskette icon above the plot, you can export a publication-ready PNG or [PDF](./img/plot_gallery.pdf) -- literally in few seconds.
+1. **Browsing data** is as easy as browsing a photo gallery. Select files in the left panel (hold ```Ctrl``` or ```Shift``` to select more of them). Data and header formats are auto-detected and the file contents is immediatelly plotted in the right panel. 
+1. If you wish to **change the plot style**, look at the plot gallery and copy the relevant code into your own script in the upper left panel.
+ For more tricks, please refer e.g. to the [documentation](http://matplotlib.org) of the matplotlib library.
+1. Data **preprocessing capabilities** are infinite with **[Python](https://www.python.org/), [NumPy](http://www.numpy.org/)** and [their ecosystem](https://scipy-lectures.org/intro/intro.html). Once saved, the left panel's script also serves as a meticulous "laboratory diary", helping reproducibility of scientific work.
+1. New data can still be **added by clicking** on the file tree, no matter how elaborate the processing & plotting routine is. 
+1. Clicking the diskette icon above the plot, one can **export a publication-ready PNG or [PDF](./img/plot_gallery.pdf)**.
 
 ![animation of selecting files and viewing the plot style gallery](img/screencast1.gif)
 
 What nihilnovi does **not** do:
-1. No new language, no new plotting library, no custom data format. Wonderful software for this already exists - let's use it fully. 
-1. No graphical or mathematical options in the menu. For hard tasks, typing code is much more efficient than clicking. Simple tasks are fast to write anyway. Python programming is fun and learning it pays off.
-1. No fees for the software. I made a tool needed for my work and I only wish to see positive evolution in the scientific community.
+1. No new language, no new plotting library, no custom data format. Wonderful and well-documented software for this already exists.
+1. No graphical or mathematical options to be clicked with the mouse. Python programming is fun and learning it pays off. For hard operations, typing code is much more efficient than clicking. Simple operations are fast to type anyway. 
+1. No fees for the software. I made a tool needed for my work and I only wish to see it serve the scientific community.
 
 ## Motivation 
 Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results in 10 or 20 years.
