@@ -1,15 +1,21 @@
 # NihilNovi - scientific data plotting program that tries to do nothing new
 
 ## Short description 
-A lightweight application allowing to browse data files on your disk, and see their contents immediately plotted in the right panel.
+A lightweight application for fast viewing of data files. For further processing, one can employ all numerical and graphical tricks offered by Python/Numpy/Matplotlib etc.
+
+![animation of selecting files and viewing the plot style gallery](img/screencast1.gif)
 
 Key points:
- * [x] Data file viewing, comparison and other simple tasks should be **as easy as browsing one's photo gallery**
- * [x] Data preprocessing should **allow the flexibility of writing standalone scripts** in *[Python](https://www.python.org/)*+*[NumPy](http://www.numpy.org/)*
- * [x] Plot options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
- * [ ] **Program code is kept short** and as clean as possible to enable its reuse in other projects
- * [ ] Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
- * [x] **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
+ * Data file viewing are **as easy as browsing one's photo gallery** - select the files in the left panel, see them plotted in the right panel.
+ * Data preprocessing **allows the flexibility of writing standalone scripts** in [Python](https://www.python.org/)+[NumPy](http://www.numpy.org/)
+ * Graphical options are determined by the **matplotlib library**, so that its [well-written documentation](http://matplotlib.org) and tricks apply. Settings can be also stored as python scripts.
+ * **Don't reinvent wheel** - there are free and mature components for mathematical plotting. Nihilnovi only connects them in a smooth workflow.
+ * Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
+ * **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
+
+
+
+
 
 ## Motivation 
 Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results in 10 or 20 years.
@@ -19,8 +25,6 @@ Switching to  alternative **open-source structured formats**, such as [Scidavis]
 A different approach is to store one's data as plain **text files** (**\*.dat** or **\*.csv**). Fairly complex operations then can be programmed using, e.g., Matlab, R, Python or other suitable language, and gigantic amounts of data can be processed in a single batch. However, it is inconvenient to repeatedly write own scripts even for simple operations -- such as plotting or curve fitting. Sometimes people store the data along with **image files** with their plots, but again, the repeated plotting can be tedious.
 
 **NihilNovi** resolves this problem by allowing the user to **view plain text files** rendered immediately as plots.
-
-![a screenshot of the first test of the program](img/screenshot.png)
 
 ## Installation 
 
@@ -202,24 +206,3 @@ A: First type a part of the file name in the _File filter_ entry, so that this f
 A: Then I am interested in getting a minimum non-working example, and will try to adapt the parser to work with it!
 
 
-## To-Do 
- * [ ] resolve TypeError: Can't convert 'bytes' object to str implicitly
- * [ ] add kb shortcuts - e.g. ctrl+w to close app, Matplotlib operations on the plot, ...
- * [ ] allow selecting curves in the plot panel, too
- * [ ] data manipulation operations (shift x/y, zoom x/y, fit linear/gaussian/sine), file saving
- * [ ] when parameters encoded in file name: intelligent extraction of the changing parameter
- * [ ] multiple columns in files --> subfigures
- * [ ] merge functions from python-meep-utils:multiplot.py
- * [ ] enable browsing HDF5 files if libhdf available (dtto)
- * [ ] nihilnovi.py RC files should be searched for in the directory (and all updirs, too)
- * [ ] try porting GtkSourceView to python3 
- * [ ] trace the memleaks and errors in the liborigin code
- * [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
- * [ ] examine the reason for persistent ValueError("posx and posy should be finite values") when browsing plots
- * [ ] fix statusbar - direct response when loading files
- * [ ] plotrc autosave before plotting
- * [ ] avoid following symlinks (or at least catch OSError)
- * [ ] new feature: automatic guessing of the swept parameter
- * [x] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
- * [ ] robust_csv_parser.py", line 70, nests FileNotFoundError
- * [ ] check the possibilities of graph digitizer/OCR: http://eumenidae.blogspot.cz/2012/12/quick-n-dirty-wxpython-plot-digitiser.html
