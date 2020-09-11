@@ -1,7 +1,7 @@
 # nihilnovi - scientific data plotting program that tries to do nothing new
 
 ## Short description 
-An efficient workflow for fast viewing and processing of scientific data. employ all numerical and graphical tricks offered by Python/Numpy/Matplotlib etc.
+An efficient workflow for fast viewing and processing of scientific data. Tested in my daily work.
 
 1. Browsing data is as easy as browsing a photo gallery. **Select files** in the left panel (hold ```Ctrl``` or ```Shift``` to select multiple files).
 1. If you wish to change the plot style, look at the **plot gallery** and copy the relevant code into your own script in the upper left panel.
@@ -12,14 +12,10 @@ An efficient workflow for fast viewing and processing of scientific data. employ
 
 ![animation of selecting files and viewing the plot style gallery](img/screencast1.gif)
 
-Key points:
- * **Don't reinvent wheel** - there are free and mature components for mathematical plotting. Nihilnovi only connects them in a smooth workflow.
- * Define **keyboard shortcuts** for all important functions. While easy to learn, mouse control of a program is slow. 
- * **Promote open data formats** in research for easier cooperation, safer archivation and more efficient work. Rely on open-source libraries and make the program multi-platform.
-
-
-
-
+What nihilnovi does **not** do:
+1. No new language, no new plotting library, no new data format. Wonderful software for this already exists.
+1. No graphical or mathematical options in the menu. For hard tasks, typing code is much more efficient than clicking. Simple tasks are fast to write anyway.
+1. No fees for the software. I only made a tool needed for my work and I wish to see positive evolution in the scientific community.
 
 ## Motivation 
 Scientific work is often based on handling numerical or experimental results in a computer. With the currently available options, it  can become a somewhat frustrating task, which people solve in different ways. One can store the data in a **proprietary structured formats** of specialized software; perhaps the most popular being "[Origin](http://originlab.com/) projects" \*.opj. The trouble with this approach is in that it permanently restricts the author and all their collaborators to use one piece of proprietary software, with compatibility issues between its versions and without any guarantee of being able to access your results in 10 or 20 years.
