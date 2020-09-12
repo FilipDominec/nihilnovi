@@ -1,3 +1,6 @@
+## This is a gallery of selected plot types. The xs, ys and other arrays are loaded upon selection
+## of files in nihilnovi. Please refer to https://matplotlib.org/gallery/index.html for more examples.
+matplotlib.rc('font', size=9, family='serif')
 ax.remove(); axs = fig.subplots(3, 4) # prepare for multiple subplots
 
 ax = axs[0,0]; ax.set_title('Scatter X, Y (+legend)') 
@@ -98,26 +101,21 @@ for          x,  y,  param,  label,  color,  n,         in \
     ax.fill_between(x, n*vspace, y+n*vspace, color=color, alpha=.3)
 
 
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
 
 
 ## Axes projection cannot be changed at runtime; but a new object can be made
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 axs[2,3].remove(); ax = fig.add_subplot(3, 4, 12, projection='3d') ; ax.set_title('3D surface') 
 
-# Make data.
-#X = xs[0] #np.arange(-5, 5, 0.25)
-#Y = params #np.arange(-5, 5, 0.25)
-#X, Y = np.meshgrid(X, Y)
-
 param = np.linspace(10, 20, len(xs)) 
-X, Y = np.meshgrid(xs[0], param)
-#R = np.sqrt(X**2 + Y**2)
-#Z = np.sin(R)
+X, P = np.meshgrid(xs[0], param)
 
 # Plot the surface.
-surf = ax.plot_surface(X, Y, np.array(ys/100), cmap=cm.viridis, linewidth=0, antialiased=False)
+surf = ax.plot_surface(X, P, np.array(ys/100), cmap=cm.viridis, linewidth=0, antialiased=False)
+#cset = ax.contour(X, P, np.array(ys/100), color='k')
+ax.plot_wireframe(X, P, np.array(ys/100), rstride=1, cstride=1, color='k', lw=.5)
 
 # Customize the z axis.
 #ax.set_zlim(-1.01, 1.01)

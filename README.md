@@ -2,7 +2,7 @@
 
 ##  scientific data plotting program that tries to do nothing new (but tries to do it well)
 
-1. **Browsing data** is as easy as browsing a photo gallery. Select files in the left panel (hold ```Ctrl``` or ```Shift``` to select more of them). Data and header formats are auto-detected and the file contents is immediatelly plotted in the right panel. 
+1. **Browsing data** is as easy as browsing a photo gallery. Select files in the left panel (hold ```Ctrl``` or ```Shift``` to select more of them). Data and header formats are auto-detected and the file contents is immediatelly plotted in the right panel with an assigned colour.
 1. If you wish to **change the plot style**, look at the plot gallery and copy the relevant code into your own script in the upper left panel.
  For more tricks, please refer e.g. to the [documentation](http://matplotlib.org) of the matplotlib library.
 1. Data **preprocessing capabilities** are infinite with **[Python](https://www.python.org/), [NumPy](http://www.numpy.org/)** and [their ecosystem](https://scipy-lectures.org/intro/intro.html). Once saved, the left panel's script also serves as a meticulous "laboratory diary", helping reproducibility of scientific work.

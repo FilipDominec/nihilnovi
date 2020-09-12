@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 #-*- coding: utf-8 -*-
 
-import gi, sys, os, signal, stat, warnings, re, time
-from pathlib import Path
+import gi, sys, os, signal, stat, warnings, re, time, pathlib
 import numpy as np
 import traceback, faulthandler ## Debugging library crashes
 faulthandler.enable()
@@ -118,7 +117,8 @@ ax2.set_ylabel('electron penetration depth (nm)')
 """
 
 
-plot_commands = {'Lines':line_plot_command, 'Plot gallery':Path('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
+def inmydir(fn): return pathlib.Path(__file__).resolve().parent/fn # finds the basename in the script's dir
+plot_commands = {'Lines':line_plot_command, 'Plot gallery': inmydir('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
 
 class Handler:
     ## == initialization == 
@@ -1136,7 +1136,7 @@ class Handler:
 
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 builder = Gtk.Builder()
-builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "nihilnovi.glade"))
+builder.add_from_file(str(inmydir("nihilnovi.glade")))
 def w(widgetname): return builder.get_object(widgetname)   # shortcut to access widgets 
 builder.connect_signals(Handler())
 
@@ -1148,49 +1148,51 @@ Gtk.main()
 
 
     # Conceptual todos:
-    #  * Plot gallery
-    #           scatter plot                scatter plot with error bars    scatter plot varying color/size     fill area between curves
-    #           horizontal bar plot         pie plot                        radar plot                          bar plot
-    #           2D contour plot             2D contour plot log(z)          waterfall plot                      3D surface
+    #  * Plot gallery ++
+    #           overlapping histograms      scatter with X+Y histograms     lollipop plot                   radar plot
+    #           box plot                    Gantt deadline plot             quiver                          streamplot
     #  * Graphical tweaks
-    #           twin axis                   assigning curve to axis         axis gap                            inset graph                         
-    #           manual arrow/text           auto-positioned arrow/text      horiz/vert shaded strip             round shaded area
+    #           on-curve labeling           cross-curves labeling           manual arrow/text                   auto-positioned arrow/text      
+    #           twin axis X                 twin axis Y                     assigning curve to axis             axis gap                        
+    #           inset graph                 horiz/vert shaded strip         shaded shapes
     #           black/white print style     fine+coarse grid                radial axes/grid
     #  * Data tricks
     #           horizontal clipping         vertical clipping               convolution (moving average)        interpolation to a new axis
-    #           user interpolated function  simple function fit             differential evolution fitting      correlation ellipse
-    #           1D/2D singular value decomp FFT/iFFT spectral filtering     smooth dataset joining
-    #  * Rewrite file browser cleanly
+    #           simple function fit         errorbar-aware fit              differential evolution fitting      covariance ellipse
+    #           1D/2D singular value decomp FFT/iFFT spectral filtering     smooth dataset joining              user interpolated function  
+    #  * Rewrite dataset browser cleanly
+    #      * use separate file readers in a ./readers/ directory;  each of them should have API inspired by Path.listdir(), ..isfile(), etc.
+    #      * run it for async file scanning (and pre-loading?) using Subprocess
+    #      * base them on kaitai (if installed)
+    #      * (if liborigin installed) try OPJ 
+    #      * replace liborigin with a new kaitai OPJ loader?
+    #      * (if zipfile installed) treat *.ZIP as a directory:   with zipfile.ZipFile('.vimrc.zip') as zf: d=zf.read(d[0].filename)    
+    #      * try to auto-extract data from bitmap/vectorized graphs (PDF -> pages -> graphs -> dataset)
     #  * robust_csv_parser.py should become genfromtxt_format_analysis and should only generate kwargs for genfromtxt() --> share with numpy project
     #           https://numpy.org/doc/stable/reference/generated/numpy.genfromtxt.html#numpy.genfromtxt
     #       * don't forget also non-number columns like strings, dates  ... numpy.array(['apples', 'foobar', 'cowboy'], dtype=object)
     #       * must not confuse comma as column delimiter and decimal separator
     #  * Sandboxed python interpreter using Subprocess
     #       * as a welcome side effect, each replot should cleanly re-load all variables (now, e.g. setting x[:]=0 persists over replots!)
-    #  * Async file loading using Subprocess
-    #  * Use own icons instead of stock icons (no dep on adwaita whatever)
+    #       * this may interfere with another nice tricks: 
+    #           * select record by clicking in the graph, right-click menu in the list)
+    #               http://scienceoss.com/interactively-select-points-from-a-plot-in-matplotlib/#more-14
+    #               http://scienceoss.com/interacting-with-figures-in-python/
+    #           * Enabling getting data online (e.g. from kaggle)
     #  * Rewrite whole GUI in tkinter,ttk
-    #           * accept drag and drop    https://www.mankier.com/n/tkDND  http://www.bitflipper.ca/Documentation/Tkdnd.html
+    #       * accept drag and drop    https://www.mankier.com/n/tkDND  http://www.bitflipper.ca/Documentation/Tkdnd.html
+    #       * Use own icons instead of stock icons (no dep on adwaita whatever)
 
     # Bugfix todos:
     #  * keep the xlim and ylim from the previous plot?  using plt.autoscale(False) ?
     #  * 'keramika 06062016.opj' and 'srovnani27a28.opj'  makes liborigin eat up all memory (check with new version)
 
     # Feature todos:
-    #  * select record by clicking in the graph, right-click menu in the list)
-    #        http://scienceoss.com/interactively-select-points-from-a-plot-in-matplotlib/#more-14
-    #        http://scienceoss.com/interacting-with-figures-in-python/
     #   * Accept the files as command-line parameter. Even better, encode every dataset as URI:  
     #      file://home/filip/example.dat?column=2      or     file://home/filip/ORIGIN.opj?sheet=MYDATA&column=TEMPERATURE
-    #   * Enable getting data online?
+    #   * on Windows, 1) check all deps with miniconda;  2) try to make clickable launcher https://pbpython.com/windows-shortcut.html
 
     # Rather technical todos:
-    #  * use separate file readers in a ./readers/ directory
-    #      * base them on kaitai (if installed)
-    #      * (if liborigin installed) try OPJ 
-    #      * replace liborigin with a new kaitai OPJ loader?
-    #      * (if zipfile installed) treat *.ZIP as a directory:   with zipfile.ZipFile('.vimrc.zip') as zf: d=zf.read(d[0].filename)    
-    #      * try to auto-extract data from bitmap/vectorized graphs (PDF -> pages -> graphs -> dataset)
     #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
     #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
 
@@ -1215,7 +1217,6 @@ Gtk.main()
 # 	* i položky v OPJ souborech
 # 	* nové filtrační kritérium: "graph/tab name"?
 # 	* pokud by "Dir" filtr schoval 'top-dir' adresář, nechat ho tam (nefiltrovat)
-# * command line options: files to select at opening;    --filtercolumn=  --filterfile=  --filterdir
 # * include interactive cheat sheet like https://pythonawesome.com/matplotlib-3-1-cheat-sheet/
 # * better plotting command editor:
 # 	* direct embedding of vim: https://stackoverflow.com/questions/13359699/pyside-embed-vim
