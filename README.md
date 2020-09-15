@@ -75,10 +75,10 @@ cd ..
 
 2. Meanwhile, you can download the project as a ZIP file, unpack the files e.g. into ```nihilnovi-master\``` in your directory. Alternately, you may clone the repository using git if you prefer.
 
-3. Once anaconda is installed, launch the *anaconda shell* from the system menu the following lines. You can use copy & paste.
+3. Once anaconda is installed (3 GB on hard drive?), launch the *anaconda shell* from the system menu the following lines. You can use copy & paste.
 
 ```	
-conda create nihilnovi
+conda create -n nihilnovi
 conda activate nihilnovi
 conda install -c conda-forge pygobject numpy matplotlib gtk3 adwaita-icon-theme
 ```	
@@ -191,7 +191,7 @@ to obtain a correctly sorted list of `'xx-123.4yy', 'xx-123.4zz', 'xx-1.233e+002
 
 ## PAQ - presumably asked questions
 #### Q: Will this work on Windows?
-A: The choice of Python3+Matplotlib+GTK3 dependencies was made with Windows compatibility in mind, but we will have to test it out.
+A: Yes, Windows 10 with Anaconda are covered in the installation chapter.
 
 #### Q: The application freezes when opening an OPJ file saved by Origin 9 or newer
 A: Yes, this is a known issue of the `liborigin2` library; it is going to be replaced either by [importOPJ](https://svn.code.sf.net/p/scidavis/svn/branches/origin_import/importOPJ/README) or by [kaitai](https://github.com/kaitai-io/kaitai_struct) parser.
