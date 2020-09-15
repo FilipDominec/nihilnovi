@@ -1,5 +1,5 @@
 <p align="center">
-<h> nihilnovi </h>
+<h1> nihilnovi </h1>
 <i>scientific data plotting program that does nothing new (but tries to do it well)</i> </p>
 
 1. **Browsing data** is as easy as browsing a photo gallery. Select files in the left panel (hold ```Ctrl``` or ```Shift``` to select more of them). Data and header formats are auto-detected and the file contents is immediatelly plotted in the right panel with an assigned colour.
