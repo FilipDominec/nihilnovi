@@ -1191,10 +1191,12 @@ Gtk.main()
     #   * Accept the files as command-line parameter. Even better, encode every dataset as URI:  
     #      file://home/filip/example.dat?column=2      or     file://home/filip/ORIGIN.opj?sheet=MYDATA&column=TEMPERATURE
     #   * on Windows, 1) check all deps with miniconda;  2) try to make clickable launcher https://pbpython.com/windows-shortcut.html
+    #                   3) check and report the diacritics-in-username trouble on https://groups.google.com/a/continuum.io/g/anaconda/
 
     # Rather technical todos:
     #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
     #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
+    #  * enable defining fixed figure sizes (good for publication)
 
     #  * line as actor?   ... self.line, = self.Axes.plot([], [], animated=True)
     #                         self.background=self.canvas1.copy_from_bbox(self.Axes.bbox)
