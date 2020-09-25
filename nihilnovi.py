@@ -675,8 +675,10 @@ class Handler:
         ## Setting persistent view is somewhat kafkaesque with matplotlib. 
         ## self.xlim        remembers the correct view from the last GUI resize , but
         ## ax.get_xlim      from the start of this method returns the wrong (autoscaled) limits, why?
-        if not w('chk_autoscale_x').get_active() and self.xlim: self.ax.set_xlim(self.xlim)
-        if not w('chk_autoscale_y').get_active() and self.ylim: self.ax.set_ylim(self.ylim)
+        init_time = time.time()
+        print(f'\nt = {time.time()-init_time:8.3f}s: Starting replot')
+        #if not w('chk_autoscale_x').get_active() and self.xlim: self.ax.set_xlim(self.xlim)
+        #if not w('chk_autoscale_y').get_active() and self.ylim: self.ax.set_ylim(self.ylim)
 
         ## Load all row data
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
@@ -731,8 +733,8 @@ class Handler:
         #print(row_data)
         if plot_command.strip() == '': return
         tosave=[]
-        init_time = time.time()
         #np = numpy
+        print(f't = {time.time()-init_time:8.3f}s: Preparing execution environment')
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
         exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                 'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
@@ -741,6 +743,7 @@ class Handler:
         #print(exec_env)
 
         #self.fig.clf() ## clear figure
+        print(f't = {time.time()-init_time:8.3f}s: Plotting script starting')
         try:
             exec(plot_command, exec_env)
             #print("JUST AFTER COMMAND")
@@ -751,7 +754,7 @@ class Handler:
             print("OTHER ERROR")
             traceback.print_exc() ## TODO locate the error
 
-        print('Plotting script finished in {:.3f} s'.format(time.time()-init_time)); init_time = time.time()
+        print(f't = {time.time()-init_time:8.3f}s: Plotting script finished')
         if tosave != []: print('Exported image files in the `tosave` list:', tosave)
         try: 
             for savefilename in list(tosave):
@@ -783,7 +786,7 @@ class Handler:
         #cursor = Cursor(self.ax, color='red', linewidth=.5)  ## FIXME http://blog.yjl.im/2009/10/blit-cursor-in-matplotlib.html
         self.canvas.draw()
 
-        print('Drawing finished in {:.3f} s'.format(time.time()-init_time))
+        print(f't = {time.time()-init_time:8.3f}s: Matplotlib drawing finished.')
         return True
 
         """
@@ -1196,6 +1199,7 @@ Gtk.main()
     #                   3) check and report the diacritics-in-username trouble on https://groups.google.com/a/continuum.io/g/anaconda/
 
     # Rather technical todos:
+    #  * complete rewrite of the modular file/dataset loader
     #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
     #       and here: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
     #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 

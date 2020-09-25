@@ -104,9 +104,9 @@ def loadtxt(file_name, sizehint=None):
     if allowCommaDecimalSep:
         allChars = ''.join(filteredLines)
         countComma, countDot = len(re.findall(r',[\d\s]', allChars)), len(re.findall(r'\.[\d\s]', allChars))
-        print('countComma, countDot',countComma, countDot)
+        if very_verbose: print('countComma, countDot',countComma, countDot)
         if countComma > countDot:
-            print('detected that comma is used more often of dot, trying to accept it as a decimal separator',countComma, countDot)
+            if verbose: print('detected that comma is used more often of dot, trying to accept it as a decimal separator',countComma, countDot)
             filteredLines = [re.sub(r',([\d\s])',   r'.\1',  fl) for fl in filteredLines]
             tryColSeparators.copy().remove(',')
 
