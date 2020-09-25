@@ -1184,6 +1184,8 @@ Gtk.main()
     #       * Use own icons instead of stock icons (no dep on adwaita whatever)
 
     # Bugfix todos:
+    #  * log y axis -> replotting -> app often lagging for some 10s of seconds! what command causes the trouble?
+    #  * cannot load real csv with commas as separators!
     #  * keep the xlim and ylim from the previous plot?  using plt.autoscale(False) ?
     #  * 'keramika 06062016.opj' and 'srovnani27a28.opj'  makes liborigin eat up all memory (check with new version)
 
