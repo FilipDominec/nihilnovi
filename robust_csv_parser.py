@@ -17,20 +17,14 @@ This module implements following improvements:
 4)  It recognizes parameters in the file header, and returns them as a dict.
 5)  If not specified otherwise, it does not clog the stderr with error reports .
 
-# TODO https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
+Optional TODOs
 """
 
 ## Import common moduli
-import matplotlib, sys, os, stat
-import matplotlib.pyplot as plt
 import numpy as np
-#import pandas as pd
-from scipy.constants import c, hbar, pi
 import re
 import warnings     
 with warnings.catch_warnings(): warnings.simplefilter("ignore")
-
-
 
 
 verbose                     = False
@@ -44,7 +38,7 @@ strict_table_layout         = False                      # when True, doubled co
 
 maxLineLength               = 10000             # hardly any numeric table in ASCII will have more than one 10kB per line 
 
-allowCommaDecimalSep        = True
+allowCommaDecimalSep        = False             # note: causes wrong detection in true CSV (where , is column sep)
 
 headerOrdinateAllowOmit     = True              # e.g. three-column CSV files sometimes have only two names in header
 headerOrdinateSuggestName   = 'x'               # ... in such a case, the first column name will added 

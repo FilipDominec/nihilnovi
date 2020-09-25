@@ -1197,6 +1197,7 @@ Gtk.main()
 
     # Rather technical todos:
     #  * https://www.python.org/dev/peps/pep-0257/ - Docstring Conventions
+    #       and here: https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard
     #  * PEP8: . In Python 3, "raise X from Y" should be used to indicate explicit replacement without losing the original traceback. 
     #  * enable defining fixed figure sizes (good for publication)
 
