@@ -17,7 +17,6 @@ This module implements following improvements:
 4)  It recognizes parameters in the file header, and returns them as a dict.
 5)  If not specified otherwise, it does not clog the stderr with error reports .
 
-Optional TODOs
 """
 
 ## Import common moduli
