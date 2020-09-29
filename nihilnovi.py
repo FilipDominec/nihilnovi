@@ -491,6 +491,12 @@ class Handler:
 
                 ## Seek the corresponding spreadsheet and column by their name
                 spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName[2:])
+                              # TODO liborigin API has changed, see /p/nihilnovi/test_files-real_life/comp*opj: 
+                              #   File "/home/dominecf/bin/nin", line 1067, in on_treeview1_row_expanded
+                              #     self.populateTreeStore(treeStore, parent_row=treeIter)
+                              #   File "/home/dominecf/bin/nin", line 493, in populateTreeStore
+                              #     spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName[2:])
+                              # ValueError: b'ledavaspec181' is not in list
                 spread = opj['FileContent']['spreads'][spreadsheet_index]
                 y_column_index = [column.name for column in spread.columns].index(curve.yColumnName)
                 x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
@@ -676,7 +682,7 @@ class Handler:
         ## self.xlim        remembers the correct view from the last GUI resize , but
         ## ax.get_xlim      from the start of this method returns the wrong (autoscaled) limits, why?
         init_time = time.time()
-        print(f'\nt = {time.time()-init_time:8.3f}s: Starting replot')
+        print(f'\nt = {time.time()-init_time:15.3f}s: Starting replot')
         #if not w('chk_autoscale_x').get_active() and self.xlim: self.ax.set_xlim(self.xlim)
         #if not w('chk_autoscale_y').get_active() and self.ylim: self.ax.set_ylim(self.ylim)
 
@@ -734,7 +740,7 @@ class Handler:
         if plot_command.strip() == '': return
         tosave=[]
         #np = numpy
-        print(f't = {time.time()-init_time:8.3f}s: Preparing execution environment')
+        print(f't = {time.time()-init_time:15.3f}s: Preparing execution environment')
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
         exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                 'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
@@ -743,7 +749,7 @@ class Handler:
         #print(exec_env)
 
         #self.fig.clf() ## clear figure
-        print(f't = {time.time()-init_time:8.3f}s: Plotting script starting')
+        print(f't = {time.time()-init_time:15.3f}s: Plotting script starting')
         try:
             exec(plot_command, exec_env)
             #print("JUST AFTER COMMAND")
@@ -754,7 +760,7 @@ class Handler:
             print("OTHER ERROR")
             traceback.print_exc() ## TODO locate the error
 
-        print(f't = {time.time()-init_time:8.3f}s: Plotting script finished')
+        print(f't = {time.time()-init_time:15.3f}s: Plotting script finished')
         if tosave != []: print('Exported image files in the `tosave` list:', tosave)
         try: 
             for savefilename in list(tosave):
@@ -786,7 +792,7 @@ class Handler:
         #cursor = Cursor(self.ax, color='red', linewidth=.5)  ## FIXME http://blog.yjl.im/2009/10/blit-cursor-in-matplotlib.html
         self.canvas.draw()
 
-        print(f't = {time.time()-init_time:8.3f}s: Matplotlib drawing finished.')
+        print(f't = {time.time()-init_time:15.3f}s: Matplotlib drawing finished.')
         return True
 
         """
@@ -1272,7 +1278,6 @@ Gtk.main()
 # 	* export do PNG, PDF, PNG+PDF (...) na uživatelské kliknutí (na základě uživatelem definované proměnné "tosave")
 # 		se zohledněním současného rozsahu os a jejich logaritmičnosti atp.
 # 	* drag'n'drop of a file into area -> direct plot
-# 	* try engauge-digitizer on picture data extraction (non-intercative mode in Python?)
 # 	* this is hard: plotrc*.*.py could be a standalone Python script - 
 # 		* so it needs a "header section" loading files 
 # 			* requires robust_csv_import.py to be system-wide accessible, possibly pushing it as a part of numpy project (politics!)
@@ -1292,16 +1297,15 @@ Gtk.main()
 # 			You can start with: http://doc.qt.io/qt-5/qtwidgets-richtext-syntaxhighlighter-example.html
 # 			read the article below for python: https://wiki.python.org/moin/PyQt/Python syntax highlighting
 # 			http://doc.qt.io/qt-5/qtwidgets-richtext-syntaxhighlighter-example.html
-# 	* tips for the README: 
-# 		* With plotcommander workflow, you usually store the original raw data with the processing procedure, rather than the
-# 			numerical results of processing. This way, your workflow is self-documenting, it scales well with data amount and 
-# 			you can repeat it easily again.
-# 	* přehled sci formátů (do https://wiki.python.org/moin/NumericAndScientific/Formats příp. též do https://docs.scipy.org/doc/scipy/reference/io.html)
+# 	* scientific formats (do https://wiki.python.org/moin/NumericAndScientific/Formats příp. též do https://docs.scipy.org/doc/scipy/reference/io.html)
 # 		* liborigin: OPJ
 # 		* pandas: CSV, XLS, HDF, SQL, JSON, HTML, Pickle
-# 		* kaitai: numerous formats, needs compilation
-# 		* openpyxl:	Excel2010 (r/w)			https://openpyxl.readthedocs.io/en/stable/
+# 		* kaitai: numerous formats, needs compilation - and a wrapper that picks "the longest array"
+#               * ? : HDF5
+#               * gwyddion: weirdest 2D and 3D formats, compiled into a DLL?
+# 		* xlrd or openpyxl:	Excel2010 (r/w)			https://openpyxl.readthedocs.io/en/stable/
 # 		* pupynere: CDF				https://www.logilab.org/blogentry/18838
+# 	        * (engauge-digitizer on plotted graph data extraction, non-intercative mode in Python?)
 # 
 
 ## To-Do 
