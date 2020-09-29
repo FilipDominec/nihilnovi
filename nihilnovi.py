@@ -1165,10 +1165,6 @@ Gtk.main()
     #           twin axis X                 twin axis Y                     assigning curve to axis             axis gap                        
     #           inset graph                 horiz/vert shaded strip         shaded shapes
     #           black/white print style     fine+coarse grid                radial axes/grid
-    #  * Data tricks
-    #           horizontal clipping         vertical clipping               convolution (moving average)        interpolation to a new axis
-    #           simple function fit         errorbar-aware fit              differential evolution fitting      covariance ellipse
-    #           1D/2D singular value decomp FFT/iFFT spectral filtering     smooth dataset joining              user interpolated function  
     #  * Rewrite dataset browser cleanly
     #      * use separate file readers in a ./readers/ directory;  each of them should have API inspired by Path.listdir(), ..isfile(), etc.
     #      * run it for async file scanning (and pre-loading?) using Subprocess
@@ -1191,12 +1187,13 @@ Gtk.main()
     #  * Rewrite whole GUI in tkinter,ttk
     #       * accept drag and drop    https://www.mankier.com/n/tkDND  http://www.bitflipper.ca/Documentation/Tkdnd.html
     #       * Use own icons instead of stock icons (no dep on adwaita whatever)
+    #  * keep the xlim and ylim from the previous plot through the [F3]-VARIABLES panel  using plt.autoscale(False) ?
 
     # Bugfix todos:
-    #  * log y axis -> replotting -> app often lagging for some 10s of seconds! what command causes the trouble?
-    #  * cannot load real csv with commas as separators!
-    #  * keep the xlim and ylim from the previous plot?  using plt.autoscale(False) ?
+    #  * ask about overwriting your own script; also ask about closing a window with unsaved script
+    #  * temporarily disabled - cannot loading a DAT file with commas as decimal separators!
     #  * 'keramika 06062016.opj' and 'srovnani27a28.opj'  makes liborigin eat up all memory (check with new version)
+    #  * can still reproduce this? log y axis -> replotting -> app often lagging for some 10s of seconds! what command causes the trouble?
 
     # Feature todos:
     #   * Accept the files as command-line parameter. Even better, encode every dataset as URI:  
