@@ -382,6 +382,7 @@ class Handler:
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
         assert not self.rowtype_is_leaf(parentrowtype)
 
+        columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents and sort it alphabetically
 
@@ -417,7 +418,6 @@ class Handler:
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             txt = self.dat_parse_or_cache(basepath)
             data_array, header, parameters = txt 
-            columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
             #columnFilterString = 'gamma|fermi'
             columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
             #FIXME File "/home/dominecf/p/nihilnovi/nihilnovi.py", line 303, in populateTreeStore
@@ -462,9 +462,15 @@ class Handler:
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
+            ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)
             numbered_valid_columns = [(n, self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment)) for n, column in 
                     enumerate(opj['FileContent']['spreads'][parent_spreadsheet].columns) if 
-                    getattr(column, 'type') != 6] ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)
+                    (getattr(column, 'type') != 6  and  
+                            (not columnFilterString or 
+                                re.findall(columnFilterString, column.name.decode('utf-8')) or 
+                                re.findall(columnFilterString, column.comment.decode('utf-8'))))] 
+            print("DEBUG: numbered_valid_columns = ", numbered_valid_columns)
+
             columnNumbers, itemShowNames  = zip(*numbered_valid_columns)
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
@@ -601,6 +607,7 @@ class Handler:
             # TODO: what does opj['FileContent']['spreads'][3].multisheet mean?
             x, y = [opj['FileContent']['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
             x, y = self.safe_np_array(x, y)
+            #TODO 2020-10-25: filter < 1e-287 garbage from origin
             xlabel, ylabel = [self.decode_origin_label(opj['FileContent']['spreads'][rowsheet].columns[c].name) for c in [rowxcolumn, rowycolumn]] 
             parameters = {} ## todo: is it possible to load parameters from origin column?
             descriptor = rowfilepath+" "+ylabel+" "+self.decode_origin_label(opj['FileContent']['spreads'][rowsheet].columns[rowycolumn].comment) ## FIXME XXX
