@@ -292,6 +292,7 @@ class Handler:
         # }}}
     def decode_origin_label(self, bb, splitrows=False): # {{{
         bb = bb.decode('utf-8', errors='ignore').replace('\r', '').strip()
+        bb = bb.split('@${')[0] # remove origin's mysterious references in labels
         bb = bb.replace('\\-', '_')     ## this is the lower index - todo: use latex notation?
         for asc,greek in zip('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 'αβγδεζηθιjκλμνοπρςστυφχξψωΑΒΓΔΕΖΗΘΙJΚΛΜΝΟΠQΡΣΤΥΦΧΞΨΩ'):
             bb = bb.replace('\\g(%s)' % asc, greek)
