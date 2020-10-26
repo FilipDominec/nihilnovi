@@ -462,10 +462,11 @@ class Handler:
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
-            itemShowNames = [self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment) for column in 
-                    opj['FileContent']['spreads'][parent_spreadsheet].columns]
+            numbered_valid_columns = [(n, self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment)) for n, column in 
+                    enumerate(opj['FileContent']['spreads'][parent_spreadsheet].columns) if 
+                    getattr(column, 'type') != 6] ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)
+            columnNumbers, itemShowNames  = zip(*numbered_valid_columns)
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
-            columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
         elif parentrowtype == 'opjgraph':
@@ -588,11 +589,15 @@ class Handler:
         ## Load the data
         rowfilepath = self.row_prop(row, 'filepath')
         rowtype     = self.row_prop(row, 'rowtype')
-        rowxcolumn  = 0 ## TODO allow ordinate also on >0th column 
         rowycolumn  = self.row_prop(row, 'column')
         rowsheet    = self.row_prop(row, 'spreadsheet')
         if  rowtype == 'opjcolumn':
             opj = self.origin_parse_or_cache(rowfilepath)
+            def find_first_numerical_column(cols):
+                for n, column in enumerate(cols):
+                    if getattr(column, 'type') != 6: ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)eI
+                        return n
+            rowxcolumn  = find_first_numerical_column(opj['FileContent']['spreads'][rowsheet].columns)
             # TODO: what does opj['FileContent']['spreads'][3].multisheet mean?
             x, y = [opj['FileContent']['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
             x, y = self.safe_np_array(x, y)
