@@ -469,9 +469,7 @@ class Handler:
                             (not columnFilterString or 
                                 re.findall(columnFilterString, column.name.decode('utf-8')) or 
                                 re.findall(columnFilterString, column.comment.decode('utf-8'))))] 
-            print("DEBUG: numbered_valid_columns = ", numbered_valid_columns)
-
-            columnNumbers, itemShowNames  = zip(*numbered_valid_columns)
+            columnNumbers, itemShowNames  = zip(*numbered_valid_columns) if numbered_valid_columns else [], []
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
@@ -570,7 +568,6 @@ class Handler:
         w('treeview1').queue_draw()
         # }}}
     def safe_np_array(self, x,y): ## converts two lists to 2 numpy array; if float() fails when processing any (x,y) row, leave it out {{{
-        if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## (fixme) the last row from liborigin is sometimes erroneous zero
         if len(x) < len(y): y = y[0:len(x)]             ## in any case, match the length of x- and y-data
         if len(y) < len(x): x = x[0:len(y)] 
         try:                                    ## fast string-to-float conversion
@@ -584,6 +581,8 @@ class Handler:
                 except ValueError:
                     pass
             x,y = x0, y0
+        mask = np.logical_and(y!=0, np.abs(y)>1e-250) ## stuffing garbage at the dataset end
+        x, y = x[mask], y[mask]
         return x, y 
     # }}}
     def load_row_data(self, row):# {{{
