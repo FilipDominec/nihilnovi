@@ -198,7 +198,7 @@ class Handler:
             #print('testing ', filename, 'result=', result)
             return result
         except FileNotFoundError: ## this may be e.g. due to a broken symlink
-            print('warning: error occured reading ', filename)
+            print('warning: error occured reading ', filename) ## TODO why is this called twice for each file/dir? 
             return False
         # }}}
     def row_type_from_fullpath(self, fullpath):# {{{
@@ -292,6 +292,7 @@ class Handler:
         # }}}
     def decode_origin_label(self, bb, splitrows=False): # {{{
         bb = bb.decode('utf-8', errors='ignore').replace('\r', '').strip()
+        bb = bb.split('@${')[0] # remove origin's mysterious references in labels
         bb = bb.replace('\\-', '_')     ## this is the lower index - todo: use latex notation?
         for asc,greek in zip('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', 'αβγδεζηθιjκλμνοπρςστυφχξψωΑΒΓΔΕΖΗΘΙJΚΛΜΝΟΠQΡΣΤΥΦΧΞΨΩ'):
             bb = bb.replace('\\g(%s)' % asc, greek)
@@ -362,6 +363,7 @@ class Handler:
             self.lockTreeViewEvents = True
             self.tsFiles.clear()            ## TODO: remember the unpacked rows, and also the selected ones
             self.clearAllPlotIcons(self.tsFiles.get_iter_first())  ## TODO: obsolete, rm!
+                                            ## TODO remember and try to renew the unpacked rows *also* when dir/column/filter changes
             self.lockTreeViewEvents = False
 
             ## The first node of cleared treeStore will point to the above directory, enabling one to browse whole filesystem 
@@ -381,6 +383,7 @@ class Handler:
         parentrowtype = self.row_prop(parent_row, 'rowtype') if parent_row else 'dir'
         assert not self.rowtype_is_leaf(parentrowtype)
 
+        columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents and sort it alphabetically
 
@@ -416,7 +419,6 @@ class Handler:
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             txt = self.dat_parse_or_cache(basepath)
             data_array, header, parameters = txt 
-            columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
             #columnFilterString = 'gamma|fermi'
             columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
             #FIXME File "/home/dominecf/p/nihilnovi/nihilnovi.py", line 303, in populateTreeStore
@@ -461,10 +463,20 @@ class Handler:
         elif parentrowtype == 'opjspread':
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
-            itemShowNames = [self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment) for column in 
-                    opj['FileContent']['spreads'][parent_spreadsheet].columns]
+            ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)
+            print("DEBUG: columnFilterString = ", columnFilterString)
+            print("opj['FileContent']['spreads'][parent_spreadsheet].columns", [(c.name,c.type) for c in opj['FileContent']['spreads'][parent_spreadsheet].columns])
+            numbered_valid_columns = [(n, self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment)) for n, column in 
+                    enumerate(opj['FileContent']['spreads'][parent_spreadsheet].columns) if 
+                    (getattr(column, 'type') != 6  and  
+                            (not columnFilterString or 
+                                re.findall(columnFilterString, column.name.decode('utf-8')) or 
+                                re.findall(columnFilterString, column.comment.decode('utf-8'))))] 
+            print("DEBUG: numbered_valid_columns = ", numbered_valid_columns)
+            columnNumbers, itemShowNames  = zip(*numbered_valid_columns) # if numbered_valid_columns else [], []
+            print("DEBUG: columnNumbers = ", columnNumbers)
+            print("DEBUG: itemShowNames = ", itemShowNames)
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
-            columnNumbers = list(range(len(itemShowNames)))  
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
         elif parentrowtype == 'opjgraph':
@@ -474,7 +486,7 @@ class Handler:
 
             ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
             curves = opj['FileContent']['graphs'][parent_graph].layers[layerNumber].curves
-            #print("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
+            print("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
             legend_box = self.decode_origin_label(opj['FileContent']['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
             legends = []
             for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
@@ -490,6 +502,8 @@ class Handler:
                 #print([spread.name for spread in opj['spreads']], (curve.dataName[2:]))
 
                 ## Seek the corresponding spreadsheet and column by their name
+                print("[spread.name for spread in opj['FileContent']['spreads']]", [spread.name for spread in opj['FileContent']['spreads']])
+                #spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName)
                 spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName[2:])
                               # TODO liborigin API has changed, see /p/nihilnovi/test_files-real_life/comp*opj: 
                               #   File "/home/dominecf/bin/nin", line 1067, in on_treeview1_row_expanded
@@ -562,7 +576,6 @@ class Handler:
         w('treeview1').queue_draw()
         # }}}
     def safe_np_array(self, x,y): ## converts two lists to 2 numpy array; if float() fails when processing any (x,y) row, leave it out {{{
-        if len(x)>2 and x[-2]>x[-1]*1e6: x=x[:-1]       ## (fixme) the last row from liborigin is sometimes erroneous zero
         if len(x) < len(y): y = y[0:len(x)]             ## in any case, match the length of x- and y-data
         if len(y) < len(x): x = x[0:len(y)] 
         try:                                    ## fast string-to-float conversion
@@ -576,6 +589,8 @@ class Handler:
                 except ValueError:
                     pass
             x,y = x0, y0
+        mask = np.logical_and(y!=0, np.abs(y)>1e-250) ## stuffing garbage at the dataset end
+        x, y = x[mask], y[mask]
         return x, y 
     # }}}
     def load_row_data(self, row):# {{{
@@ -587,22 +602,28 @@ class Handler:
         ## Load the data
         rowfilepath = self.row_prop(row, 'filepath')
         rowtype     = self.row_prop(row, 'rowtype')
-        rowxcolumn  = 0 ## TODO allow ordinate also on >0th column 
         rowycolumn  = self.row_prop(row, 'column')
         rowsheet    = self.row_prop(row, 'spreadsheet')
         if  rowtype == 'opjcolumn':
             opj = self.origin_parse_or_cache(rowfilepath)
+            def find_first_numerical_column(cols):
+                for n, column in enumerate(cols):
+                    if getattr(column, 'type') != 6: ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)eI
+                        return n
+            rowxcolumn  = find_first_numerical_column(opj['FileContent']['spreads'][rowsheet].columns)
             # TODO: what does opj['FileContent']['spreads'][3].multisheet mean?
             x, y = [opj['FileContent']['spreads'][rowsheet].columns[c].data for c in [rowxcolumn, rowycolumn]]
             x, y = self.safe_np_array(x, y)
+            #TODO 2020-10-25: filter < 1e-287 garbage from origin
             xlabel, ylabel = [self.decode_origin_label(opj['FileContent']['spreads'][rowsheet].columns[c].name) for c in [rowxcolumn, rowycolumn]] 
             parameters = {} ## todo: is it possible to load parameters from origin column?
             descriptor = rowfilepath+" "+ylabel+" "+self.decode_origin_label(opj['FileContent']['spreads'][rowsheet].columns[rowycolumn].comment) ## FIXME XXX
             return x, y, descriptor, parameters, xlabel, ylabel
         elif rowtype in ('csvtwocolumn', 'csvcolumn'): 
             data_array, header, parameters = self.dat_parse_or_cache(rowfilepath)
+            rowxcolumn = 0
             if rowtype == 'csvtwocolumn': 
-                rowxcolumn, rowycolumn = 0, 1
+                rowycolumn = 1
                 ## in fact, file denoted as "csvtwocolumn" may have only one column, in such a case generate simple integer x-axis numbering
                 if len(header) == 1: 
                     data_array = np.vstack([np.arange(len(data_array)), data_array.T]).T # 
@@ -1203,6 +1224,7 @@ Gtk.main()
     #      file://home/filip/example.dat?column=2      or     file://home/filip/ORIGIN.opj?sheet=MYDATA&column=TEMPERATURE
     #   * on Windows, 1) check all deps with miniconda;  2) try to make clickable launcher https://pbpython.com/windows-shortcut.html
     #                   3) check and report the diacritics-in-username trouble on https://groups.google.com/a/continuum.io/g/anaconda/
+    #   * allow direct user interaction - see https://stackoverflow.com/questions/33569626/matplotlib-responding-to-click-events
 
     # Rather technical todos:
     #  * complete rewrite of the modular file/dataset loader
