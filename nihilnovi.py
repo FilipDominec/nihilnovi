@@ -1187,6 +1187,9 @@ Gtk.main()
     #  * Rewrite whole GUI in tkinter,ttk
     #       * accept drag and drop    https://www.mankier.com/n/tkDND  http://www.bitflipper.ca/Documentation/Tkdnd.html
     #       * Use own icons instead of stock icons (no dep on adwaita whatever)
+    #       * TTK themes - https://stackoverflow.com/questions/21396809/multiple-tkinter-windows-look-different-when-closing-and-reopening-window
+    #       * file browser get inspired from here http://code.activestate.com/recipes/580772-file-browser-for-tkinter-using-idle-gui-library/
+    #       *   
     #  * keep the xlim and ylim from the previous plot through the [F3]-VARIABLES panel  using plt.autoscale(False) ?
 
     # Bugfix todos:
