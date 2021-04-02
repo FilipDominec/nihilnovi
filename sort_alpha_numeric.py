@@ -19,6 +19,7 @@ def generate_numeric_pairs(instring):
     span0, span2 = 0, 0
     for match in re.finditer('[-+]?(((\d+(\.\d*)?)|(\.\d+))([eE][+-]?\d+)?)', instring):
         span1, span2 = match.span()
+        if span0==span1: span1+=1 ## strip hyphen if number follows a number (it is probably a date like "YYYY-MM-DD")
         yield instring[span0:span1], float(instring[span1:span2])   ## non-numeric part and numeric part
         span0 = span2
     if len(instring)>0 and span2<len(instring):
