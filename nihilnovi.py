@@ -926,21 +926,23 @@ class Handler:
                 filenamepath = self.row_prop(self.tsFiles.get_iter(treepath), 'filepath')
                 dirpath, filename = pathlib.Path(os.path.dirname(filenamepath)), pathlib.Path(os.path.basename(filenamepath))
                 ## TODO 
-                print("DEBUG: filenamepath = ", filenamepath, dirpath, filename)
                 trashpath = dirpath / 'trash'
-                if not (dirpath/filename).is_file():
-                    print('File no more exists:', dirpath)
-                if not trashpath.is_dir():
-                    print('Would make DIR:', dirpath)
-                print(f'Would move {filename} from {dirpath} to {trashpath} ...' )
 
                 trashpath.mkdir(parents=False, exist_ok=True)
                 import shutil
                 shutil.move(filenamepath, trashpath)
-                    
-                #p.mkdir(parents=True, exist_ok=True)
             except Exception as e:
                 print(e)
+        self.on_btn_RefreshFolders_clicked(None)
+    # }}}
+    def on_btn_RefreshFolders_clicked(self, dummy): # {{{
+        print('Refresh STUB')
+        #treeIter = treeStore.get_iter_first()
+        treeIter        = self.tsFiles.get_iter_first()
+        if self.lockTreeViewEvents: 
+            print("AVOIDING RECURSION")
+            return      ## during folding, prevent triggering 'on_select' events on all node children 
+        self.populateTreeStore_keep_exp_and_sel(reset_path=self.row_prop(treeIter, 'filepath'))
     # }}}
 
          
