@@ -920,13 +920,27 @@ class Handler:
     def on_btn_TrashSelFiles_clicked(self, dummy): # {{{
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
-        try:
-            print('TODO on_btn_TrashSelFiles_clicked: stub')
-            ## TODO 
-            #p = pathlib.Path("temp/")
-            #p.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            print(e)
+        print("DEBUG: pathlist = ", pathlist)
+        for treepath in pathlist:
+            try:
+                filenamepath = self.row_prop(self.tsFiles.get_iter(treepath), 'filepath')
+                dirpath, filename = pathlib.Path(os.path.dirname(filenamepath)), pathlib.Path(os.path.basename(filenamepath))
+                ## TODO 
+                print("DEBUG: filenamepath = ", filenamepath, dirpath, filename)
+                trashpath = dirpath / 'trash'
+                if not (dirpath/filename).is_file():
+                    print('File no more exists:', dirpath)
+                if not trashpath.is_dir():
+                    print('Would make DIR:', dirpath)
+                print(f'Would move {filename} from {dirpath} to {trashpath} ...' )
+
+                trashpath.mkdir(parents=False, exist_ok=True)
+                import shutil
+                shutil.move(filenamepath, trashpath)
+                    
+                #p.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                print(e)
     # }}}
 
          
@@ -1112,6 +1126,7 @@ class Handler:
         ## Update the plot command
         if w('rad_plotstyle_rc').get_active():
              ## TODO if it does not exist
+            ## TODO PREVENT OVERWRITING OF UNSAVED USER SCRIPT!
             self.update_plotcommand_from_rcfile(allow_overwrite_by_empty=False)
         elif self.relevant_rc_filename():
             w('rad_plotstyle_rc').set_active(True)
@@ -1123,6 +1138,7 @@ class Handler:
     def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
         ## TODO reasonable behaviour for block-selection over different unpacked directories/files
         ## Expand a directory by clicking, but do not allow user to select it
+        ## TODO shift+click could select whole directory contents (and unpack it)
         treeIter        = self.tsFiles.get_iter(treePath)
         #self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
 
