@@ -1366,3 +1366,6 @@ Gtk.main()
 #  [x] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
 #  [ ] robust_csv_parser.py", line 70, nests FileNotFoundError
 #  [ ] check the possibilities of graph digitizer/OCR: http://eumenidae.blogspot.cz/2012/12/quick-n-dirty-wxpython-plot-digitiser.html
+
+#  [ ] implement where useful: from collections import namedtuple as nt; ntup = nt('name', 'a b c')
+  #[ ] rewrite to tkinter + pygubu?
