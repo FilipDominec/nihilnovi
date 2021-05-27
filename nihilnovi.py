@@ -759,11 +759,11 @@ class Handler:
         #print(row_data)
         if plot_command.strip() == '': return
         tosave=[]
-        #np = numpy
         print(f't = {time.time()-init_time:15.3f}s: Preparing execution environment')
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
         exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
+                'xs':np.array(xs).copy(), 'ys':np.array(ys).copy(), 'labels':labels, 'sharedlabels':sharedlabels, 
+                'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                 'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                 'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
         #print(exec_env)
