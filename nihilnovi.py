@@ -709,7 +709,7 @@ class Handler:
 
         ## Load all row data
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
-        if len(pathlist) == 0: return
+        #if len(pathlist) == 0: return
         error_counter = 0
         row_data = []
         row_labels = []
@@ -719,11 +719,11 @@ class Handler:
                 row_data.append(self.load_row_data(self.tsFiles.get_iter(path)))
                 plotted_paths.append(path)
             except (RuntimeError, ValueError):
-                traceback.print_exc()
+                traceback.print_exc() ## TODO - show the error in a GUI textbox, possibly also moving cursor in the script editor
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
-        if row_data == []: return False
-        xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data)       
+        #if row_data == []: return False
+        xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data) if row_data else [[] for _ in range(6)]
         labels, sharedlabels = self.dedup_keys_values(labels_orig, output_removed=True)
         #print('LABELS', labels, 'sharedlabels', sharedlabels)
 
@@ -751,7 +751,6 @@ class Handler:
         # 3) it may be in the params dict, or in the filename (for csvtwocolumn), or in the header of csvcolumn, opjcolumn etc.
 
 
-        #print("self.ax.axis", self.ax.axis())
         ## Plot all curves sequentially
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
