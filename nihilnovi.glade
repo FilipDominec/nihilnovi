@@ -492,10 +492,10 @@
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkButton" id="btn_EditSelFiles1">
-                        <property name="label" translatable="yes">Mo_ve data</property>
+                      <object class="GtkButton" id="btn_TrashData">
+                        <property name="label" translatable="yes">Trash data</property>
                         <property name="visible">True</property>
-                        <property name="sensitive">False</property>
+                        <property name="sensitive">True</property>
                         <property name="can_focus">True</property>
                         <property name="receives_default">True</property>
                         <property name="tooltip_text" translatable="yes">Creates a "trash" folder in the same directory as selected files are, and moves them. They can be still accessed there. </property>
