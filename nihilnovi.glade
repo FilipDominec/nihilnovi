@@ -492,13 +492,8 @@
                       </packing>
                     </child>
                     <child>
-<<<<<<< HEAD
                       <object class="GtkButton" id="btn_TrashData">
                         <property name="label" translatable="yes">Trash data</property>
-=======
-                      <object class="GtkButton" id="btn_TrashFiles">
-                        <property name="label" translatable="yes">Trash files</property>
->>>>>>> a61210efa3e126dd57efee40d0352a4e1e639509
                         <property name="visible">True</property>
                         <property name="sensitive">True</property>
                         <property name="can_focus">True</property>
