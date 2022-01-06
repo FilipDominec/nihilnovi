@@ -710,8 +710,6 @@ class Handler:
 
         ## Load all row data
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
-        print('---PL.plot', pathlist)
-        if len(pathlist) == 0: return
         error_counter = 0
         row_data = []
         row_labels = []
@@ -721,11 +719,10 @@ class Handler:
                 row_data.append(self.load_row_data(self.tsFiles.get_iter(path)))
                 plotted_paths.append(path)
             except (RuntimeError, ValueError):
-                traceback.print_exc()
+                traceback.print_exc() ## TODO - show the error in a GUI textbox, possibly also moving cursor in the script editor
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
-        if row_data == []: return False # todo: rm this to allow no-file plotting (e.g. of mathematical functions)
-        xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data)       
+        xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data) if row_data else [[] for _ in range(6)]
         labels, sharedlabels = self.dedup_keys_values(labels_orig, output_removed=True)
         #print('LABELS', labels, 'sharedlabels', sharedlabels)
 
@@ -753,7 +750,6 @@ class Handler:
         # 3) it may be in the params dict, or in the filename (for csvtwocolumn), or in the header of csvcolumn, opjcolumn etc.
 
 
-        #print("self.ax.axis", self.ax.axis())
         ## Plot all curves sequentially
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
@@ -762,11 +758,11 @@ class Handler:
         #print(row_data)
         if plot_command.strip() == '': return
         tosave=[]
-        #np = numpy
         print(f't = {time.time()-init_time:15.3f}s: Preparing execution environment')
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
         exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                'xs':np.array(xs), 'ys':np.array(ys), 'labels':labels, 'sharedlabels':sharedlabels, 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
+                'xs':np.array(xs).copy(), 'ys':np.array(ys).copy(), 'labels':labels, 'sharedlabels':sharedlabels, 
+                'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                 'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                 'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
         #print(exec_env)
@@ -949,6 +945,17 @@ class Handler:
                 pass
 
         self.populateTreeStore_keep_exp_and_sel()
+
+        self.on_btn_RefreshFolders_clicked(None)
+    # }}}
+    def on_btn_RefreshFolders_clicked(self, dummy): # {{{
+        print('Refresh STUB')
+        #treeIter = treeStore.get_iter_first()
+        treeIter        = self.tsFiles.get_iter_first()
+        if self.lockTreeViewEvents: 
+            print("AVOIDING RECURSION")
+            return      ## during folding, prevent triggering 'on_select' events on all node children 
+        self.populateTreeStore_keep_exp_and_sel(reset_path=self.row_prop(treeIter, 'filepath'))
     # }}}
 
          
@@ -1134,6 +1141,7 @@ class Handler:
         ## Update the plot command
         if w('rad_plotstyle_rc').get_active():
              ## TODO if it does not exist
+            ## TODO PREVENT OVERWRITING OF UNSAVED USER SCRIPT!
             self.update_plotcommand_from_rcfile(allow_overwrite_by_empty=False)
         elif self.relevant_rc_filename():
             w('rad_plotstyle_rc').set_active(True)
@@ -1145,6 +1153,7 @@ class Handler:
     def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
         ## TODO reasonable behaviour for block-selection over different unpacked directories/files
         ## Expand a directory by clicking, but do not allow user to select it
+        ## TODO shift+click could select whole directory contents (and unpack it)
         treeIter        = self.tsFiles.get_iter(treePath)
         #self.treeStoreColumns=      {'filepath':0, 'icon':1, 'name':2, 'plotstyleicon':3, 'column':4, 'spreadsheet':5, 'rowtype':6}
 
@@ -1374,3 +1383,6 @@ Gtk.main()
 #  [x] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
 #  [ ] robust_csv_parser.py", line 70, nests FileNotFoundError
 #  [ ] check the possibilities of graph digitizer/OCR: http://eumenidae.blogspot.cz/2012/12/quick-n-dirty-wxpython-plot-digitiser.html
+
+#  [ ] implement where useful: from collections import namedtuple as nt; ntup = nt('name', 'a b c')
+  #[ ] rewrite to tkinter + pygubu?
