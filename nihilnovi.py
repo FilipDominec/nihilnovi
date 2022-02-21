@@ -708,6 +708,7 @@ class Handler:
 # }}}
     def plot_all_sel_records(self):# {{{
 
+
         ## Setting persistent view is somewhat kafkaesque with matplotlib. 
         ## self.xlim        remembers the correct view from the last GUI resize , but
         ## ax.get_xlim      from the start of this method returns the wrong (autoscaled) limits, why?
@@ -718,7 +719,6 @@ class Handler:
 
         ## Load all row data
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
-        #if len(pathlist) == 0: return
         error_counter = 0
         row_data = []
         row_labels = []
@@ -731,7 +731,6 @@ class Handler:
                 traceback.print_exc() ## TODO - show the error in a GUI textbox, possibly also moving cursor in the script editor
                 error_counter += 1
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
-        #if row_data == []: return False
         xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data) if row_data else [[] for _ in range(6)]
         labels, sharedlabels = self.dedup_keys_values(labels_orig, output_removed=True)
         #print('LABELS', labels, 'sharedlabels', sharedlabels)
@@ -822,7 +821,10 @@ class Handler:
         self.canvas.draw()
 
         print(f't = {time.time()-init_time:15.3f}s: Matplotlib drawing finished.')
+
+        self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         return True
+
 
         """
         xlims_changed from  (4.6147009455810979, 3650.4430782521085)
@@ -887,10 +889,13 @@ class Handler:
     def remember_treeView_selected_rows(self, treeStore, treeView):# {{{
         ## returns a list of paths of selected files/directories
         (model, selectedPathList) = treeView.get_selection().get_selected_rows()
+
+        print('---PL.remember', selectedPathList)
         selected_row_names = []
         for treePath in selectedPathList:
+            print('SPL', treePath , '------>', treeStore.get_value(treeStore.get_iter(treePath), 0)    )
             selected_row_names.append(treeStore.get_value(treeStore.get_iter(treePath), 0))
-        return selected_row_names
+        self.selected_row_names = selected_row_names
         # }}}
     def restore_treeView_expanded_rows(self, expanded_row_names):# {{{
         def recursive_expand_rows(treeIter, ):
@@ -903,11 +908,13 @@ class Handler:
                 treeIter=self.tsFiles.iter_next(treeIter)
         recursive_expand_rows(self.tsFiles.get_iter_first())
         # }}}
-    def restore_treeView_selected_rows(self, selected_row_names):# {{{
+    def restore_treeView_selected_rows(self):# {{{
         def recursive_select_rows(treeIter):
             while treeIter != None: 
-                if self.tsFiles.get_value(treeIter, 0) in selected_row_names:
+                #print(' CHECKING SELECTION', self.tsFiles.get_value(treeIter, 0), selected_row_names)
+                if self.tsFiles.get_value(treeIter, 0) in self.selected_row_names:
                     self.lockTreeViewEvents = True
+                    print('SELECTING', self.tsFiles.get_path(treeIter))
                     w('treeview1').get_selection().select_path(self.tsFiles.get_path(treeIter))
                     self.lockTreeViewEvents = False
                 recursive_select_rows(self.tsFiles.iter_children(treeIter))
@@ -928,19 +935,26 @@ class Handler:
     def on_btn_TrashSelFiles_clicked(self, dummy): # {{{
         (model, pathlist) = w('treeview1').get_selection().get_selected_rows()
         if len(pathlist) == 0: return
-        print("DEBUG: pathlist = ", pathlist)
-        for treepath in pathlist:
-            try:
-                filenamepath = self.row_prop(self.tsFiles.get_iter(treepath), 'filepath')
-                dirpath, filename = pathlib.Path(os.path.dirname(filenamepath)), pathlib.Path(os.path.basename(filenamepath))
-                ## TODO 
-                trashpath = dirpath / 'trash'
+        #try:
 
-                trashpath.mkdir(parents=False, exist_ok=True)
-                import shutil
-                shutil.move(filenamepath, trashpath)
-            except Exception as e:
-                print(e)
+        for path in pathlist:
+            print(self.row_prop(self.tsFiles.get_iter(path), 'filepath'))
+            filepath = pathlib.Path(self.row_prop(self.tsFiles.get_iter(path), 'filepath'))
+            trashpath = filepath.resolve().parent / 'trash'
+
+            if trashpath.is_file(): 
+                print('cannot make trash directory: such a file exists', trashpath)
+                continue
+            trashpath.mkdir(parents=True, exist_ok=True)
+
+            try:
+                filepath.rename(trashpath / filepath.name)
+                print(f'moved {filepath} to {trashpath / filepath.name}')
+            except FileNotFoundError: # perhaps multi-column and already removed?
+                pass
+
+        self.populateTreeStore_keep_exp_and_sel()
+
         self.on_btn_RefreshFolders_clicked(None)
     # }}}
     def on_btn_RefreshFolders_clicked(self, dummy): # {{{
@@ -1174,18 +1188,19 @@ class Handler:
             elif not w('treeview1').row_expanded(treePath) :
                 w('treeview1').expand_row(treePath, open_all=False)
             return False
+        self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
+
     # }}}
     def populateTreeStore_keep_exp_and_sel(self, *args, reset_path=None):
         """ Wrapper around populateTreeStore that maintains the selected and expanded rows """
         expanded_row_names = self.remember_treeView_expanded_rows(self.tsFiles, w('treeview1'))    
-        selected_row_names = self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         # Passing parent=None will populate the whole tree again
         #self.lockTreeViewEvents = True
         self.populateTreeStore(self.tsFiles, reset_path=reset_path)       
         #self.lockTreeViewEvents = False
-        print(expanded_row_names)
+        print(expanded_row_names, 'SRN===', self.selected_row_names)
         self.restore_treeView_expanded_rows(expanded_row_names)
-        self.restore_treeView_selected_rows(selected_row_names)
+        self.restore_treeView_selected_rows()
 
     def on_window1_delete_event(self, *args):# {{{
         Gtk.main_quit(*args)# }}}
@@ -1234,6 +1249,9 @@ Gtk.main()
     #  * Rewrite whole GUI in tkinter,ttk
     #       * accept drag and drop    https://www.mankier.com/n/tkDND  http://www.bitflipper.ca/Documentation/Tkdnd.html
     #       * Use own icons instead of stock icons (no dep on adwaita whatever)
+    #       * TTK themes - https://stackoverflow.com/questions/21396809/multiple-tkinter-windows-look-different-when-closing-and-reopening-window
+    #       * file browser get inspired from here http://code.activestate.com/recipes/580772-file-browser-for-tkinter-using-idle-gui-library/
+    #       *   
     #  * keep the xlim and ylim from the previous plot through the [F3]-VARIABLES panel  using plt.autoscale(False) ?
 
     # Bugfix todos:
