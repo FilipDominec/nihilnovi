@@ -186,7 +186,9 @@ class Handler:
 
 
         ## Add the data cursor by default  # TODO - make this work
-        #cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2)
+        #cursor = Cursor(self.ax, useblit=True, color='red', linewidth=2) 
+        # see also https://stackoverflow.com/questions/8955869/why-is-plotting-with-matplotlib-so-slow
+        # see also https://bastibe.de/2013-05-30-speeding-up-matplotlib.html
 
 
         #}}}
@@ -466,12 +468,14 @@ class Handler:
             ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)
             print("DEBUG: columnFilterString = ", columnFilterString)
             print("opj['FileContent']['spreads'][parent_spreadsheet].columns", [(c.name,c.type) for c in opj['FileContent']['spreads'][parent_spreadsheet].columns])
+            #print('CND',  column.name.decode('utf-8'), 'CCD',  column.comment.decode('utf-8') ) 
+
             numbered_valid_columns = [(n, self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment)) for n, column in 
                     enumerate(opj['FileContent']['spreads'][parent_spreadsheet].columns) if 
                     (getattr(column, 'type') != 6  and  
                             (not columnFilterString or 
-                                re.findall(columnFilterString, column.name.decode('utf-8')) or 
-                                re.findall(columnFilterString, column.comment.decode('utf-8'))))] 
+                                (re.findall(columnFilterString, column.name.decode('utf-8')) or 
+                                re.findall(columnFilterString, column.comment.decode('utf-8')))))] 
             print("DEBUG: numbered_valid_columns = ", numbered_valid_columns)
             columnNumbers, itemShowNames  = zip(*numbered_valid_columns) # if numbered_valid_columns else [], []
             print("DEBUG: columnNumbers = ", columnNumbers)
@@ -1368,3 +1372,5 @@ Gtk.main()
 
 #  [ ] implement where useful: from collections import namedtuple as nt; ntup = nt('name', 'a b c')
   #[ ] rewrite to tkinter + pygubu?
+
+# add to https://zenodo.org/

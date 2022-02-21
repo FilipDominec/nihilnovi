@@ -37,12 +37,12 @@ strict_table_layout         = False                      # when True, doubled co
 
 maxLineLength               = 10000             # hardly any numeric table in ASCII will have more than one 10kB per line 
 
-allowCommaDecimalSep        = False             # note: causes wrong detection in true CSV (where , is column sep)
+allowCommaDecimalSep        = True             # note: causes wrong detection in true CSV (where , is column sep)
 
 headerOrdinateAllowOmit     = True              # e.g. three-column CSV files sometimes have only two names in header
 headerOrdinateSuggestName   = 'x'               # ... in such a case, the first column name will added 
 
-tryColSeparators    = [',', ';', '\t', '\s', '\s+']           # possible ways of separating columns: comma, tabulator, 1 whitespace character, whitespace
+tryColSeparators    = [';', ',', '\t', '\s', '\s+']           # possible ways of separating columns
 ## TODO test avoiding escaped whitespace, e.g. use "[^\\]\s" instead of "\s"
 unevenColumnLengthPenalty = 1                   # may be any positive number; low value may lead to joining cells, higher value may lead to empty cells detected
 
@@ -100,12 +100,12 @@ def loadtxt(file_name, sizehint=None):
     if filteredLines == []: raise RuntimeError("Error: all lines in the file are empty or identified as comments")
     if very_verbose: print("filteredLines:", filteredLines)
 
-    ## Handle files that use ',' instead of '.' as a decimal separator 
+    ## Handle files that use ',' instead of '.' as a decimal separator  TODO different strategy needed
     if allowCommaDecimalSep:
         allChars = ''.join(filteredLines)
         countComma, countDot = len(re.findall(r',[\d\s]', allChars)), len(re.findall(r'\.[\d\s]', allChars))
         if very_verbose: print('countComma, countDot',countComma, countDot)
-        if countComma > countDot:
+        if countComma > countDot and countDot<len(filteredLines):
             if verbose: print('detected that comma is used more often of dot, trying to accept it as a decimal separator',countComma, countDot)
             filteredLines = [re.sub(r',([\d\s])',   r'.\1',  fl) for fl in filteredLines]
             tryColSeparators.copy().remove(',')
