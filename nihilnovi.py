@@ -593,8 +593,13 @@ class Handler:
                 except ValueError:
                     pass
             x,y = x0, y0
-        mask = np.logical_and(y!=0, np.abs(y)>1e-250) ## stuffing garbage at the dataset end
-        x, y = x[mask], y[mask]
+
+        try:
+            mask = np.logical_and(y!=0, np.abs(y)>1e-250) ## stuffing garbage at the dataset end
+            x, y = x[mask], y[mask]
+        except np.core._exceptions.UFuncTypeError:
+            mask = np.logical_and(y!='', y!=b'') ## stuffing garbage at the dataset end
+            x, y = x[mask].astype(np.float),y[mask].astype(np.float)
         return x, y 
     # }}}
     def load_row_data(self, row):# {{{
