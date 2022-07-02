@@ -13,6 +13,7 @@ from gi.repository.GdkPixbuf import Pixbuf, Colorspace
 
 import matplotlib
 import matplotlib.cm as cm
+import matplotlib.figure
 from matplotlib.backends.backend_gtk3cairo import FigureCanvasGTK3Cairo  as FigureCanvas 
 from matplotlib.backends.backend_gtk3      import NavigationToolbar2GTK3 as NavigationToolbar # if not specified, Python3 freezes
 #from matplotlib.backends.backend_tkagg import FigureCanvasTk as FigureCanvas
@@ -1397,3 +1398,4 @@ Gtk.main()
   #[ ] rewrite to tkinter + pygubu?
 
 # add to https://zenodo.org/
+# see gmail "nino 1" from 200901
