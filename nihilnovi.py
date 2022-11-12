@@ -121,6 +121,11 @@ ax2.set_ylabel('electron penetration depth (nm)')
 def inmydir(fn): return pathlib.Path(__file__).resolve().parent/fn # finds the basename in the script's dir
 plot_commands = {'Lines':line_plot_command, 'Plot gallery': inmydir('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
 
+verbose = False
+def debug(*args):
+    if verbose:
+        print("DEBUG: ", *args)
+
 class Handler:
     ## == initialization == 
     def __init__(self): #{{{
@@ -132,6 +137,14 @@ class Handler:
         # (figure is static, axes clear on every replot)
         self.canvas = FigureCanvas(self.fig)
         self.canvas.set_size_request(300,300)
+        # FIXME: The 'window' parameter of __init__() was deprecated in Matplotlib 3.6 and will be removed 
+        #       If any parameter follows 'window', they should be passed as keyword, not positionally.
+
+        # FIXME: 
+
+
+        #w('txt_rc').modify_font(Pango.FontDescription("monospace 10"))
+        #DeprecationWarning: Gtk.ScrolledWindow.add_with_viewport is deprecated
         self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas, w('box4').get_parent_window())
 
         self.xlim, self.ylim = None, None
@@ -183,6 +196,7 @@ class Handler:
 
         ## Initialize the default plotting commands 
         w('txt_rc').get_buffer().set_text(line_plot_command)
+        #DeprecationWarning: Gtk.Widget.modify_font is deprecated
         w('txt_rc').modify_font(Pango.FontDescription("monospace 10"))
 
 
@@ -467,8 +481,8 @@ class Handler:
             opj = self.origin_parse_or_cache(basepath)
             parent_spreadsheet = self.row_prop(parent_row, 'spreadsheet')
             ## origin 8.5+ quirk: it sometimes fills 1st column with column labels (i.e. strings+stuffing)
-            print("DEBUG: columnFilterString = ", columnFilterString)
-            print("opj['FileContent']['spreads'][parent_spreadsheet].columns", [(c.name,c.type) for c in opj['FileContent']['spreads'][parent_spreadsheet].columns])
+            debug("columnFilterString = ", columnFilterString)
+            debug("opj['FileContent']['spreads'][parent_spreadsheet].columns", [(c.name,c.type) for c in opj['FileContent']['spreads'][parent_spreadsheet].columns])
             #print('CND',  column.name.decode('utf-8'), 'CCD',  column.comment.decode('utf-8') ) 
 
             numbered_valid_columns = [(n, self.decode_origin_label(column.name)+" "+self.decode_origin_label(column.comment)) for n, column in 
@@ -477,10 +491,10 @@ class Handler:
                             (not columnFilterString or 
                                 (re.findall(columnFilterString, column.name.decode('utf-8')) or 
                                 re.findall(columnFilterString, column.comment.decode('utf-8')))))] 
-            print("DEBUG: numbered_valid_columns = ", numbered_valid_columns)
+            debug("numbered_valid_columns = ", numbered_valid_columns)
             columnNumbers, itemShowNames  = zip(*numbered_valid_columns) # if numbered_valid_columns else [], []
-            print("DEBUG: columnNumbers = ", columnNumbers)
-            print("DEBUG: itemShowNames = ", itemShowNames)
+            debug("columnNumbers = ", columnNumbers)
+            debug("itemShowNames = ", itemShowNames)
             itemFullNames = [basepath] * len(itemShowNames)    # all columns are from one file
             spreadNumbers = [parent_spreadsheet] * len(itemShowNames)
             rowTypes      = ['opjcolumn'] * len(itemShowNames)
@@ -491,7 +505,7 @@ class Handler:
 
             ## Try to extract meaningful legend for each curve, assuming the legend box has the same number of lines
             curves = opj['FileContent']['graphs'][parent_graph].layers[layerNumber].curves
-            print("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
+            debug("opj['graphs'][parent_graph].layers[layerNumber].curves", curves, 'with names=', [curve.dataName for curve in curves])
             legend_box = self.decode_origin_label(opj['FileContent']['graphs'][parent_graph].layers[layerNumber].legend.text, splitrows=True)
             legends = []
             for legendline in legend_box:  ## the legend may have format as such: ['\l(1) 50B', '\l(2) 48B', ...], needs to be pre-formatted:
@@ -507,7 +521,7 @@ class Handler:
                 #print([spread.name for spread in opj['spreads']], (curve.dataName[2:]))
 
                 ## Seek the corresponding spreadsheet and column by their name
-                print("[spread.name for spread in opj['FileContent']['spreads']]", [spread.name for spread in opj['FileContent']['spreads']])
+                debug("[spread.name for spread in opj['FileContent']['spreads']]", [spread.name for spread in opj['FileContent']['spreads']])
                 #spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName)
                 spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName[2:])
                               # TODO liborigin API has changed, see /p/nihilnovi/test_files-real_life/comp*opj: 
@@ -519,7 +533,7 @@ class Handler:
                 spread = opj['FileContent']['spreads'][spreadsheet_index]
                 y_column_index = [column.name for column in spread.columns].index(curve.yColumnName)
                 x_column_index = [column.name for column in spread.columns].index(curve.xColumnName)
-                #print(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, 
+                #debug(curve.dataName[2:].self.decode_origin_label('utf-8'), spreadsheet_index, 
                         #curve.yColumnName.self.decode_origin_label('utf-8'), y_column_index)
 
                 itemShowNames.append('%s -> spread %s: column %s (%s)' %  
@@ -647,8 +661,8 @@ class Handler:
             # TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
             #return 
             #xl = pd.ExcelFile(infile, header=1) ##  
-            #print(xl.sheet_names)  
-            #print(xl.sheets[rowsheet])
+            #debug(xl.sheet_names)  
+            #debug(xl.sheets[rowsheet])
             #df = xl.parse() 
             #x, y, xlabel, ylabel = df.values.T[rowxcolumn], df.values.T[rowycolumn], header[rowxcolumn], header[rowycolumn]
             ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
@@ -678,21 +692,21 @@ class Handler:
         ## Split names into "key=value" chunks and  then into ("key"="value") tuples
         keyvaluelists = []
         for keyvalue_string in keyvalue_strings: 
-            #print("keyvalue_strings", keyvalue_strings) ## TODO clean up debugging leftovers
+            #debug("keyvalue_strings", keyvalue_strings) ## TODO clean up debugging leftovers
             chunklist = re.split('[_ /]', keyvalue_string) 
-            #print("    chunklist", chunklist)
+            #debug("    chunklist", chunklist)
             keyvaluelist = [try_float_value(re.split('=', rm_ext(chunk.replace('~', ' ')))) for chunk in chunklist] 
-            #print("   -> keyvaluelist", keyvaluelist)
+            #debug("   -> keyvaluelist", keyvaluelist)
             keyvaluelists.append(keyvaluelist)
         ## If identical ("key"="value") tuple found everywhere, remove it 
         ## FIXME: removes also keys that are contained deep in the names of common upper directory; in such a case should 
         ## eliminate the common directory name first
         removedkvlist = []
         for keyvaluelist in keyvaluelists.copy(): 
-            #print("KEYVALUELIST ---------- ", keyvaluelist)
+            #debug("KEYVALUELIST ---------- ", keyvaluelist)
             for keyvalue in keyvaluelist.copy():
                 if all([(keyvalue in testkeyvaluelist) for testkeyvaluelist in keyvaluelists]):
-                    if keyvalue == '70mm': print("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
+                    if keyvalue == '70mm': debug("REMOVING", keyvalue , "it was found in all" , keyvaluelists )
                     for keyvaluelist2 in keyvaluelists:
                         keyvaluelist2.remove(keyvalue)
                     removedkvlist.append(keyvalue)
@@ -714,7 +728,7 @@ class Handler:
         ## self.xlim        remembers the correct view from the last GUI resize , but
         ## ax.get_xlim      from the start of this method returns the wrong (autoscaled) limits, why?
         init_time = time.time()
-        print(f'\nt = {time.time()-init_time:15.3f}s: Starting replot')
+        debug(f'\nt = {time.time()-init_time:15.3f}s: Starting replot')
         #if not w('chk_autoscale_x').get_active() and self.xlim: self.ax.set_xlim(self.xlim)
         #if not w('chk_autoscale_y').get_active() and self.ylim: self.ax.set_ylim(self.ylim)
 
@@ -734,10 +748,10 @@ class Handler:
         w('statusbar1').push(0, ('%d records loaded' % len(pathlist)) + ('with %d errors' % error_counter) if error_counter else '')
         xs, ys, labels_orig, params, xlabels, ylabels = zip(*row_data) if row_data else [[] for _ in range(6)]
         labels, sharedlabels = self.dedup_keys_values(labels_orig, output_removed=True)
-        #print('LABELS', labels, 'sharedlabels', sharedlabels)
+        #debug('LABELS', labels, 'sharedlabels', sharedlabels)
 
         #for n,v in zip('xs, ys, labels, params, xlabels, ylabels'.split(), [xs, ys, labels, params, xlabels, ylabels]):
-            #print(n,v)
+            #debug(n,v)
         ##
         ## TODO: Once files are correctly named:
         ## additionally check if there is exactly one column in the 'params' table that differs among files:       label="%s=%s" % (labelkey, labelval)
@@ -764,29 +778,33 @@ class Handler:
         plot_cmd_buffer = w('txt_rc').get_buffer() 
         plot_command = plot_cmd_buffer.get_text(plot_cmd_buffer.get_start_iter(), plot_cmd_buffer.get_end_iter(), 
                 include_hidden_chars=True)
-        #print("BEFORE COMMAND")
-        #print(row_data)
+        #debug("BEFORE COMMAND")
+        #debug(row_data)
         if plot_command.strip() == '': return
         tosave=[]
-        print(f't = {time.time()-init_time:15.3f}s: Preparing execution environment')
+        debug(f't = {time.time()-init_time:15.3f}s: Preparing execution environment')
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
+
+        # FIXME VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of 
+        #      lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to 
+        #      do this, you must specify 'dtype=object' when creating the ndarray
         exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                 'xs':np.array(xs).copy(), 'ys':np.array(ys).copy(), 'labels':labels, 'sharedlabels':sharedlabels, 
                 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                 'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                 'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
-        #print(exec_env)
+        #debug(exec_env)
 
         #self.fig.clf() ## clear figure
         print(f't = {time.time()-init_time:15.3f}s: Plotting script starting')
         try:
             exec(plot_command, exec_env)
-            #print("JUST AFTER COMMAND")
+            #debug("JUST AFTER COMMAND")
         except SyntaxError:
-            print("SYNTAX ERROR:")
+            debug("SYNTAX ERROR:")
             traceback.print_exc() ## TODO locate the error
         except:
-            print("OTHER ERROR")
+            debug("OTHER ERROR")
             traceback.print_exc() ## TODO locate the error
 
         print(f't = {time.time()-init_time:15.3f}s: Plotting script finished')
@@ -891,10 +909,10 @@ class Handler:
         ## returns a list of paths of selected files/directories
         (model, selectedPathList) = treeView.get_selection().get_selected_rows()
 
-        print('---PL.remember', selectedPathList)
+        debug('---PL.remember', selectedPathList)
         selected_row_names = []
         for treePath in selectedPathList:
-            print('SPL', treePath , '------>', treeStore.get_value(treeStore.get_iter(treePath), 0)    )
+            debug('SPL', treePath , '------>', treeStore.get_value(treeStore.get_iter(treePath), 0)    )
             selected_row_names.append(treeStore.get_value(treeStore.get_iter(treePath), 0))
         self.selected_row_names = selected_row_names
         # }}}
@@ -1199,7 +1217,7 @@ class Handler:
         #self.lockTreeViewEvents = True
         self.populateTreeStore(self.tsFiles, reset_path=reset_path)       
         #self.lockTreeViewEvents = False
-        print(expanded_row_names, 'SRN===', self.selected_row_names)
+        print(expanded_row_names, 'SRN===', getattr(self,"selected_row_names", None))
         self.restore_treeView_expanded_rows(expanded_row_names)
         self.restore_treeView_selected_rows()
 
