@@ -610,7 +610,6 @@ class Handler:
 
         try:
             mask = np.logical_and(y!=0, np.abs(y)>1e-250) ## Origin OPJ files stuff garbage at the dataset end
-            print(mask, x,y)
             x, y = x[mask], y[mask]
         except np.core._exceptions.UFuncTypeError:
             mask = np.logical_and(y!='', y!=b'') ## Origin OPJ files also stuff strings at the dataset end
@@ -728,7 +727,7 @@ class Handler:
         ## self.xlim        remembers the correct view from the last GUI resize , but
         ## ax.get_xlim      from the start of this method returns the wrong (autoscaled) limits, why?
         init_time = time.time()
-        debug(f'\nt = {time.time()-init_time:15.3f}s: Starting replot')
+        debug(f'\nt = {time.time()-init_time:6.3f}s: Starting replot')
         #if not w('chk_autoscale_x').get_active() and self.xlim: self.ax.set_xlim(self.xlim)
         #if not w('chk_autoscale_y').get_active() and self.ylim: self.ax.set_ylim(self.ylim)
 
@@ -782,7 +781,7 @@ class Handler:
         #debug(row_data)
         if plot_command.strip() == '': return
         tosave=[]
-        debug(f't = {time.time()-init_time:15.3f}s: Preparing execution environment')
+        debug(f't = {time.time()-init_time:6.3f}s: Preparing execution environment')
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
 
         ## TODO it would be user friendly to switch to all fns from numpy namespace, using:     from numpy import * 
@@ -811,7 +810,7 @@ class Handler:
         #debug(exec_env)
 
         #self.fig.clf() ## clear figure
-        print(f't = {time.time()-init_time:15.3f}s: Plotting script starting')
+        print(f't = {time.time()-init_time:6.3f}s: Plotting script starting')
         try:
             exec(plot_command, exec_env)
             #debug("JUST AFTER COMMAND")
@@ -822,11 +821,11 @@ class Handler:
             debug("OTHER ERROR")
             traceback.print_exc() ## TODO locate the error
 
-        print(f't = {time.time()-init_time:15.3f}s: Plotting script finished')
+        print(f't = {time.time()-init_time:6.3f}s: Plotting script finished')
         if tosave != []: print('Exported image files in the `tosave` list:', tosave)
         try: 
             for savefilename in list(tosave):
-                self.fig.savefig(savefilename)
+                self.fig.savefig(savefilename) # TODO check for overwrites
                 print("nihilnovi: saving output to:", savefilename)
         except IOError as e:
             print("nihilnovi: saving output failed with", e)
@@ -854,7 +853,7 @@ class Handler:
         #cursor = Cursor(self.ax, color='red', linewidth=.5)  ## FIXME http://blog.yjl.im/2009/10/blit-cursor-in-matplotlib.html
         self.canvas.draw()
 
-        print(f't = {time.time()-init_time:15.3f}s: Matplotlib drawing finished.')
+        print(f't = {time.time()-init_time:6.3f}s: Matplotlib drawing finished.')
 
         self.remember_treeView_selected_rows(self.tsFiles, w('treeview1'))
         return True
