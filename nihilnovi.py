@@ -38,13 +38,14 @@ SIZELIMIT_FOR_DATA   = 10000000
 external_editor_command = ('/usr/bin/vim.gtk3', '-gp')
 
 line_plot_command = \
-"""matplotlib.rc('font', size=12, family='serif')
+"""
 for          x,  y,  n,              param,  label,  xlabel,  ylabel,  color in \\\n         zip(xs, ys, range(len(xs)), params, labels, xlabels, ylabels, colors):
-    # x, y = x[~np.isnan(y)], y[~np.isnan(y)]        ## filter-out NaN points
-    # convol = 2**-np.linspace(-2,2,25)**2; y = np.convolve(y,convol/np.sum(convol), mode='same') ## simple smoothing
-
     ax.plot(x, y, label="%s" % (label), color=color)
     #ax.plot(x, y, label="%s" % (label.split('.dat')[0]), color=colors[c%10], ls=['-','--'][int(c/10)]) 
+
+#ax.set_xscale('log')
+#ax.set_yscale('log')
+
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
 
@@ -53,8 +54,6 @@ plot_title = sharedlabels[-4:] ## last few labels that are shared among all curv
 
 #ax.set_xlim(xmin=0, xmax=1)
 #ax.set_ylim(ymin=2.6, ymax=2.7)
-#ax.set_xscale('log')
-#ax.set_yscale('log')
 ax.set_title(' '.join(plot_title)) 
 ax.legend(loc='best', prop={'size':10})
 
@@ -594,11 +593,11 @@ class Handler:
         recursive_clear_icon(self.tsFiles.get_iter_first())
         w('treeview1').queue_draw()
         # }}}
-    def safe_np_array(self, x,y): ## converts two lists to 2 numpy array; if float() fails when processing any (x,y) row, leave it out {{{
+    def safe_np_array(self, x, y): ## converts two lists to 2 numpy array; if float() fails when processing any (x,y) row, leave it out {{{
         if len(x) < len(y): y = y[0:len(x)]             ## in any case, match the length of x- and y-data
         if len(y) < len(x): x = x[0:len(y)] 
         try:                                    ## fast string-to-float conversion
-            x, y = [np.array(arr) for arr in (x,y)] ## TODO dtype=float
+            x, y = [np.array(arr, dtype=float) for arr in (x,y)] ## TODO dtype=float
         except ValueError:                      ## failsafe string-to-float conversion
             x0, y0 = [], []
             for x1,y1 in zip(x,y):
@@ -607,14 +606,15 @@ class Handler:
                     x0.append(xf); y0.append(yf)
                 except ValueError:
                     pass
-            x,y = x0, y0
+            x,y = [np.array(arr, dtype=float) for arr in (x0, y0)] ## TODO dtype=floatx0, y0
 
         try:
-            mask = np.logical_and(y!=0, np.abs(y)>1e-250) ## stuffing garbage at the dataset end
+            mask = np.logical_and(y!=0, np.abs(y)>1e-250) ## Origin OPJ files stuff garbage at the dataset end
+            print(mask, x,y)
             x, y = x[mask], y[mask]
         except np.core._exceptions.UFuncTypeError:
-            mask = np.logical_and(y!='', y!=b'') ## stuffing garbage at the dataset end
-            x, y = x[mask].astype(np.float),y[mask].astype(np.float)
+            mask = np.logical_and(y!='', y!=b'') ## Origin OPJ files also stuff strings at the dataset end
+            x, y = x[mask].astype(float), y[mask].astype(float)
         return x, y 
     # }}}
     def load_row_data(self, row):# {{{
@@ -785,6 +785,21 @@ class Handler:
         debug(f't = {time.time()-init_time:15.3f}s: Preparing execution environment')
         def dedup(l): return list(dict.fromkeys(l[::-1]))[::-1] ## deduplicates items, preserves order of first occurence
 
+        ## TODO it would be user friendly to switch to all fns from numpy namespace, using:     from numpy import * 
+        # the trouble is such import would overwrite following builtins :
+            #In [13]: [n for n in dir(np) if n in dir(__builtins__) and not n.startswith('__')]                                                                            
+            #Out[13]: ['abs', 'all', 'any', 'divmod', 'max', 'min', 'round', 'sum']
+
+        # ... but these 8 numpy functions are not drop-in equivalents to the builtins, e.g.:
+            #In [19]: max(1,2)                                                                                                                                             
+            #Out[19]: 2
+
+            #In [20]: from numpy import max                                                                                                                                
+
+            #In [21]: max(1,2)                                                                                                                                             
+            #...  AxisError: axis 2 is out of bounds for array of dimension 0
+
+
         # FIXME VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of 
         #      lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to 
         #      do this, you must specify 'dtype=object' when creating the ndarray
@@ -933,7 +948,7 @@ class Handler:
                 #print(' CHECKING SELECTION', self.tsFiles.get_value(treeIter, 0), selected_row_names)
                 if self.tsFiles.get_value(treeIter, 0) in self.selected_row_names:
                     self.lockTreeViewEvents = True
-                    print('SELECTING', self.tsFiles.get_path(treeIter))
+                    debug('SELECTING', self.tsFiles.get_path(treeIter))
                     w('treeview1').get_selection().select_path(self.tsFiles.get_path(treeIter))
                     self.lockTreeViewEvents = False
                 recursive_select_rows(self.tsFiles.iter_children(treeIter))
