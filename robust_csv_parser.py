@@ -37,7 +37,7 @@ strict_table_layout         = False                      # when True, doubled co
 
 maxLineLength               = 10000             # hardly any numeric table in ASCII will have more than one 10kB per line 
 
-allowCommaDecimalSep        = False             # note: causes wrong detection in true CSV (where , is column sep)
+allowCommaDecimalSep        = True             # note: causes wrong detection in true CSV (where , is column sep)
 
 headerOrdinateAllowOmit     = True              # e.g. three-column CSV files sometimes have only two names in header
 headerOrdinateSuggestName   = 'x'               # ... in such a case, the first column name will added 
@@ -105,7 +105,7 @@ def loadtxt(file_name, sizehint=None):
         allChars = ''.join(filteredLines)
         countComma, countDot = len(re.findall(r',[\d\s]', allChars)), len(re.findall(r'\.[\d\s]', allChars))
         if very_verbose: print('countComma, countDot',countComma, countDot)
-        if countComma > countDot:
+        if countComma > countDot: # and countDot:
             if verbose: print('detected that comma is used more often of dot, trying to accept it as a decimal separator',countComma, countDot)
             filteredLines = [re.sub(r',([\d\s])',   r'.\1',  fl) for fl in filteredLines]
             tryColSeparators.copy().remove(',')
@@ -129,7 +129,8 @@ def loadtxt(file_name, sizehint=None):
         ## Compute the statistics of numeric-valued columns at each line 
         columnsOnLinesAvg = np.sum(columnsOnLines)/len(columnsOnLines)
         columnsOnLinesSD  = np.sum(columnsOnLines**2)/len(columnsOnLines)-columnsOnLinesAvg**2
-        tryColSeparatorFitness = columnsOnLinesAvg - unevenColumnLengthPenalty*columnsOnLinesSD
+        tryColSeparatorFitness = columnsOnLinesAvg - unevenColumnLengthPenalty*columnsOnLinesSD**.5
+        #print( np.sum(columnsOnLines) , len(columnsOnLines) , np.sum(columnsOnLines)/len(columnsOnLines) , columnsOnLinesAvg , tryColSeparatorFitness)
 
         ## Choose parser settings that give the highest average and simultaneously the lowest deviation for the number of fields per line
         ## Note that use of < instead of <= is important to prefer less greedy regexp (e.g. "\s" over "\s*") and 

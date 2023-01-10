@@ -117,7 +117,7 @@ ax2.set_ylabel('electron penetration depth (nm)')
 """
 
 
-def inmydir(fn): return pathlib.Path(__file__).resolve().parent/fn # finds the basename in the script's dir
+def inmydir(fn): return pathlib.Path(__file__).parent/fn # finds the basename in the script's dir
 plot_commands = {'Lines':line_plot_command, 'Plot gallery': inmydir('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
 
 class Handler:
@@ -176,6 +176,7 @@ class Handler:
         ## TODO: If files are specified as arguments, select these at start, and plot them at once
 
         ## If a directory is specified, just set it as the root of the file list. If none, use current working dir.
+        self.selected_row_names = []
         self.populateTreeStore(self.tsFiles, reset_path=os.getcwd() if len(sys.argv)<=1  else  sys.argv[1])
         self.plot_reset()
         self.plot_all_sel_records()
@@ -234,7 +235,9 @@ class Handler:
         elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.csv', '.tsv', '.dat', '.txt', '.asc')):
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
+                t0=time.time()
                 data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER) 
+                print("PARSER prelim took (s)", time.time() - t0)
                 if len(header)<=2: return 'csvtwocolumn' 
                 else: return 'csvmulticolumn'
             except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
@@ -285,7 +288,9 @@ class Handler:
         # }}}
     def dat_parse_or_cache(self, filepath):# {{{
         if not filepath in self.dat_file_cache.keys()  or  os.stat(filepath).st_mtime > self.dat_file_cache[filepath]['LastLoadTime']:
+            t0=time.time()
             FileContent  = robust_csv_parser.loadtxt(filepath, sizehint=SIZELIMIT_FOR_DATA)
+            print("LOADING UNCACHED FILE , ", filepath, " , took (s)", time.time() - t0)
             LastLoadTime = os.stat(filepath).st_mtime
             self.dat_file_cache[filepath] = {'LastLoadTime':LastLoadTime, 'FileContent':FileContent}
         return self.dat_file_cache[filepath]['FileContent']
@@ -384,6 +389,7 @@ class Handler:
         assert not self.rowtype_is_leaf(parentrowtype)
 
         columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
+        print(time.time(), "POPULATING", basepath)
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents and sort it alphabetically
 
@@ -931,7 +937,8 @@ class Handler:
         for path in pathlist:
             print(self.row_prop(self.tsFiles.get_iter(path), 'filepath'))
             filepath = pathlib.Path(self.row_prop(self.tsFiles.get_iter(path), 'filepath'))
-            trashpath = filepath.resolve().parent / 'trash'
+            print("FP + FPP = ", filepath, filepath.parent ) ## TODO CHECK IF RESOLVES SYMLINKS
+            trashpath = filepath.parent / 'trash' # do not resolve() - handle symlinks transparently
 
             if trashpath.is_file(): 
                 print('cannot make trash directory: such a file exists', trashpath)
@@ -949,7 +956,7 @@ class Handler:
         self.on_btn_RefreshFolders_clicked(None)
     # }}}
     def on_btn_RefreshFolders_clicked(self, dummy): # {{{
-        print('Refresh STUB')
+        #print('Refresh STUB')
         #treeIter = treeStore.get_iter_first()
         treeIter        = self.tsFiles.get_iter_first()
         if self.lockTreeViewEvents: 
@@ -1200,7 +1207,7 @@ signal.signal(signal.SIGINT, signal.SIG_DFL)
 builder = Gtk.Builder()
 builder.add_from_file(str(inmydir("nihilnovi.glade")))
 def w(widgetname): return builder.get_object(widgetname)   # shortcut to access widgets 
-builder.connect_signals(Handler())
+builder.connect_signals(Handler()) # TODO
 
 window = builder.get_object("window1")
 window.maximize()
