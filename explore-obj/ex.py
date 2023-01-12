@@ -6,7 +6,7 @@ import liborigin
 import sys
 style = 'abbrev' #$False
 if style == 'color':
-    normal = r"\033[1;0m"
+    normal = r"\034[1;0m" 
     bold   = r"\033[1;1m"
     grey   = r"\033[2;2m"
 else:
