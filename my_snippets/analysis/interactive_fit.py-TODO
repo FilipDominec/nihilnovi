@@ -1,0 +1,122 @@
+#-*- coding: utf-8 -*-
+#!/usr/bin/python3
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import collections
+import time, sys
+
+from rawkit.raw import Raw
+from rawkit.options import interpolation
+from scipy import ndimage
+
+"""
+Interactive plot of Huang-Rhys function for broad phonon-coupled emission spectra
+"""
+## Static settings & built-in constants
+
+def heaviside(xx):
+    return (abs(xx)+xx)/xx/2
+
+print(heaviside(-10),  heaviside(10))
+def huangrhysgauss (E, a,x0,FWHM, a2,S,E0,deltaFC):
+    return abs(a)*np.exp(-(E-x0)**2/(FWHM/(2*((np.log(2))**0.5)))**2)   +   heaviside(E0-E)*abs(a2)*np.exp(-2*S*(((heaviside(E0-E)*(E0-E)/deltaFC)**0.5)-1)**2)
+    #return heaviside(E0-E)*abs(a2)*    np.exp(-2*S*    (((heaviside(E0-E)*(E0-E)/deltaFC)**0.5)-1)**2   )
+    #return abs(a)*np.exp(-(E-x0)**2/(FWHM/(2*((np.log(2))**0.5)))**2)
+
+
+
+
+## Loading and access to the previously saved image processing parameters
+default_params = collections.OrderedDict()
+default_params['a']         = (0,      .5e6,    1e6)
+default_params['x0']        = (2.65,   3.0,    3.3)
+default_params['FWHM']      = (0.001,  0.1,    0.3)
+default_params['a2']        = (0,      .5e6,    1e6)
+default_params['S']         = (0.1,    10.,    20)
+default_params['E0']        = (2.4,    3.2,    5.3)
+default_params['deltaFC']   = (0.2,    .6,    1)
+
+def load_saved_parameters(settingsfilename='./saved_parameters.dat'):
+    echelle_parameters = {}
+    try:
+        with open(settingsfilename) as settingsfile:
+            for n, line in enumerate(settingsfile.readlines()):
+                try:
+                    key, val = line.split('=', 1)
+                    echelle_parameters[key.strip()] = float(val)
+                except ValueError:
+                    print("Warning: could not process value `{}` for key `{}` in line #{} in `{}`".format(key, val, n, settingsfilename))
+    except IOError:
+        print("Warning: could not read `{}` in the working directory; using default values for image processing".format(settingsfilename))
+    return echelle_parameters
+
+def p(pname):  ## FIXME non-interactive mode fails on 'echelle_parameters' is not defined
+    return paramsliders[pname].val    if __name__ == '__main__'   else echelle_parameters[pname]
+        
+
+
+if __name__ == '__main__':
+    ## GUI user interaction
+    fig, (ax1, ax2) = plt.subplots(1,2)
+    fig.subplots_adjust(left=0.05, right=0.95, bottom=0.30, top=0.99, hspace=0)
+
+    echelle_parameters  = load_saved_parameters()
+
+
+
+    ## GUI: update plots on manual parameter tuning
+    def update(val): 
+        x = np.linspace(2., 5., 1000) 
+        y = huangrhysgauss(x, *[p(kw) for kw in default_params.keys()])
+        ax1.set_xlim(np.min(x), np.max(x))
+        ax1.set_ylim(1e2, np.max(y.real))
+
+        ax2.set_xlim(np.min(x), np.max(x))
+        ax2.set_ylim(1e2, np.max(y.real))
+        #       np.min(y.real)
+        lines[0].set_data(x, y)
+        fig.canvas.draw_idle()
+
+    ## GUI: Generate sliders for each image-processing parameter at the bottom of the window
+    paramsliders = {}
+    sliderheight, sliderpos = .02, .025
+    for key,item in list(default_params.items())[::-1]:
+        ax1.set_yscale('log')
+        paramsliders[key] = matplotlib.widgets.Slider(
+                plt.axes([0.15, sliderpos, 0.80, sliderheight]), 
+                key, item[0], item[2], 
+                valinit=echelle_parameters.get(key.strip(), item[1]))
+        paramsliders[key].on_changed(update)
+        sliderpos += sliderheight*1.4 if key in ('x_to_lambda_ofs','κ vertical camera declination (rad)') else sliderheight
+
+    ## GUI: Option to save current parameter values
+    def save_values(event): 
+        with open('./saved_parameters.dat', 'w') as of:
+            for key,item in paramsliders.items(): 
+                save_line = key + ' '*(40-len(key)) + ' = ' + str(item.val)
+                of.write(save_line+'\n')
+                print(save_line)
+    button = matplotlib.widgets.Button(plt.axes([.8, 0.02, 0.1, sliderheight]), 'Save settings', color='.7', hovercolor='.9')
+    button.on_clicked(save_values)
+
+    ## GUI: Prepare (empty) matplotlib curve objects for plotting the diffraction orders and spectra
+    lines, peaks_major, peaks_midi, peaks_minor, spectral_curves = ([], [], [], [], [])
+    for difrorder in [0]:
+        leftpanelline = ax1.plot([], [], lw=1, ls='--' if difrorder==1 else '-')[0]
+        color=leftpanelline.get_color()
+        lines.append(leftpanelline) 
+        peaks_major.append(ax1.plot([], [], marker='D', lw=0, markersize=8, markeredgecolor=color, markerfacecolor='none')[0])
+        peaks_midi.append(ax1.plot([], [], marker='D', lw=0, markersize=6, markeredgecolor=color, markerfacecolor='none',alpha=.6)[0])
+        peaks_minor.append(ax1.plot([], [], marker='D', lw=0, markersize=4, markeredgecolor=color, markerfacecolor='none',alpha=.4)[0])
+        spectral_curves.append(ax2.plot([], [], lw=1.5, alpha=.8, color=color)[0])
+        composite_curve = ax2.plot([], [], lw=2, color='k')[0]
+    update(None)
+
+
+    ax2.set_yscale('log')
+    ax2.grid(True)
+    ax2.set_xlabel('wavelength (nm)')
+    ax2.set_ylabel('uncalibrated intensity (a. u.)')
+        
+    plt.show()

@@ -54,7 +54,7 @@ plot_title = sharedlabels[-4:] ## last few labels that are shared among all curv
 
 #ax.set_xlim(xmin=0, xmax=1)
 #ax.set_ylim(ymin=2.6, ymax=2.7)
-ax.set_title(' '.join(plot_title)) 
+#ax.set_title(' '.join(plot_title)) 
 ax.legend(loc='best', prop={'size':10})
 
 #np.savetxt('output.dat', np.vstack([x,ys[0],ys[1]]).T, fmt="%.8g")
@@ -764,9 +764,14 @@ class Handler:
         ## ?? If there is none, or too many, the curves will be labeled just by their column label found in the header. 
         ## TODO allow also to name the curves by the file name, if the column names do not exist or are all the same!
 
-        ## Generate the color palette for curves
+        ## TODO TODO Generate the color palette for curves
+        #jet = matplotlib.cm.jet(np.arange(256))
+        #my_cmap = matplotlib.colors.ListedColormap(jet, name='myColorMap', N=jet.shape[0])
+        #matplotlib.colormaps.register(cmap=my_cmap)
+
+        my_cm = matplotlib.cm.gist_rainbow
         color_pre_map = np.linspace(0.05, .95, len(plotted_paths)+1)[:-1]
-        colors = matplotlib.cm.gist_rainbow(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
+        colors = my_cm(color_pre_map*.5 + np.sin(color_pre_map*np.pi/2)**2*.5)
         for path, color_from_palette in zip(plotted_paths, colors):
             ## If no exception occured during loading, colour the icon according to the line colour
             icon = self.row_prop(self.tsFiles.get_iter(path), 'plotstyleicon')
