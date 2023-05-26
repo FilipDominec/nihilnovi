@@ -8,6 +8,7 @@
     #                          function of the curves parameter 'param')
 
     p0 =          (np.max(y), np.mean(x),  0.1*(np.max(x)-np.min(x)))      
+    print(f'init parameters for curve "{label}":', np.vstack([p0]).T) 
     def fitf(x,    A,         x0        ,  FWHM                     ): 
         return A * np.exp(-(x-x0)**2 / (FWHM/2)**2 * np.log(2))
 
