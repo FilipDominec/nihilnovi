@@ -26,7 +26,7 @@ import warnings
 with warnings.catch_warnings(): warnings.simplefilter("ignore")
 
 
-verbose                     = False
+verbose                     =1 # False
 very_verbose                = False
 
 commentCharsLineStart       = ['#', '!', ';', ',', '%']  # if line starts with one of these characters, it will be a comment (or header)
@@ -60,12 +60,17 @@ def floatableLen(arr):      return len(filter_floats(arr))
 
 
 
-def loadtxt(file_name, sizehint=None):
+def loadtxt(file_name, sizehint=None, encoding=None):
     ## Load file
-    try:
-        lines = open(file_name).readlines(sizehint)
-        if verbose: print("Read %d lines" % len(lines))
-    except:
+    encodings = ['utf-8', 'latin-1'] if not encoding else [encoding]
+    for _encoding in encodings:
+        try:
+            lines = open(file_name, encoding=_encoding).readlines(sizehint)
+            if verbose: print("Read %d lines" % len(lines))
+            break
+        except UnicodeDecodeError:
+            pass
+    else:
         raise IOError('file %s could not be opened for reading' % file_name)
 
     ## Abort if overly long lines
@@ -218,6 +223,7 @@ def loadtxt(file_name, sizehint=None):
 
 
 if __name__ == "__main__":
+    import sys
     fileName = sys.argv[1]
     data_array, header, parameters = loadtxt(fileName)
     print("DATA:",          data_array)

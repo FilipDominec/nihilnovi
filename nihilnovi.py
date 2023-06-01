@@ -672,6 +672,7 @@ class Handler:
             #x, y, xlabel, ylabel = df.values.T[rowxcolumn], df.values.T[rowycolumn], header[rowxcolumn], header[rowycolumn]
             ## TODO Should offer choice of columns ## FIXME clash with 'header'!!
         else:
+            print("rowtype ", rowtype)
             raise RuntimeError         ## for all remaining filetypes, abort plotting quietly
 
 # }}}
