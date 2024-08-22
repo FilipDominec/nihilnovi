@@ -734,7 +734,7 @@ class Handler:
         ## self.xlim        remembers the correct view from the last GUI resize , but
         ## ax.get_xlim      from the start of this method returns the wrong (autoscaled) limits, why?
         init_time = time.time()
-        debug(f'\nt = {time.time()-init_time:6.3f}s: Starting replot')
+        print(f'\n\n\nt = {time.time()-init_time:6.3f}s: Starting replot')
         #if not w('chk_autoscale_x').get_active() and self.xlim: self.ax.set_xlim(self.xlim)
         #if not w('chk_autoscale_y').get_active() and self.ylim: self.ax.set_ylim(self.ylim)
 
@@ -1085,17 +1085,22 @@ class Handler:
         else:
             return ''
 
-    def update_plotcommand_from_rcfile(self, allow_overwrite_by_empty=True):
-        plotcommand =  self.load_plotcommand_from_rcfile()
-        if plotcommand or allow_overwrite_by_empty:
-            w('txt_rc').get_buffer().set_text(plotcommand)
-
-    def plotcommand_get_text(self):
-        buf = w('txt_rc').get_buffer()
-        return buf.get_text(buf.get_start_iter(), buf.get_end_iter(), include_hidden_chars=True)
-    def plotcommand_set_text(self, text):
-        buf = w('txt_rc').get_buffer()
-        buf.set_text(text)# }}}
+    #def update_plotcommand_from_rcfile(self, allow_overwrite_by_empty=True): # TODO unused? 
+        #print("DEBUG, your script in textbox may be rewritten by saved rc-file", self.relevant_rc_filename())
+        #plotcommand =  self.load_plotcommand_from_rcfile()
+        #if plotcommand or allow_overwrite_by_empty:
+            #if w('txt_rc').get_buffer().get_text() != plotcommand:
+                #print("WARNING, your script in textbox was rewritten by saved rc-file", self.relevant_rc_filename())
+                #print("Here is what was in the textbox:") ## TODO test this 
+                #print(w('txt_rc').get_buffer().get_text())
+            #w('txt_rc').get_buffer().set_text(plotcommand)
+    #def plotcommand_get_text(self):# TODO unused? 
+        #buf = w('txt_rc').get_buffer()
+        #return buf.get_text(buf.get_start_iter(), buf.get_end_iter(), include_hidden_chars=True)
+    #def plotcommand_set_text(self, text):# TODO unused? 
+        #print("Setting text")
+        #buf = w('txt_rc').get_buffer()
+        #buf.set_text(text)# }}}
     def on_plotcommand_toggled(self, *args):# {{{
         radiobutton = args[0]
         
@@ -1160,7 +1165,23 @@ class Handler:
     def update_plotcommand_from_rcfile(self, allow_overwrite_by_empty=True):
         plotcommand =  self.load_plotcommand_from_rcfile()
         if plotcommand or allow_overwrite_by_empty:
-            w('txt_rc').get_buffer().set_text(plotcommand)
+            # TODO also check if textarea has been edited since last asking. If not, don't ask again:
+            if self.plotcommand_get_text() != plotcommand: 
+                messagedialog = Gtk.MessageDialog(message_format="MessageDialog")
+                messagedialog.set_transient_for(w('window1'))
+                messagedialog.set_title("Update plotting script?")
+                messagedialog.set_markup("Your python script in textbox differs from the corresponding plotrc file on the disk. ")
+                messagedialog.format_secondary_text("Click Yes to replace your changes with the file content. "+\
+                        "Click No to use the current version of your script.")
+                messagedialog.add_button("_OK", Gtk.ResponseType.YES)
+                messagedialog.add_button("_Close", Gtk.ResponseType.NO)
+                if messagedialog.run() == Gtk.ResponseType.YES:
+                    print("\n\nYour script in textbox was rewritten by saved rc-file", self.relevant_rc_filename())
+                    print("Here is what was in the textbox:") ## TODO test this 
+                    print(self.plotcommand_get_text())
+                    w('txt_rc').get_buffer().set_text(plotcommand)
+                messagedialog.destroy()
+
 
     def plotcommand_get_text(self):
         buf = w('txt_rc').get_buffer()
