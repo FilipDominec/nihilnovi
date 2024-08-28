@@ -376,7 +376,7 @@ class Handler:
                     basepath = self.row_prop(self.tsFiles.get_iter_first(), 'filepath')
                 else:
                     raise AttributeError('Specify either parent_row, reset_path, or ensure the first row is of "updir" type')
-            w('window1').set_title('NihilNovi: %s' % basepath)
+            w('window1').set_title('NihilNovi: %s' % '/home/dominecf/sample_data') #TODO  % basepath)
 
             ## On startup, or when the 'updir' node is selected, we update the whole tree. 
             ## Initially, it has to be cleared of all rows. 
@@ -815,7 +815,7 @@ class Handler:
         #      lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to 
         #      do this, you must specify 'dtype=object' when creating the ndarray
         exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
-                'xs':np.array(xs).copy(), 'ys':np.array(ys).copy(), 'labels':labels, 'sharedlabels':sharedlabels, 
+                'xs':list(xs).copy(), 'ys':list(ys).copy(), 'labels':labels, 'sharedlabels':sharedlabels, 
                 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
                 'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                 'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
@@ -1453,7 +1453,7 @@ Gtk.main()
 #  [ ] could http://www.originlab.com/doc/Orglab/Orglab be used for anything?
 #  [ ] examine the reason for persistent ValueError("posx and posy should be finite values") when browsing plots
 #  [ ] fix statusbar - direct response when loading files
-#  [ ] plotrc autosave before plotting
+#  [x] plotrc autosave before plotting
 #  [ ] avoid following symlinks (or at least catch OSError)
 #  [ ] new feature: automatic guessing of the swept parameter
 #  [x] when file filter is changed/disabled, the selected files are slowly, sequentially replotted. Disable onselect action when restoring the selection!
@@ -1462,6 +1462,6 @@ Gtk.main()
 
 #  [ ] implement where useful: from collections import namedtuple as nt; ntup = nt('name', 'a b c')
   #[ ] rewrite to tkinter + pygubu?
-
-# add to https://zenodo.org/
+#  [ ] New Readme.md, with link to https://github.com/rougier/scientific-visualization-book#book-gallery and use img/screen2024_m.png 
+#  [ ] add to https://zenodo.org/
 # see gmail "nino 1" from 200901
