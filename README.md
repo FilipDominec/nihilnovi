@@ -1,5 +1,8 @@
 # nihilnovi
-<p align="center"> <i>scientific data plotting program that does nothing new (but tries to do it well)</i> </p>
+<p align="center"> <i>scientific data plotting program that does nothing new (but tries to do it well)</i> 
+<br>
+<img alt="A screenshot of streak-camera data analysis" src="img/screen2024_m.png">
+</p>
 
 1. **Browsing data** is as easy as browsing a photo gallery. Select files in the left panel (hold ```Ctrl``` or ```Shift``` to select more of them). Data and header formats are auto-detected and the file contents is immediatelly plotted in the right panel with an assigned colour.
 1. If you wish to **change the plot style**, look at the plot gallery and copy the relevant code into your own script in the upper left panel.
@@ -14,9 +17,9 @@ ffmpeg -ss 2 -i out.ogv -vf "fps=20,scale=400:-1:flags=lanczos,split[s0][s1];[s0
   -->
 
 What nihilnovi does **not** do:
-1. No new language, no new plotting library, no new data formats. Established and well-documented software for this already exists.
-1. No graphical menu to be clicked on with the mouse. Python programming is fun and learning it pays off. For hard operations, typing code is much more efficient than clicking. Simple operations are fast to type anyway. 
-1. No permanent settings for *nihilnovi*. All its behaviour is defined by the data files, and the Python scripts stored along with them.
+1. No new language, no new plotting library. Python + matplotlib + text files are great. 
+1. No graphical menu to be clicked on with the mouse. Data processing in Python is fun and learning it pays off. For hard operations, typing code is much more efficient than clicking. Simple operations are fast to type anyway. 
+1. No permanent settings for *nihilnovi*. All its behaviour is defined by the data files and the Python scripts stored along with them.
 1. No compilation, no platform dependence. You only need Python3 and use its default module manager to get several modules required. (See below.)
 1. No fees or use limitations for the software (see the [MIT license](./LICENSE)).  I made a tool needed for my work and I only wish to see it serve the scientific community.
 
