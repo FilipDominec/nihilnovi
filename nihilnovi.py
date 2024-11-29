@@ -376,7 +376,7 @@ class Handler:
                     basepath = self.row_prop(self.tsFiles.get_iter_first(), 'filepath')
                 else:
                     raise AttributeError('Specify either parent_row, reset_path, or ensure the first row is of "updir" type')
-            w('window1').set_title('NihilNovi: %s' % '/home/dominecf/sample_data') #TODO  % basepath)
+            w('window1').set_title('NihilNovi: %s' % basepath)
 
             ## On startup, or when the 'updir' node is selected, we update the whole tree. 
             ## Initially, it has to be cleared of all rows. 
