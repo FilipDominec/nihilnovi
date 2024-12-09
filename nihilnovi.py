@@ -1465,3 +1465,5 @@ Gtk.main()
 #  [ ] New Readme.md, with link to https://github.com/rougier/scientific-visualization-book#book-gallery and use img/screen2024_m.png 
 #  [ ] add to https://zenodo.org/
 # see gmail "nino 1" from 200901
+#  [ ] config set through e.g. plt.rcParams.update({'font.size': FONTSIZE}) applies only to the *next* plot
+#  [ ] user-defined canvas size (for reproducible image export)
