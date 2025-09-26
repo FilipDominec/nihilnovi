@@ -8,11 +8,11 @@
     #                          function of the curves parameter 'param')
 
     p0 =          (np.max(y), np.mean(x),  0.1*(np.max(x)-np.min(x)))      
-    print(f'init parameters for curve "{label}":', np.vstack([p0]).T) 
+    # print(f'init parameters for curve "{label}":', *p0) 
     def fitf(x,    A,         x0        ,  FWHM                     ): 
         return A * np.exp(-(x-x0)**2 / (FWHM/2)**2 * np.log(2))
 
     from scipy.optimize import curve_fit
     popt, pcov = curve_fit(fitf, x, y, p0)
-    ax.plot(x, fitf(x, *popt), color='k', linestyle=':', linewidth=0.5)  # plots the fitted curve
-    print(f'fitted parameters for curve "{label}":', np.vstack([popt]).T) 
+    ax.plot(x, fitf(x, *popt), color='k', linestyle=':', linewidth=0.8)  # plots the fitted curve
+    print(f'fitted parameters for curve "{label}":', *popt) 
