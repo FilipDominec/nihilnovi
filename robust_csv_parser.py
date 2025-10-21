@@ -50,7 +50,7 @@ guessHeaderSpaces           = True              # Will try to expand CamelCase a
 
 def safe_float(string):
     try:                    return float(string)
-    except:                 return np.NaN
+    except:                 return np.nan
 def can_float(string):
     try:    float(string);  return True            ## note: "nan" counts the same as a number
     except:                 return False 
@@ -89,7 +89,7 @@ def loadtxt(file_name, sizehint=None, encoding=None):
                 if parameterSeparator in line[1:-1]:
                     paramKey, paramValue = regExpPar.split(line[1:-1], 1)
 
-                    parameters[paramKey.strip()] = float(paramValue) if (safe_float(paramValue) is not np.NaN) else paramValue.strip()
+                    parameters[paramKey.strip()] = float(paramValue) if (safe_float(paramValue) is not np.nan) else paramValue.strip()
                     break
         else:
             if firstNonSkippedLine is None: firstNonSkippedLine = lineNumber
@@ -209,9 +209,9 @@ def loadtxt(file_name, sizehint=None, encoding=None):
     table_values = []
     for line in filteredLines:
         line_values = [safe_float(field) for field in filter_floats(regExpSep.split(line.strip()))]
-        while len(line_values) < resultingColumnsOnLines: line_values.append(np.NaN)    ## extend line if shorter
+        while len(line_values) < resultingColumnsOnLines: line_values.append(np.nan)    ## extend line if shorter
         line_values = line_values[:resultingColumnsOnLines]     ## truncate line if longer
-        if line_values[0] is not np.NaN: ## todo fix - this is only to prevent an uncommented header adding a [NaN, NaN] first line in data
+        if line_values[0] is not np.nan: ## todo fix - this is only to prevent an uncommented header adding a [NaN, NaN] first line in data
             table_values.append(line_values)
     data_array = np.array(table_values)
 

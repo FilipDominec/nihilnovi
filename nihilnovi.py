@@ -144,7 +144,7 @@ class Handler:
 
         #w('txt_rc').modify_font(Pango.FontDescription("monospace 10"))
         #DeprecationWarning: Gtk.ScrolledWindow.add_with_viewport is deprecated
-        self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas) # ?? Deprecated: , w('box4').get_parent_window())
+        self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas) 
 
         self.xlim, self.ylim = None, None
         self.sw = Gtk.ScrolledWindow()
@@ -687,13 +687,13 @@ class Handler:
         def rm_ext(s):
             try:
                 base, ext = s.rsplit('.',1)
-                if ext and len(ext)<=3 and re.sub('\d', '', ext): return base
+                if ext and len(ext)<=3 and re.sub('\\d', '', ext): return base
             except ValueError:
                 pass
             return s
         def all_to_string(tup): return [str(v) for v in tup]
         ## File name may be interesting as curve label, but not its extension -> filter it out
-        keyvalue_strings = [re.sub('\.[a-zA-Z][\w]?[\w]?$', '', kvstring) for kvstring in keyvalue_strings]
+        keyvalue_strings = [re.sub('\\.[a-zA-Z][\\w]?[\\w]?$', '', kvstring) for kvstring in keyvalue_strings]
 
         ## Split names into "key=value" chunks and  then into ("key"="value") tuples
         keyvaluelists = []
