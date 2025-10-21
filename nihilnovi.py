@@ -48,6 +48,8 @@ for          x,  y,  n,              param,  label,  xlabel,  ylabel,  color in 
 
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
+#ax.set_xlabel('λ (nm)')
+#ax.set_ylabel('intensity (a.u.)')
 
 plot_title = sharedlabels[-4:] ## last few labels that are shared among all curves make a perfect title
 #plot_title = sharedlabels[sharedlabels.index('LastCroppedLabel')+1:] ## optionally, use all labels after the chosen one 
@@ -528,7 +530,14 @@ class Handler:
                 ## Seek the corresponding spreadsheet and column by their name
                 debug("[spread.name for spread in opj['FileContent']['spreads']]", [spread.name for spread in opj['FileContent']['spreads']])
                 #spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName)
-                spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName[2:])
+                try: 
+                    spreadsheet_index = [spread.name for spread in opj['FileContent']['spreads']].index(curve.dataName[2:])
+                except:
+                    print('LIBORIGIN ERROR')
+                    print('   ',[spread.name for spread in opj['FileContent']['spreads']] )
+                    print('   ',curve.dataName[2:], curve.dataName)
+                    print('   ')
+
                               # TODO liborigin API has changed, see /p/nihilnovi/test_files-real_life/comp*opj: 
                               #   File "/home/dominecf/bin/nin", line 1067, in on_treeview1_row_expanded
                               #     self.populateTreeStore(treeStore, parent_row=treeIter)
@@ -1465,3 +1474,5 @@ Gtk.main()
 #  [ ] New Readme.md, with link to https://github.com/rougier/scientific-visualization-book#book-gallery and use img/screen2024_m.png 
 #  [ ] add to https://zenodo.org/
 # see gmail "nino 1" from 200901
+#  [ ] config set through e.g. plt.rcParams.update({'font.size': FONTSIZE}) applies only to the *next* plot
+#  [ ] user-defined canvas size (for reproducible image export)
