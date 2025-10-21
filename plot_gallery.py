@@ -87,6 +87,14 @@ else:
     paramss = np.array(list(p*np.ones_like(x) for p,x in  zip(params, xs))) 
     ax.tricontourf(np.array(xs).flatten(), np.array(paramss).flatten(), np.array(ys).flatten(), levels=levels, extend='both')
 
+## Logarithmic color levels
+#  levels = np.logspace(np.log10(z.min()),np.log10(z.max()), 500)
+#  cs = plt.tricontourf(x,y,z, cmap='turbo',levels=levels,
+#  locator=ticker.LogLocator(subs="auto"))
+#  cbar = fig.colorbar(cs)
+#  cbar.locator = ticker.LogLocator(10)
+#  cbar.set_ticks(cbar.locator.tick_values(z.min(), z.max())[1:-1])
+
 
 
 # alternatively put here: 2D contour plot log(ys)

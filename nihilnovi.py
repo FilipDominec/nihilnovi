@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 #-*- coding: utf-8 -*-
 
 import gi, sys, os, signal, stat, warnings, re, time, pathlib
@@ -144,7 +144,7 @@ class Handler:
 
         #w('txt_rc').modify_font(Pango.FontDescription("monospace 10"))
         #DeprecationWarning: Gtk.ScrolledWindow.add_with_viewport is deprecated
-        self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas, w('box4').get_parent_window())
+        self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas) # ?? Deprecated: , w('box4').get_parent_window())
 
         self.xlim, self.ylim = None, None
         self.sw = Gtk.ScrolledWindow()
@@ -376,7 +376,7 @@ class Handler:
                     basepath = self.row_prop(self.tsFiles.get_iter_first(), 'filepath')
                 else:
                     raise AttributeError('Specify either parent_row, reset_path, or ensure the first row is of "updir" type')
-            w('window1').set_title('NihilNovi: %s' % '/home/dominecf/sample_data') #TODO  % basepath)
+            w('window1').set_title('NihilNovi: %s' % basepath)
 
             ## On startup, or when the 'updir' node is selected, we update the whole tree. 
             ## Initially, it has to be cleared of all rows. 
