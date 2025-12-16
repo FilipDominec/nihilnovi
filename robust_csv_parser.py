@@ -48,6 +48,8 @@ unevenColumnLengthPenalty = 1                   # may be any positive number; lo
 
 guessHeaderSpaces           = True              # Will try to expand CamelCase and unit names with spaces for better look of plots
 
+allow_guessing_singleliners = True              # TODO implement detecting files with a single data row 
+
 def safe_float(string):
     try:                    return float(string)
     except:                 return np.nan
@@ -74,8 +76,16 @@ def loadtxt(file_name, sizehint=None, encoding=None):
         raise IOError('file %s could not be opened for reading' % file_name)
 
     ## Abort if overly long lines
-    if len(lines)>0 and max([len(line) for line in lines]) > maxLineLength:
-        raise IOError('Error: a line longer than %d characters found, the file is probably binary or corrupt' % maxLineLength)
+    #if len(lines)>0 and max([len(line) for line in lines]) > maxLineLength:
+        #raise IOError('Error: a line longer than %d characters found, the file is probably binary or corrupt' % maxLineLength)
+
+    if allow_guessing_singleliners: # experimental!
+        if 2>=len(lines)>0 and len(lines[0])>100: 
+            data_array = np.loadtxt(file_name).T
+            if very_verbose:
+                print('allow_guessing_singleliners is used', data_array.shape)
+            return data_array, ['']*len(data_array[0]), {} #expandedColumnsInHeader, parameters
+
 
     ## Filter out empty lines, and also all that are commented out. If they have a parameter-like syntax, store them in a dict.
     filteredLines = [] 
@@ -227,6 +237,6 @@ if __name__ == "__main__":
     fileName = sys.argv[1]
     data_array, header, parameters = loadtxt(fileName)
     print("DATA:",          data_array)
-    print("HEADER:",        header)
+    #print("HEADER:",        header)
     print("PARAMETERS:",    parameters)
 
