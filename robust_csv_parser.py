@@ -84,7 +84,7 @@ def loadtxt(file_name, sizehint=None, encoding=None):
             data_array = np.loadtxt(file_name).T
             if very_verbose:
                 print('allow_guessing_singleliners is used', data_array.shape)
-            return data_array, ['']*len(data_array[0]), {} #expandedColumnsInHeader, parameters
+            return data_array, ['']*len(data_array), {} # data_array[0] ??     #expandedColumnsInHeader, parameters
 
 
     ## Filter out empty lines, and also all that are commented out. If they have a parameter-like syntax, store them in a dict.

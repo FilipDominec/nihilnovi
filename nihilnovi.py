@@ -38,13 +38,11 @@ SIZELIMIT_FOR_DATA   = 10000000
 external_editor_command = ('/usr/bin/vim.gtk3', '-gp')
 
 line_plot_command = \
-"""
-for          x,  y,  n,              param,  label,  xlabel,  ylabel,  color in \\\n         zip(xs, ys, range(len(xs)), params, labels, xlabels, ylabels, colors):
+"""for          x,  y,  n,              param,  label,  xlabel,  ylabel,  color in \\\n         zip(xs, ys, range(len(xs)), params, labels, xlabels, ylabels, colors):
     ax.plot(x, y, label="%s" % (label), color=color)
     #ax.plot(x, y, label="%s" % (label.split('.dat')[0]), color=colors[c%10], ls=['-','--'][int(c/10)]) 
-
-#ax.set_xscale('log')
 #ax.set_yscale('log')
+#ax.set_xscale('log')
 
 ax.set_xlabel(xlabelsdedup)
 ax.set_ylabel(ylabelsdedup)
