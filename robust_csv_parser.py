@@ -26,7 +26,7 @@ import warnings
 with warnings.catch_warnings(): warnings.simplefilter("ignore")
 
 
-verbose                     =1 # False
+verbose                     = False
 very_verbose                = False
 
 commentCharsLineStart       = ['#', '!', ';', ',', '%']  # if line starts with one of these characters, it will be a comment (or header)

@@ -54,10 +54,12 @@ plot_title = sharedlabels[-4:] ## last few labels that are shared among all curv
 #ax.set_ylim(ymin=2.6, ymax=2.7)
 #ax.set_title(' '.join(plot_title)) 
 ax.legend(loc='best', prop={'size':10})
+ax.grid(True)
 
 #np.savetxt('output.dat', np.vstack([x,ys[0],ys[1]]).T, fmt="%.8g")
 #tosave.append('_'.join(plot_title)+'.png') ## whole graph will be saved as PNG
 #tosave.append('_'.join(plot_title)+'.pdf') ## whole graph will be saved as PDF
+
 """
 
 contour_plot_command = \
@@ -82,6 +84,14 @@ levels = np.linspace(cmaprange1, cmaprange2, 50)
 
 ax.contourf(xs[0], param, ys, levels=levels, extend='both')
 ax.contour(xs[0], param, ys, levels=levels)
+ax.set_xlabel('')
+ax.set_ylabel('')
+ax.set_title('')
+"""
+
+imshow_plot_command = \
+"""matplotlib.rc('font', size=12)
+ax.imshow(ys[0])
 ax.set_xlabel('')
 ax.set_ylabel('')
 ax.set_title('')
@@ -116,7 +126,7 @@ ax2.set_ylabel('electron penetration depth (nm)')
 
 
 def inmydir(fn): return pathlib.Path(__file__).parent/fn # finds the basename in the script's dir
-plot_commands = {'Lines':line_plot_command, 'Plot gallery': inmydir('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
+plot_commands = {'Lines':line_plot_command, '2D':imshow_plot_command, 'Plot gallery': inmydir('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
 
 verbose = False
 def debug(*args):
@@ -249,11 +259,29 @@ class Handler:
         elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.csv', '.tsv', '.dat', '.txt', '.asc')):
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
-                t0=time.time()
+                #t0=time.time()
                 data_array, header, parameters = robust_csv_parser.loadtxt(fullpath, sizehint=SIZELIMIT_FOR_HEADER) 
-                print("PARSER prelim took (s)", time.time() - t0)
+                #print("PARSER prelim took (s)", time.time() - t0)
                 if len(header)<=2: return 'csvtwocolumn' 
                 else: return 'csvmulticolumn'
+            except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
+                return 'unknown'
+        elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.npy',)):
+            try:
+                header, data_array = 'array', np.load(fullpath) # #XX
+                parameters = {}
+                return 'numpyarray' 
+            except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
+                return 'unknown'
+        elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.npz',)):
+            try:
+                ## Note: experimental numpy formats, trying to re-use csv*column row types
+                header, data_array = zip(*np.load(fullpath).items())
+                parameters = {}
+                if len(header) <= 1:
+                    return 'numpyarray' 
+                else:
+                    return 'numpymulti' 
             except (IOError, RuntimeError):    # This error is usually returned for directories and non-data files
                 return 'unknown'
         else:
@@ -267,11 +295,11 @@ class Handler:
         are not "leaves", since they contain some structure that can be further unpacked. In contrast, 
         ordinary two-column CSV files or columns of CSV files are "leaves" and can be directly plotted.
         """
-        return (rowtype in ('csvtwocolumn', 'csvcolumn', 'xlscolumn', 'opjcolumn', 'unknown'))
+        return (rowtype in ('csvtwocolumn', 'csvcolumn', 'xlscolumn', 'opjcolumn', 'unknown', 'numpyarray'))
     # }}}
     def rowtype_can_plot(self, rowtype):# {{{
         """ Determines if row shall be plotted """
-        return (rowtype in ('csvtwocolumn', 'xlscolumn', 'opjcolumn'))
+        return (rowtype in ('csvtwocolumn', 'xlscolumn', 'opjcolumn', 'numpyarray'))
     # }}}
     def rowtype_icon(self, rowtype, iconsize=8):# {{{
         iconname = {
@@ -287,6 +315,8 @@ class Handler:
                 'xlsfile':          'package-x-generic', 
                 'xlsspread':        'go-next', 
                 'xlscolumn':        'text-x-generic', 
+                'numpymulti':       'package-x-generic', 
+                'numpyarray':       'x-office-spreadsheet', 
                 'unknown':          'stop'
                 }
         return Gtk.IconTheme.get_default().load_icon(iconname[rowtype], iconsize, 0)
@@ -403,7 +433,7 @@ class Handler:
         assert not self.rowtype_is_leaf(parentrowtype)
 
         columnFilterString = w('enColFilter').get_text().strip()   #XXX XXX 
-        print(time.time(), "POPULATING", basepath)
+        #print(time.time(), "POPULATING", basepath)
         if parentrowtype == 'dir':             ## Populate a directory with files/subdirs
             ## Get the directory contents and sort it alphabetically
 
@@ -439,7 +469,6 @@ class Handler:
             ## Note: Multicolumn means at least 3 columns (i.e. x-column and two or more y-columns)
             txt = self.dat_parse_or_cache(basepath)
             data_array, header, parameters = txt 
-            #columnFilterString = 'gamma|fermi'
             columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
             #FIXME File "/home/dominecf/p/nihilnovi/nihilnovi.py", line 303, in populateTreeStore
                 #columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
@@ -554,6 +583,22 @@ class Handler:
                 columnNumbers.append(y_column_index)  
                 spreadNumbers.append(spreadsheet_index)
             rowTypes      = ['opjcolumn'] * len(itemShowNames) ## TODO or introduce opjgraphcurve ?
+
+        elif parentrowtype == 'numpymulti':
+            ## Note: Multicolumn here means there are at least 2 numpy arrays in NPZ file
+
+            header, data_array = zip(*np.load(basepath).items())
+            parameters = {}
+
+            columnNumbers = range(len(header))
+            # (TODO) columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
+
+            #ValueError: not enough values to unpack (expected 2, got 0)
+            itemFullNames = [basepath] * len(header)    # all columns are from one file
+            itemShowNames = header                      # column numbers are either in file header, or auto-generated
+            spreadNumbers = [None] * len(header)        # there are no spreadsheets in CSV files
+            rowTypes      = ['numpyarray'] * len(header)
+
         else:
             warnings.warn('Not prepared yet to show listings of this file: %s' % parentrowtype)
             return
@@ -666,6 +711,17 @@ class Handler:
             ## TODO consider also parameters in the file! 
             descriptor = rowfilepath +" "+header[rowycolumn] 
             return data_array.T[rowxcolumn], data_array.T[rowycolumn], descriptor, parameters, header[rowxcolumn], header[rowycolumn] 
+
+        elif rowtype in ('numpyarray'): 
+            header, data_array = list(np.load('aa_a.npz').items())[rowycolumn] # todo caching for npy/npz ?
+            parameters = {}
+            descriptor = rowfilepath +" "+header[rowycolumn] 
+
+            print(data_array, rowycolumn)
+            return np.arange(data_array.shape[0]), data_array, descriptor, parameters, 'xlabel', 'ylabel' # 
+
+
+ 
 
         #elif rowtype == 'xls':
             # TODO a XLS file is a *container* with multiple sheets, a sheet may contain multiple columns
@@ -857,7 +913,7 @@ class Handler:
 
 
         #self.ax.legend(loc="best")
-        self.ax.grid(True)
+        #self.ax.grid(True)
         #self.ax.set_xscale('log' if w('chk_xlogarithmic').get_active() else 'linear')  ## TODO caused freezes
         #self.ax.set_yscale('log' if w('chk_ylogarithmic').get_active() else 'linear') ## TODO caused freezes
 
@@ -1110,6 +1166,7 @@ class Handler:
         radiobutton = args[0]
         
         w('chk_xlogarithmic').set_active(False)
+        print(*args)
         if radiobutton is w('rad_plotstyle_rc'):
             if radiobutton.get_active():        ## selecting action
                 self.update_plotcommand_from_rcfile(allow_overwrite_by_empty=True)
