@@ -91,10 +91,18 @@ ax.set_title('')
 
 imshow_plot_command = \
 """matplotlib.rc('font', size=12)
-ax.imshow(ys[0])
+fig.tight_layout() # not sure if useful
+im = ax.imshow(np.sum(ys[0][20:],axis=0),aspect='equal') #,norm='log')
+
+ax.set_adjustable("datalim") # for interactive zooming in
+
+ax.autoscale(False)
 ax.set_xlabel('')
 ax.set_ylabel('')
 ax.set_title('')
+
+fig.colorbar(im, ax=ax, label='', pad=0.01)
+
 """
 
 
@@ -713,7 +721,9 @@ class Handler:
             return data_array.T[rowxcolumn], data_array.T[rowycolumn], descriptor, parameters, header[rowxcolumn], header[rowycolumn] 
 
         elif rowtype in ('numpyarray'): 
-            header, data_array = list(np.load('aa_a.npz').items())[rowycolumn] # todo caching for npy/npz ?
+            # todo caching ?
+            header, data_array = list(np.load(rowfilepath).items())[rowycolumn] # for NPZ
+            #header, data_array = 'data', np.load(rowfilepath) # for simple NPY  FIXME
             parameters = {}
             descriptor = rowfilepath +" "+header[rowycolumn] 
 
@@ -882,7 +892,7 @@ class Handler:
                 'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
         #debug(exec_env)
 
-        #self.fig.clf() ## clear figure
+        #self.fig.clf() ## clear figure # TODO right now the figure still resets; should optionally keep zoom & color range
         print(f't = {time.time()-init_time:6.3f}s: Plotting script starting')
         try:
             exec(plot_command, exec_env)
