@@ -92,7 +92,10 @@ ax.set_title('')
 imshow_plot_command = \
 """matplotlib.rc('font', size=12)
 fig.tight_layout() # not sure if useful
-im = ax.imshow(np.sum(ys[0][20:],axis=0),aspect='equal') #,norm='log')
+
+#ys = np.clip(ys,0,2)
+im = ax.imshow(ys[0],aspect='equal') #,norm='log')
+#im = ax.imshow(np.sum(ys[0][20:],axis=0),aspect='equal') #,norm='log') # summed
 
 ax.set_adjustable("datalim") # for interactive zooming in
 

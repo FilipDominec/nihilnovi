@@ -80,11 +80,12 @@ def loadtxt(file_name, sizehint=None, encoding=None):
         #raise IOError('Error: a line longer than %d characters found, the file is probably binary or corrupt' % maxLineLength)
 
     if allow_guessing_singleliners: # experimental!
-        if 2>=len(lines)>0 and len(lines[0])>100: 
+        if len(lines) > 0 and len(lines[0]) > 2*len(lines):  # if twice more columns than rows
             data_array = np.loadtxt(file_name).T
             if very_verbose:
                 print('allow_guessing_singleliners is used', data_array.shape)
-            return data_array, ['']*len(data_array), {} # data_array[0] ??     #expandedColumnsInHeader, parameters
+            row_count = data_array.shape[1]
+            return data_array, [f'row f{n:d}' for n in range(row_count)], {}
 
 
     ## Filter out empty lines, and also all that are commented out. If they have a parameter-like syntax, store them in a dict.
