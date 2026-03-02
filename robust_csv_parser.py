@@ -80,7 +80,7 @@ def loadtxt(file_name, sizehint=None, encoding=None):
         #raise IOError('Error: a line longer than %d characters found, the file is probably binary or corrupt' % maxLineLength)
 
     if allow_guessing_singleliners: # experimental!
-        if len(lines) > 0 and len(lines[0]) > 2*len(lines):  # if twice more columns than rows
+        if len(lines) > 0 and len(lines[0].split()) > 2*len(lines):  # if twice more columns than rows (assumes   FIXME
             data_array = np.loadtxt(file_name).T
             if very_verbose:
                 print('allow_guessing_singleliners is used', data_array.shape)
