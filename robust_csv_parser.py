@@ -84,7 +84,10 @@ def loadtxt(file_name, sizehint=None, encoding=None):
             data_array = np.loadtxt(file_name).T
             if very_verbose:
                 print('allow_guessing_singleliners is used', data_array.shape)
-            row_count = data_array.shape[1]
+            if len(data_array.shape)>1:
+                row_count = data_array.shape[1]
+            else:
+                row_count = data_array.shape[0]
             return data_array, [f'row f{n:d}' for n in range(row_count)], {}
 
 
