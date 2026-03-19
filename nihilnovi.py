@@ -891,7 +891,7 @@ class Handler:
         exec_env = {'np':np, 'matplotlib':matplotlib, 'cm':matplotlib.cm, 'ax':self.ax, 'fig': self.fig, 
                 'xs':list(xs).copy(), 'ys':list(ys).copy(), 'labels':labels, 'sharedlabels':sharedlabels, 
                 'params':np.array(params), 'xlabels':xlabels,  'ylabels':ylabels,  
-                'xlabelsdedup':', '.join(dedup(xlabels))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
+                'xlabelsdedup':', '.join(dedup([l.lstrip('#') for l in xlabels]))[:100],  'ylabelsdedup':', '.join(dedup(ylabels))[:100], 
                 'colors':colors, 'tosave':tosave, 'labels_orig':labels_orig}
         #debug(exec_env)
 
