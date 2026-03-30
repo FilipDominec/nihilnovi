@@ -604,8 +604,11 @@ class Handler:
             ## Note: Multicolumn here means there are at least 2 numpy arrays in NPZ file
 
             header, data_array = zip(*np.load(basepath).items())
-            parameters = {}
 
+            # append array shape to its name
+            header = [h + '   (' + '×'.join(str(s) for s in a.shape) + ')' for h,a in zip(header,data_array)] 
+
+            parameters = {}
             columnNumbers = range(len(header))
             # (TODO) columnNumbers, header = zip(*[n for n in enumerate(header) if re.findall(columnFilterString, n[1])]) ## filter the columns
 
@@ -733,9 +736,9 @@ class Handler:
             header, data_array = list(np.load(rowfilepath).items())[rowycolumn] # for NPZ
             #header, data_array = 'data', np.load(rowfilepath) # for simple NPY  FIXME
             parameters = {}
-            descriptor = rowfilepath +" "+header[rowycolumn] 
+            descriptor = rowfilepath # might also reflect `header` in descriptor?
 
-            print(data_array, rowycolumn)
+            #print(data_array, rowycolumn)
             return np.arange(data_array.shape[0]), data_array, descriptor, parameters, 'xlabel', 'ylabel' # 
 
 
