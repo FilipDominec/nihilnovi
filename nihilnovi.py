@@ -104,6 +104,11 @@ ax.set_xlabel('')
 ax.set_ylabel('')
 ax.set_title('')
 
+
+# for colorbar positioning, try out:
+# from mpl_toolkits.axes_grid1 import make_axes_locatable
+# ax = make_axes_locatable(ax).append_axes("right", size="2.5%", pad=0.3)
+
 fig.colorbar(im, ax=ax, label='', pad=0.01)
 
 """
