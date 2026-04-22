@@ -140,6 +140,36 @@ ax2.set_yticklabels(tick_function(new_tick_locations))
 ax2.set_ylabel('electron penetration depth (nm)')
 """
 
+# TODO implement headers & footers, TODO put currently selected files in a list into header
+header = \
+"""
+#!/usr/bin/env python3  
+#-*- coding: utf-8 -*-
+
+import numpy as np
+import os
+from pathlib import Path
+import sys
+import time
+
+import matplotlib.pyplot as plt
+
+fig = plt.figure(figsize=(12, 6))
+ax = fig.add_subplot()
+
+ys = np.load('xyslice_order6_xrd.npz').values()
+
+# <END_OF_HEADER> Keep this line: Added by nihilnovi to allow running this as standalone script. User code follows.
+"""
+
+footer = \
+"""
+# <START_OF_FOOTER> Keep this line: Added by nihilnovi to allow running this as standalone script.
+#plt.savefig('output.png')
+plt.show()
+"""
+
+
 
 def inmydir(fn): return pathlib.Path(__file__).parent/fn # finds the basename in the script's dir
 plot_commands = {'Lines':line_plot_command, '2D':imshow_plot_command, 'Plot gallery': inmydir('./plot_gallery.py').read_text(), 'Contours':contour_plot_command, }
@@ -628,6 +658,7 @@ class Handler:
                 zip(itemFullNames, itemShowNames, columnNumbers, spreadNumbers, rowTypes):
             plotstyleIcon = Pixbuf.new(Colorspace.RGB, True, 8, 10, 10)
             plotstyleIcon.fill(0xffffffff)
+
             if rowtype != 'unknown' or w('chk_ShowAllFiles').get_active():
                 currentIter = treeStore.append(parent_row, 
                         [itemFullName, self.rowtype_icon(rowtype), itemShowName, plotstyleIcon, columnNumber, spreadNumber, rowtype])
@@ -1295,7 +1326,9 @@ class Handler:
         self.tsFiles.append(treeIter, self.dummy_treestore_row)
     # }}}
     def on_treeview1_selection_changed(self, *args):# {{{       ## triggers replot
-        if self.lockTreeViewEvents: return      ## prevent event handlers triggering other events
+        if self.lockTreeViewEvents: 
+            print('lock') 
+            return      ## prevent event handlers triggering other events
 
         ## Update the plot command
         if w('rad_plotstyle_rc').get_active():
@@ -1306,8 +1339,9 @@ class Handler:
             w('rad_plotstyle_rc').set_active(True)
 
         ## Update the graphical presentation
-        self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
-        self.plot_all_sel_records()     ## then show the selected ones
+        if w('chk_Autoplot').get_active():
+            self.plot_reset()               ## first delete the curves, to hide (also) unselected plots
+            self.plot_all_sel_records()     ## then show the selected ones
     # }}}
     def treeview1_selectmethod(self, selection, model, treePath, is_selected, user_data):# {{{
         ## TODO reasonable behaviour for block-selection over different unpacked directories/files
