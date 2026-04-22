@@ -111,6 +111,13 @@ ax.set_title('')
 
 fig.colorbar(im, ax=ax, label='', pad=0.01)
 
+
+## Direct image output -  saves the image color mapped, but in native pixel resolution (compression needs libtiff)
+import matplotlib.pyplot as plt
+cmap_TIFF = plt.cm.Greys
+norm = plt.Normalize(vmin=vmin, vmax=vmax)
+image = cmap_TIFF(norm(result))
+plt.imsave(basename + 'r.tiff', image, pil_kwargs={"compression": "tiff_deflate"})
 """
 
 
