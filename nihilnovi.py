@@ -329,7 +329,11 @@ class Handler:
         elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.npz',)):
             try:
                 ## Note: experimental numpy formats, trying to re-use csv*column row types
-                header, data_array = zip(*np.load(fullpath).items())
+                try:
+                    header, data_array = zip(*np.load(fullpath).items())
+                except: # e.g. zlib.error if npz is corrupted
+                    return 'unknown'
+
                 parameters = {}
                 if len(header) <= 1:
                     return 'numpyarray' 
