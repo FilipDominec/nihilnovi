@@ -775,8 +775,11 @@ class Handler:
 
         elif rowtype in ('numpyarray'): 
             # todo caching ?
-            header, data_array = list(np.load(rowfilepath).items())[rowycolumn] # for NPZ
-            #header, data_array = 'data', np.load(rowfilepath) # for simple NPY  FIXME
+            loaded_file = np.load(rowfilepath)
+            if hasattr(loaded_file, 'items'):
+                header, data_array = list(loaded_file.items())[rowycolumn] # for NPZ
+            else:
+                header, data_array = 'data', np.load(rowfilepath) # for simple NPY  FIXME
             parameters = {}
             descriptor = rowfilepath # might also reflect `header` in descriptor?
 
