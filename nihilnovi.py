@@ -112,13 +112,27 @@ ax.set_title('')
 fig.colorbar(im, ax=ax, label='', pad=0.01)
 
 
-## Direct image output -  saves the image color mapped, but in native pixel resolution (compression needs libtiff)
-import matplotlib.pyplot as plt
-cmap_TIFF = plt.cm.Greys
-norm = plt.Normalize(vmin=vmin, vmax=vmax)
-image = cmap_TIFF(norm(result))
-plt.imsave(basename + 'r.tiff', image, pil_kwargs={"compression": "tiff_deflate"})
+
+## Export 1-channel 16-bit TIFF for further processing
+enable_tiff_output = True
+image = ys[0]  # select the 2D data to write
+basename = f'raw_output' # select the name
+if enable_tiff_output:
+    import imageio
+    image = np.nan_to_num(image, nan=0)   # optional: fill NaN values with zeros (to prevent NaN in vmin,vmax results below)
+
+    # Optional: auto-range by quantiles, allows for slight value clipping in dead/hot pixels
+    vmin, vmax = np.nanquantile(image, [.0, .999]) 
+
+    # Optional: auto-scaling to 16-bit range; note that oversaturated pixels are black (adjust quantile levels above)
+    image_to_save = ((0 + (np.clip(image, vmin, vmax)-vmin) / (vmax-vmin)) * (2**16) - 0).astype(np.uint16) # proportional brightness auto-range
+    #image_to_save = ((1 - (np.clip(image, vmin, vmax)-vmin) / (vmax-vmin)) * (2**16) - 0).astype(np.uint16) # inverse contrast auto-range
+
+    imageio.imwrite(basename + '.tiff', image_to_save, compression='lzma')
+
+
 """
+
 
 
 
@@ -164,7 +178,8 @@ import matplotlib.pyplot as plt
 fig = plt.figure(figsize=(12, 6))
 ax = fig.add_subplot()
 
-ys = np.load('xyslice_order6_xrd.npz').values()
+ys = []
+ys.append(np.load(<FILENAME>).values())
 
 # <END_OF_HEADER> Keep this line: Added by nihilnovi to allow running this as standalone script. User code follows.
 """
@@ -1598,3 +1613,4 @@ Gtk.main()
 # see gmail "nino 1" from 200901
 #  [ ] config set through e.g. plt.rcParams.update({'font.size': FONTSIZE}) applies only to the *next* plot; should force re-init of mpl? 
 #  [ ] user-defined canvas size (for reproducible image export)
+#  [ ] allow changing CWD (i.e. directory where the script saves NPZ and TIFF outputs)
