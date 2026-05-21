@@ -113,18 +113,20 @@ fig.colorbar(im, ax=ax, label='', pad=0.01)
 
 
 
-## Export 1-channel 16-bit TIFF for further processing
-enable_tiff_output = True
-image = ys[0]  # select the 2D data to write
-basename = f'raw_output' # select the name
+## Optional: Export 1-channel 16-bit TIFF for further processing
+enable_tiff_output = False 
+image = ys[0]            # select the 2D data to save (first user-selected array loads into ys[0])
+basename = f'raw_output' # select the name manually, or pick it from `sharedlabels`
 if enable_tiff_output:
     import imageio
-    image = np.nan_to_num(image, nan=0)   # optional: fill NaN values with zeros (to prevent NaN in vmin,vmax results below)
 
-    # Optional: auto-range by quantiles, allows for slight value clipping in dead/hot pixels
+    # Optional: replace NaN values with zeros (to prevent NaN in vmin,vmax results below)
+    image = np.nan_to_num(image, nan=0)   
+
+    # Optional: auto-range data using quantiles (allows for slight value clipping of dead/hot pixels)
     vmin, vmax = np.nanquantile(image, [.0, .999]) 
 
-    # Optional: auto-scaling to 16-bit range; note that oversaturated pixels are black (adjust quantile levels above)
+    # Optional: auto-scale to 16-bit range
     image_to_save = ((0 + (np.clip(image, vmin, vmax)-vmin) / (vmax-vmin)) * (2**16) - 0).astype(np.uint16) # proportional brightness auto-range
     #image_to_save = ((1 - (np.clip(image, vmin, vmax)-vmin) / (vmax-vmin)) * (2**16) - 0).astype(np.uint16) # inverse contrast auto-range
 
@@ -952,6 +954,19 @@ class Handler:
             #In [21]: max(1,2)                                                                                                                                             
             #...  AxisError: axis 2 is out of bounds for array of dimension 0
 
+        ## XXX Experimental Plotting re- initialization
+        #del self.toolbar
+        #del self.canvas
+        #del self.fig
+        #self.fig = matplotlib.figure.Figure(figsize=(8,8), dpi=96, facecolor='#eeeeee', tight_layout=1) 
+
+        #self.fig.clf() ## clear figure # TODO right now the figure still resets; should optionally keep zoom & color range
+
+        #self.canvas = FigureCanvas(self.fig)
+        #self.canvas.set_size_request(300,300)
+        #self.toolbar = matplotlib.backends.backend_gtk3.NavigationToolbar2GTK3(self.canvas) 
+        #self.sw.add_with_viewport(self.canvas)
+
 
         # FIXME VisibleDeprecationWarning: Creating an ndarray from ragged nested sequences (which is a list-or-tuple of 
         #      lists-or-tuples-or ndarrays with different lengths or shapes) is deprecated. If you meant to 
@@ -1614,3 +1629,5 @@ Gtk.main()
 #  [ ] config set through e.g. plt.rcParams.update({'font.size': FONTSIZE}) applies only to the *next* plot; should force re-init of mpl? 
 #  [ ] user-defined canvas size (for reproducible image export)
 #  [ ] allow changing CWD (i.e. directory where the script saves NPZ and TIFF outputs)
+#  [ ] TIFF support like:    import tifffile; tifffile.imread('your_file.tif').astype(float)
+#  [ ] in-application help popups
