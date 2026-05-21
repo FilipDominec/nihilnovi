@@ -1,5 +1,5 @@
     def rm_bg(y, iter=50, coef=0.75, blurpx=250):
-        """ subtracts smooth slowly varying background, keeping peaks and similar features,
+        """ iterative subtraction of slowly varying background, keeping peaks and similar features,
         (almost) never resulting in negative values """
         def edge_safe_convolve(arr,ker): 
             return np.convolve(np.pad(arr,len(ker),mode='edge'),ker,mode='same')[len(ker):-len(ker)]
