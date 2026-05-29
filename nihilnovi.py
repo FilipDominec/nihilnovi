@@ -93,9 +93,17 @@ imshow_plot_command = \
 """matplotlib.rc('font', size=12)
 fig.tight_layout() # not sure if useful
 
-#ys = np.clip(ys,0,2)
-im = ax.imshow(ys[0],aspect='equal') #,norm='log')
-#im = ax.imshow(np.sum(ys[0][20:],axis=0),aspect='equal') #,norm='log') # summed
+for n,y in enumerate(ys): print(f'dimension of input array ys[{n}]:', '×'.join(f'{d:d}' for d in y.shape))
+
+if len(ys[0].shape) == 2 or (len(ys[0].shape) == 3 and ys[0].shape[0] == len('RGB')):
+  image = ys[0]         # will plot the 2d data as is (greyscale or RGB)
+elif len(ys[0].shape) == 3:
+  image = np.sum(ys[0][:], axis=0)   # summing [a subset of] 3d hyperspectral frames into 2d plane
+
+vmin, vmax = np.nanquantile(image, [1e-3, 1 - 1e-3])  # optional: set color range neglecting outliers
+
+im = ax.imshow(image,aspect='equal', vmin=vmin, vmax=vmax) #,norm='log')
+
 
 ax.set_adjustable("datalim") # for interactive zooming in
 
