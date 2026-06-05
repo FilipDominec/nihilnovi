@@ -39,8 +39,8 @@ external_editor_command = ('/usr/bin/vim.gtk3', '-gp')
 
 line_plot_command = \
 """for          x,  y,  n,              param,  label,  xlabel,  ylabel,  color in \\\n         zip(xs, ys, range(len(xs)), params, labels, xlabels, ylabels, colors):
-    ax.plot(x, y, label="%s" % (label), color=color)
-    #ax.plot(x, y, label="%s" % (label.split('.dat')[0]), color=colors[c%10], ls=['-','--'][int(c/10)]) 
+    ax.plot(x, y, label=f'{label}', color=color)
+    #ax.plot(x, y, label=f'{label}', color=colors[c%10], ls=['-','--'][int(c/10)])  # grouping by color/linestyle
 #ax.set_yscale('log')
 #ax.set_xscale('log')
 
@@ -100,7 +100,7 @@ if len(ys[0].shape) == 2 or (len(ys[0].shape) == 3 and ys[0].shape[0] == len('RG
 elif len(ys[0].shape) == 3:
   image = np.sum(ys[0][:], axis=0)   # summing [a subset of] 3d hyperspectral frames into 2d plane
 
-vmin, vmax = np.nanquantile(image, [1e-3, 1 - 1e-3])  # optional: set color range neglecting outliers
+vmin, vmax = np.nanquantile(image, [1e-2, 1 - 1e-2])  # optional: set color range neglecting outliers
 
 im = ax.imshow(image,aspect='equal', vmin=vmin, vmax=vmax) #,norm='log')
 
