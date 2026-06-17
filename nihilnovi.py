@@ -1152,6 +1152,17 @@ class Handler:
             import subprocess
             print(external_editor_command, [self.row_prop(self.tsFiles.get_iter(path), 'filepath') for path in pathlist])
             subprocess.Popen(list(external_editor_command) + [self.row_prop(self.tsFiles.get_iter(path), 'filepath') for path in pathlist])
+
+            ## TODO use XDG  ;  
+            #import subprocess, os, platform
+            #if platform.system() == 'Darwin':       # macOS
+                #subprocess.call(('open', filepath))
+            #elif platform.system() == 'Windows':    # Windows
+                #os.startfile(filepath)
+            #else:                                   # linux variants
+                #subprocess.call(('xdg-open', filepath))
+                # # Note gvim users on linux may want to run: xdg-mime default gvim.desktop text/x-python
+
         except Exception as e:
             print(e)
     # }}}
