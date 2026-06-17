@@ -98,7 +98,20 @@ for n,y in enumerate(ys): print(f'dimension of input array ys[{n}]:', '×'.join(
 if len(ys[0].shape) == 2 or (len(ys[0].shape) == 3 and ys[0].shape[0] == len('RGB')):
   image = ys[0]         # will plot the 2d data as is (greyscale or RGB)
 elif len(ys[0].shape) == 3:
-  image = np.sum(ys[0][:], axis=0)   # summing [a subset of] 3d hyperspectral frames into 2d plane
+  # assuming 3d hyperspectral frames into 2d plane
+  p, w = 45, 3  # starting position and width of the slice
+  #image = np.nanmean(ys[0][p:p+w], axis=0)   # horizontal slice through 3D data
+
+  p, w = 160, 1  # starting position and width of the slice
+  #image = np.nanmean(ys[0][:, p:p+w], axis=1)   # vertical slice through 3D data
+
+  p, w = 60, 1  # starting position and width of the slice
+  image = np.nanmean(ys[0][..., p:p+w], axis=2)   # vertical slice through 3D data, other axis
+
+
+# image = image / np.nanmean(image, axis=0)**.5  # (partial) normalize of image columns
+# image = image / np.nanmean(image, axis=1)[:,None]**.5  # (partial) normalize of image rows
+# image = image**0.5   # optionally enhance shadows
 
 vmin, vmax = np.nanquantile(image, [1e-2, 1 - 1e-2])  # optional: set color range neglecting outliers
 
