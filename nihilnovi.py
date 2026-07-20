@@ -347,7 +347,7 @@ class Handler:
             return 'xlsfile'
         elif fullpath.lower().endswith('.opj'):
             return 'opjfile'
-        elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.csv', '.tsv', '.dat', '.txt', '.asc')):
+        elif any(fullpath.lower().endswith(try_ending) for try_ending in ('.csv', '.tsv', '.dat', '.txt', '.asc', '.s1p', '.s2p')):
             try:
                 ## Note: column number is incorrectly determined if header is longer than sizehint, but 10kB should be enough
                 #t0=time.time()
